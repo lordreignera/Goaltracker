@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="page-title">Create Goal</h1>
+        <h1 class="page-title">Edit Goal</h1>
     </x-slot>
 
     <style>
@@ -32,24 +32,37 @@
         }
     </style>
 
+    @php
+        $selectedDepartments = old('department_ids', $goal->assignedDepartments->pluck('id')->all() ?: [$goal->department_id]);
+        $selectedUnits = old('unit_ids', $goal->assignedUnits->pluck('id')->all() ?: array_filter([$goal->unit_id]));
+        $oldObjectives = old('objectives', $goal->objectives->map(fn ($objective) => [
+            'id' => $objective->id,
+            'title' => $objective->title,
+            'description' => $objective->description,
+            'weight' => $objective->weight,
+            'starts_at' => $objective->starts_at?->toDateString() ?? $goal->quarter->starts_at?->toDateString(),
+            'due_at' => $objective->due_at?->toDateString(),
+        ])->values()->all());
+    @endphp
+
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
-            <h2 class="h5 fw-bold mb-1">Create Main Goal</h2>
-            <div class="text-muted small">Add objectives/sub-goals now. Objective weights must total 100%.</div>
+            <h2 class="h5 fw-bold mb-1">Edit Main Goal & Objectives</h2>
+            <div class="text-muted small">Add/remove objectives here only. The total weight must remain 100%.</div>
         </div>
-        <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Back to Goals</a>
+        <a class="btn btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Back to Goal</a>
     </div>
 
-    <form method="post" action="{{ route('goals.store') }}" class="goal-panel p-4">
+    <form method="post" action="{{ route('goals.update', $goal) }}" class="goal-panel p-4">
         @csrf
+        @method('PUT')
 
         <div class="row g-3">
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Quarter</label>
                 <select class="form-select" name="quarter_id" required>
-                    <option value="">Select quarter</option>
                     @foreach ($quarters as $quarter)
-                        <option value="{{ $quarter->id }}" data-start="{{ $quarter->starts_at->toDateString() }}" data-end="{{ $quarter->ends_at->toDateString() }}" @selected(old('quarter_id') == $quarter->id)>
+                        <option value="{{ $quarter->id }}" data-start="{{ $quarter->starts_at->toDateString() }}" data-end="{{ $quarter->ends_at->toDateString() }}" @selected(old('quarter_id', $goal->quarter_id) == $quarter->id)>
                             {{ $quarter->name }} ({{ $quarter->starts_at->format('M d, Y') }} - {{ $quarter->ends_at->format('M d, Y') }})
                         </option>
                     @endforeach
@@ -59,7 +72,7 @@
                 <label class="form-label fw-semibold">Departments</label>
                 <select class="form-select" name="department_ids[]" multiple required size="5">
                     @foreach ($departments as $department)
-                        <option value="{{ $department->id }}" @selected(in_array($department->id, old('department_ids', [])))>{{ $department->name }}</option>
+                        <option value="{{ $department->id }}" @selected(in_array($department->id, $selectedDepartments))>{{ $department->name }}</option>
                     @endforeach
                 </select>
                 <small class="text-muted">Hold Ctrl to select more than one.</small>
@@ -68,7 +81,7 @@
                 <label class="form-label fw-semibold">Units</label>
                 <select class="form-select" name="unit_ids[]" multiple size="5">
                     @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" @selected(in_array($unit->id, old('unit_ids', [])))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->name }}</option>
+                        <option value="{{ $unit->id }}" @selected(in_array($unit->id, $selectedUnits))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->name }}</option>
                     @endforeach
                 </select>
                 <small class="text-muted">Leave empty for department-wide assignment.</small>
@@ -76,18 +89,18 @@
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Goal Level</label>
                 <select class="form-select" name="level" required>
-                    <option value="department" @selected(old('level') === 'department')>Department</option>
-                    <option value="unit" @selected(old('level') === 'unit')>Unit</option>
-                    <option value="individual" @selected(old('level') === 'individual')>Individual</option>
+                    <option value="department" @selected(old('level', $goal->level) === 'department')>Department</option>
+                    <option value="unit" @selected(old('level', $goal->level) === 'unit')>Unit</option>
+                    <option value="individual" @selected(old('level', $goal->level) === 'individual')>Individual</option>
                 </select>
             </div>
             <div class="col-md-8">
                 <label class="form-label fw-semibold">Main Goal Title</label>
-                <input class="form-control" name="title" value="{{ old('title') }}" placeholder="Improve ICT Service Delivery" required>
+                <input class="form-control" name="title" value="{{ old('title', $goal->title) }}" required>
             </div>
             <div class="col-12">
                 <label class="form-label fw-semibold">Expected Outcome</label>
-                <textarea class="form-control" name="description" rows="3" placeholder="Describe the outcome expected within the 90-day period">{{ old('description') }}</textarea>
+                <textarea class="form-control" name="description" rows="3">{{ old('description', $goal->description) }}</textarea>
             </div>
         </div>
 
@@ -103,15 +116,9 @@
         @enderror
 
         <div class="d-grid gap-3 mb-3" data-objectives-list>
-            @php
-                $oldObjectives = old('objectives', [
-                    ['title' => '', 'description' => '', 'weight' => '', 'starts_at' => '', 'due_at' => ''],
-                    ['title' => '', 'description' => '', 'weight' => '', 'starts_at' => '', 'due_at' => ''],
-                ]);
-            @endphp
-
             @foreach ($oldObjectives as $index => $objective)
                 <div class="objective-row" data-objective-row>
+                    <input type="hidden" name="objectives[{{ $index }}][id]" value="{{ $objective['id'] ?? '' }}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <strong class="small">Objective {{ $index + 1 }}</strong>
                         <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
@@ -142,11 +149,11 @@
             @endforeach
         </div>
 
-        <div class="small text-muted mb-4">Example: 20 + 25 + 20 + 15 + 20 = 100%. Only approved completed objectives contribute to progress.</div>
+        <div class="small text-muted mb-4">Weights must total exactly 100% before saving.</div>
 
         <div class="d-flex flex-column flex-sm-row gap-2">
-            <button class="btn btn-maroon">Save Main Goal</button>
-            <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Cancel</a>
+            <button class="btn btn-maroon">Save Changes</button>
+            <a class="btn btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Cancel</a>
         </div>
     </form>
 
@@ -169,6 +176,7 @@
             wrapper.className = 'objective-row';
             wrapper.dataset.objectiveRow = '';
             wrapper.innerHTML = `
+                <input type="hidden" name="objectives[${index}][id]" value="">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <strong class="small">Objective ${index + 1}</strong>
                     <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>

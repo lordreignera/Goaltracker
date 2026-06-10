@@ -105,14 +105,17 @@
                         <small class="text-muted">{{ $goal->department->name }}</small>
                     </td>
                     <td>{{ $goal->quarter->name }}</td>
-                    <td>{{ $goal->unit?->name ?? 'Department-wide' }}</td>
+                    <td>
+                        <div>{{ $goal->assignedDepartments->pluck('name')->join(', ') ?: $goal->department->name }}</div>
+                        <small class="text-muted">{{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->join(', ') : 'Department-wide' }}</small>
+                    </td>
                     <td>
                         <span class="badge text-bg-light border">{{ $goal->objectives->count() }} total</span>
-                        <span class="badge text-bg-success">{{ $goal->objectives->where('status', 'completed')->count() }} completed</span>
+                        <span class="badge text-bg-success">{{ $goal->objectives->filter->isApprovedComplete()->count() }} completed</span>
                     </td>
                     <td>
                         <div class="progress"><div class="progress-bar" style="width: {{ $goal->progress() }}%"></div></div>
-                        <small class="text-muted">{{ $goal->progress() }}% from completed approved objectives</small>
+                        <small class="text-muted">{{ $goal->progress() }}% from approved weekly reports</small>
                     </td>
                     <td class="text-end">
                         <a class="btn btn-sm btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Open</a>

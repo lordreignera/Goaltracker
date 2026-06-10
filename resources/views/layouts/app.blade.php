@@ -257,10 +257,109 @@
                 box-shadow: 0 4px 12px rgba(17, 24, 39, .05);
             }
 
+            .admin-content .btn,
+            .admin-content summary.btn {
+                transition: color .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+            }
+
+            .admin-content .btn:focus-visible,
+            .admin-content summary.btn:focus-visible {
+                outline: 3px solid rgba(243, 178, 58, .45);
+                outline-offset: 2px;
+                box-shadow: 0 0 0 .2rem rgba(143, 23, 27, .16);
+            }
+
+            .admin-content .btn-maroon,
+            .admin-content .btn[style*="background:#8f171b"] {
+                background: var(--arm-maroon) !important;
+                border-color: var(--arm-maroon) !important;
+                color: #fff !important;
+            }
+
+            .admin-content .btn-maroon:hover,
+            .admin-content .btn-maroon:focus,
+            .admin-content .btn-maroon:active,
+            .admin-content .btn[style*="background:#8f171b"]:hover,
+            .admin-content .btn[style*="background:#8f171b"]:focus,
+            .admin-content .btn[style*="background:#8f171b"]:active {
+                background: var(--arm-maroon-dark) !important;
+                border-color: var(--arm-maroon-dark) !important;
+                color: #fff !important;
+            }
+
             .admin-content .btn-outline-secondary,
             .admin-content .btn-outline-dark,
             .admin-content .btn-outline-danger {
                 background: #fff;
+            }
+
+            .admin-content .btn-outline-secondary {
+                color: #4b5563;
+                border-color: #9ca3af;
+            }
+
+            .admin-content .btn-outline-secondary:hover,
+            .admin-content .btn-outline-secondary:focus,
+            .admin-content .btn-outline-secondary:active,
+            .admin-content .btn-outline-secondary.show,
+            .admin-content details[open] > summary.btn-outline-secondary {
+                background: #4b5563 !important;
+                border-color: #4b5563 !important;
+                color: #fff !important;
+            }
+
+            .admin-content .btn-outline-success {
+                color: #147a48;
+                border-color: #198754;
+                background: #fff;
+            }
+
+            .admin-content .btn-outline-success:hover,
+            .admin-content .btn-outline-success:focus,
+            .admin-content .btn-outline-success:active {
+                background: #147a48 !important;
+                border-color: #147a48 !important;
+                color: #fff !important;
+            }
+
+            .admin-content .btn-outline-danger {
+                color: #b42318;
+                border-color: #dc3545;
+            }
+
+            .admin-content .btn-outline-danger:hover,
+            .admin-content .btn-outline-danger:focus,
+            .admin-content .btn-outline-danger:active {
+                background: #b42318 !important;
+                border-color: #b42318 !important;
+                color: #fff !important;
+            }
+
+            .admin-content .btn-outline-dark {
+                color: #1f2937;
+                border-color: #1f2937;
+            }
+
+            .admin-content .btn-outline-dark:hover,
+            .admin-content .btn-outline-dark:focus,
+            .admin-content .btn-outline-dark:active {
+                background: #1f2937 !important;
+                border-color: #1f2937 !important;
+                color: #fff !important;
+            }
+
+            .admin-content .btn-primary {
+                background: #0d6efd;
+                border-color: #0d6efd;
+                color: #fff;
+            }
+
+            .admin-content .btn-primary:hover,
+            .admin-content .btn-primary:focus,
+            .admin-content .btn-primary:active {
+                background: #084298 !important;
+                border-color: #084298 !important;
+                color: #fff !important;
             }
 
             .pagination {
@@ -459,6 +558,9 @@
                     </a>
                     <a class="sidebar-link {{ request()->routeIs('goals.*') ? 'active' : '' }}" href="{{ route('goals.index') }}">
                         <span class="sidebar-icon">G</span> Goals
+                    </a>
+                    <a class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.quarterly.index') }}">
+                        <span class="sidebar-icon">RP</span> Reports
                     </a>
                     @if ($canManageAdministration)
                         <a class="sidebar-link {{ request()->routeIs('users.management.*') || request()->routeIs('users.approvals.*') ? 'active' : '' }}" href="{{ route('users.management.index') }}">

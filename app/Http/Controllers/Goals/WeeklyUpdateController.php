@@ -3,27 +3,28 @@
 namespace App\Http\Controllers\Goals;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Goals\StoreWeeklyUpdateRequest;
+use App\Http\Requests\Goals\UpdateWeeklyUpdateRequest;
 use App\Models\GoalObjective;
-use App\Services\GoalAccessService;
-use Illuminate\Http\Request;
+use App\Models\WeeklyUpdate;
 
 class WeeklyUpdateController extends Controller
 {
-    public function store(Request $request, GoalObjective $objective)
+    public function store(StoreWeeklyUpdateRequest $request, GoalObjective $objective)
     {
-        $goal = $objective->goal;
-        abort_unless(app(GoalAccessService::class)->canViewGoal($request->user(), $goal), 403);
-
-        $objective->weeklyUpdates()->create($request->validate([
-            'week_number' => ['required', 'integer', 'min:1', 'max:13'],
-            'week_starting' => ['nullable', 'date'],
-            'progress_summary' => ['required', 'string'],
-            'achievements' => ['nullable', 'string'],
-            'challenges' => ['nullable', 'string'],
-            'next_actions' => ['nullable', 'string'],
-            'percentage_estimate' => ['required', 'integer', 'min:0', 'max:100'],
-        ]) + ['user_id' => $request->user()->id]);
+        $objective->weeklyUpdates()->create($request->preparedUpdateData() + ['user_id' => $request->user()->id]);
 
         return back()->with('status', 'Weekly update submitted.');
+    }
+
+    public function update(UpdateWeeklyUpdateRequest $request, WeeklyUpdate $weeklyUpdate)
+    {
+        $weeklyUpdate->update($request->preparedUpdateData() + ['status' => 'submitted']);
+
+        if (in_array($weeklyUpdate->objective->status, ['rejected', 'revision_requested'], true)) {
+            $weeklyUpdate->objective->update(['status' => 'pending']);
+        }
+
+        return back()->with('status', 'Weekly update resubmitted.');
     }
 }

@@ -29,9 +29,19 @@ class Goal extends Model
         return $this->belongsTo(Department::class);
     }
 
+    public function assignedDepartments()
+    {
+        return $this->belongsToMany(Department::class, 'goal_department')->withTimestamps();
+    }
+
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function assignedUnits()
+    {
+        return $this->belongsToMany(Unit::class, 'goal_unit')->withTimestamps();
     }
 
     public function owner()
@@ -51,8 +61,8 @@ class Goal extends Model
 
     public function progress(): int
     {
-        return (int) $this->objectives()
-            ->where('status', 'completed')
-            ->sum('weight');
+        $this->loadMissing(['quarter', 'objectives.weeklyUpdates']);
+
+        return (int) round($this->objectives->sum(fn (GoalObjective $objective) => $objective->progressContribution()));
     }
 }

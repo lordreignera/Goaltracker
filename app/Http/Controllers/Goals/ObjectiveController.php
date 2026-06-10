@@ -13,20 +13,8 @@ class ObjectiveController extends Controller
     {
         abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
 
-        $data = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'weight' => ['required', 'integer', 'min:1', 'max:100'],
-            'due_at' => ['nullable', 'date'],
-        ]);
-
-        $totalWeight = $goal->objectives()->sum('weight') + (int) $data['weight'];
-        if ($totalWeight > 100) {
-            return back()->withErrors(['weight' => 'Objective weights cannot exceed 100%.'])->withInput();
-        }
-
-        $goal->objectives()->create($data);
-
-        return back()->with('status', 'Objective added.');
+        return redirect()
+            ->route('goals.edit', $goal)
+            ->withErrors(['objectives' => 'Add or remove objectives from the Edit Goal page so the total weight remains 100%.']);
     }
 }

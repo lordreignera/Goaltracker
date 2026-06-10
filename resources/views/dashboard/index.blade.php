@@ -144,7 +144,7 @@
                 <h2 class="h5 mb-1 fw-bold">Visible Goals</h2>
                 <div class="text-muted small">Goals filtered by your department, unit, and role access.</div>
             </div>
-            <a class="btn btn-sm text-white fw-bold" style="background:#8f171b;" href="{{ route('goals.index') }}">Manage Goals</a>
+            <a class="btn btn-sm btn-maroon" href="{{ route('goals.index') }}">Manage Goals</a>
         </div>
         <div class="table-responsive">
             <table class="table align-middle mb-0">

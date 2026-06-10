@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreQuarterRequest;
 use App\Models\Quarter;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
@@ -20,15 +21,9 @@ class QuarterController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreQuarterRequest $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'starts_at' => ['required', 'date'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
+        $data = $request->validated();
 
         $data['ends_at'] = Carbon::parse($data['starts_at'])->addDays(89)->toDateString();
 

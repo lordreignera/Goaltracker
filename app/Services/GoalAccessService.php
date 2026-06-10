@@ -48,39 +48,53 @@ class GoalAccessService
             return $query;
         }
 
-        if ($user->isSupervisor()) {
-            return $query
-                ->where('department_id', $user->department_id)
-                ->where(function (Builder $query) use ($user) {
-                    $query->whereNull('unit_id');
+        return $query->where(function (Builder $query) use ($user) {
+            $query->where(function (Builder $query) use ($user) {
+                $query->where('department_id', $user->department_id)
+                    ->where(function (Builder $query) use ($user) {
+                        $query->whereNull('unit_id');
 
-                    if ($user->unit_id) {
-                        $query->orWhere('unit_id', $user->unit_id);
-                    }
-                });
-        }
+                        if ($user->unit_id) {
+                            $query->orWhere('unit_id', $user->unit_id);
+                        }
+                    });
+            })->orWhere(function (Builder $query) use ($user) {
+                $query->whereHas('assignedDepartments', fn (Builder $query) => $query->whereKey($user->department_id))
+                    ->where(function (Builder $query) use ($user) {
+                        $query->whereDoesntHave('assignedUnits');
 
-        return $query
-            ->where('department_id', $user->department_id)
-            ->where(function (Builder $query) use ($user) {
-                $query->whereNull('unit_id');
-
-                if ($user->unit_id) {
-                    $query->orWhere('unit_id', $user->unit_id);
-                }
+                        if ($user->unit_id) {
+                            $query->orWhereHas('assignedUnits', fn (Builder $query) => $query->whereKey($user->unit_id));
+                        }
+                    });
             });
+        });
     }
 
     private function belongsToUserDepartmentOrUnit(User $user, Goal $goal): bool
     {
-        if (! $user->department_id || $user->department_id !== $goal->department_id) {
+        if (! $user->department_id) {
             return false;
         }
 
-        if ($goal->unit_id) {
-            return $user->unit_id === $goal->unit_id;
+        $goal->loadMissing(['assignedDepartments:id', 'assignedUnits:id']);
+
+        $assignedDepartmentIds = $goal->assignedDepartments->pluck('id');
+        $assignedUnitIds = $goal->assignedUnits->pluck('id');
+
+        if ($assignedDepartmentIds->isNotEmpty()) {
+            if (! $assignedDepartmentIds->contains($user->department_id)) {
+                return false;
+            }
+
+            return $assignedUnitIds->isEmpty()
+                || ($user->unit_id && $assignedUnitIds->contains($user->unit_id));
         }
 
-        return true;
+        if ($user->department_id !== $goal->department_id) {
+            return false;
+        }
+
+        return ! $goal->unit_id || $user->unit_id === $goal->unit_id;
     }
 }
