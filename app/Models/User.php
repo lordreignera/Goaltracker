@@ -131,4 +131,40 @@ class User extends Authenticatable
             || $this->hasRole('Manager')
             || in_array($this->role, ['supervisor', 'manager'], true);
     }
+
+    public function canManageGoals(): bool
+    {
+        return $this->isAdmin()
+            || $this->isSupervisor()
+            || $this->can('manage goals');
+    }
+
+    public function canReviewGoals(): bool
+    {
+        return $this->isAdmin()
+            || $this->isSupervisor()
+            || $this->can('review goals');
+    }
+
+    public function canManageAdministration(): bool
+    {
+        return $this->isAdmin()
+            || $this->hasAnyPermission([
+                'manage departments',
+                'manage units',
+                'manage users',
+                'manage quarters',
+            ]);
+    }
+
+    public function hasAnyPermission(array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($this->can($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -10,11 +10,7 @@ class GoalAccessService
 {
     public function canViewGoal(User $user, Goal $goal): bool
     {
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        if ($goal->owner_id === $user->id) {
+        if ($user->isAdmin()) {
             return true;
         }
 
@@ -27,30 +23,29 @@ class GoalAccessService
             return false;
         }
 
-        return $user->isAdmin()
-            || $user->isSupervisor()
-            || $goal->owner_id === $user->id;
+        return $user->canManageGoals();
     }
 
     public function canReviewGoal(User $user, Goal $goal): bool
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isAdmin()) {
             return true;
         }
 
-        return $user->isSupervisor()
+        return $user->canReviewGoals()
             && $this->belongsToUserDepartmentOrUnit($user, $goal);
     }
 
     public function scopeVisibleGoals(Builder $query, User $user): Builder
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isAdmin()) {
             return $query;
         }
 
         return $query->where(function (Builder $query) use ($user) {
-            $query->where(function (Builder $query) use ($user) {
-                $query->where('department_id', $user->department_id)
+            $query->whereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
+                ->orWhereHas('assignments', function (Builder $query) use ($user) {
+                    $query->where('department_id', $user->department_id)
                     ->where(function (Builder $query) use ($user) {
                         $query->whereNull('unit_id');
 
@@ -58,16 +53,7 @@ class GoalAccessService
                             $query->orWhere('unit_id', $user->unit_id);
                         }
                     });
-            })->orWhere(function (Builder $query) use ($user) {
-                $query->whereHas('assignedDepartments', fn (Builder $query) => $query->whereKey($user->department_id))
-                    ->where(function (Builder $query) use ($user) {
-                        $query->whereDoesntHave('assignedUnits');
-
-                        if ($user->unit_id) {
-                            $query->orWhereHas('assignedUnits', fn (Builder $query) => $query->whereKey($user->unit_id));
-                        }
-                    });
-            });
+                });
         });
     }
 
@@ -77,24 +63,20 @@ class GoalAccessService
             return false;
         }
 
-        $goal->loadMissing(['assignedDepartments:id', 'assignedUnits:id']);
+        return $goal->assignments()
+            ->where(function (Builder $query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere(function (Builder $query) use ($user) {
+                        $query->where('department_id', $user->department_id)
+                            ->where(function (Builder $query) use ($user) {
+                                $query->whereNull('unit_id');
 
-        $assignedDepartmentIds = $goal->assignedDepartments->pluck('id');
-        $assignedUnitIds = $goal->assignedUnits->pluck('id');
-
-        if ($assignedDepartmentIds->isNotEmpty()) {
-            if (! $assignedDepartmentIds->contains($user->department_id)) {
-                return false;
-            }
-
-            return $assignedUnitIds->isEmpty()
-                || ($user->unit_id && $assignedUnitIds->contains($user->unit_id));
-        }
-
-        if ($user->department_id !== $goal->department_id) {
-            return false;
-        }
-
-        return ! $goal->unit_id || $user->unit_id === $goal->unit_id;
+                                if ($user->unit_id) {
+                                    $query->orWhere('unit_id', $user->unit_id);
+                                }
+                            });
+                    });
+            })
+            ->exists();
     }
 }

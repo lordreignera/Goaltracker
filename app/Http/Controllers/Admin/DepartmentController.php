@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
         return view('departments.index', [
+            'nextDepartmentCode' => $this->generateDepartmentCode(),
             'departments' => Department::withCount(['units', 'users', 'goals'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     $query->where(function ($query) use ($request) {
@@ -30,24 +30,26 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
-        Department::create($request->validate([
+        $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50', 'unique:departments,code'],
             'description' => ['nullable', 'string'],
-        ]));
+        ]);
+
+        $data['code'] = $this->generateDepartmentCode();
+
+        Department::create($data);
 
         return back()->with('status', 'Department created.');
     }
 
     public function update(Request $request, Department $department)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
         $department->update($request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['nullable', 'string', 'max:50', Rule::unique('departments', 'code')->ignore($department->id)],
             'description' => ['nullable', 'string'],
         ]));
 
@@ -56,7 +58,7 @@ class DepartmentController extends Controller
 
     public function destroy(Request $request, Department $department)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
         if ($department->units()->exists() || $department->users()->exists() || $department->goals()->exists()) {
             return back()->withErrors(['department' => 'This department has units, users, or goals and cannot be deleted.']);
@@ -65,5 +67,14 @@ class DepartmentController extends Controller
         $department->delete();
 
         return back()->with('status', 'Department deleted.');
+    }
+
+    private function generateDepartmentCode(): string
+    {
+        do {
+            $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (Department::where('code', $code)->exists());
+
+        return $code;
     }
 }

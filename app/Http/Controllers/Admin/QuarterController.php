@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreQuarterRequest;
 use App\Models\Quarter;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class QuarterController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage quarters'), 403);
 
         return view('quarters.index', [
             'quarters' => Quarter::orderByDesc('starts_at')
@@ -34,5 +34,33 @@ class QuarterController extends Controller
         Quarter::create($data + ['is_active' => $request->boolean('is_active')]);
 
         return back()->with('status', 'Quarter created.');
+    }
+
+    public function update(StoreQuarterRequest $request, Quarter $quarter)
+    {
+        $data = $request->validated();
+
+        $data['ends_at'] = Carbon::parse($data['starts_at'])->addDays(89)->toDateString();
+
+        if ($request->boolean('is_active')) {
+            Quarter::whereKeyNot($quarter->id)->update(['is_active' => false]);
+        }
+
+        $quarter->update($data + ['is_active' => $request->boolean('is_active')]);
+
+        return back()->with('status', 'Quarter updated.');
+    }
+
+    public function destroy(Request $request, Quarter $quarter)
+    {
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage quarters'), 403);
+
+        if ($quarter->goals()->exists()) {
+            return back()->withErrors(['quarter' => 'This quarter has goals and cannot be deleted.']);
+        }
+
+        $quarter->delete();
+
+        return back()->with('status', 'Quarter deleted.');
     }
 }

@@ -18,8 +18,16 @@ class Unit extends Model
         return $this->hasMany(User::class);
     }
 
+    public function goalAssignments()
+    {
+        return $this->hasMany(GoalAssignment::class);
+    }
+
     public function goals()
     {
-        return $this->hasMany(Goal::class);
+        return $this->belongsToMany(Goal::class, 'goal_assignments', 'unit_id', 'goal_id')
+            ->wherePivotNotNull('unit_id')
+            ->distinct()
+            ->withTimestamps();
     }
 }

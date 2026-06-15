@@ -75,33 +75,29 @@ class StaffAccessControlTest extends TestCase
         ]);
         $staff->assignRole('Staff');
 
-        Goal::create([
+        $departmentGoal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $department->id,
-            'unit_id' => null,
             'title' => 'Department Goal',
         ]);
+        $departmentGoal->assignments()->create(['department_id' => $department->id]);
 
-        Goal::create([
+        $ownUnitGoal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $department->id,
-            'unit_id' => $unit->id,
             'title' => 'Own Unit Goal',
         ]);
+        $ownUnitGoal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
 
-        Goal::create([
+        $otherUnitGoal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $department->id,
-            'unit_id' => $otherUnit->id,
             'title' => 'Other Unit Goal',
         ]);
+        $otherUnitGoal->assignments()->create(['department_id' => $department->id, 'unit_id' => $otherUnit->id]);
 
-        Goal::create([
+        $otherDepartmentGoal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $otherDepartment->id,
-            'unit_id' => null,
             'title' => 'Other Department Goal',
         ]);
+        $otherDepartmentGoal->assignments()->create(['department_id' => $otherDepartment->id]);
 
         $response = $this->actingAs($staff)->get(route('goals.index'));
 

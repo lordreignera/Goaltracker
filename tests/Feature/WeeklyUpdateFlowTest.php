@@ -25,7 +25,6 @@ class WeeklyUpdateFlowTest extends TestCase
             'achievements' => ['Installed computers'],
             'challenges' => ['Procurement delay'],
             'next_actions' => ['Complete remaining installations'],
-            'percentage_estimate' => 20,
         ];
 
         $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), $payload)
@@ -49,7 +48,6 @@ class WeeklyUpdateFlowTest extends TestCase
             'achievements' => "Original achievement",
             'challenges' => "Original challenge",
             'next_actions' => "Original action",
-            'percentage_estimate' => 10,
             'status' => 'submitted',
         ]);
 
@@ -60,7 +58,6 @@ class WeeklyUpdateFlowTest extends TestCase
             'achievements' => ['Installed Kampala office computers', 'Configured user accounts'],
             'challenges' => ['Delayed procurement'],
             'next_actions' => ['Complete remaining installations'],
-            'percentage_estimate' => 45,
         ])->assertRedirect();
 
         $update->refresh();
@@ -81,7 +78,6 @@ class WeeklyUpdateFlowTest extends TestCase
             'week_number' => 1,
             'week_starting' => '2026-01-01',
             'progress_summary' => 'Approved report.',
-            'percentage_estimate' => 20,
             'status' => 'approved',
         ]);
 
@@ -89,7 +85,6 @@ class WeeklyUpdateFlowTest extends TestCase
             'week_number' => 2,
             'week_starting' => '2026-01-08',
             'progress_summary' => 'Trying to change approved report.',
-            'percentage_estimate' => 30,
         ])->assertForbidden();
 
         $this->assertSame('Approved report.', $update->fresh()->progress_summary);
@@ -107,7 +102,6 @@ class WeeklyUpdateFlowTest extends TestCase
             'week_number' => 1,
             'week_starting' => '2026-01-01',
             'progress_summary' => 'Submitted but not reviewed.',
-            'percentage_estimate' => 0,
             'status' => 'submitted',
         ]);
 
@@ -134,21 +128,20 @@ class WeeklyUpdateFlowTest extends TestCase
 
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $department->id,
-            'unit_id' => $unit->id,
             'owner_id' => $staff->id,
             'title' => 'Improve ICT Service Delivery',
             'level' => 'unit',
         ]);
-
-        $goal->assignedDepartments()->sync([$department->id]);
-        $goal->assignedUnits()->sync([$unit->id]);
+        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade computers',
+            'specific_output' => 'Upgrade staff computers.',
+            'success_measure' => 'Computers are functional and signed off.',
             'weight' => 100,
+            'planned_weeks' => 3,
             'starts_at' => '2026-01-01',
-            'due_at' => '2026-01-15',
+            'due_at' => '2026-01-21',
         ]);
 
         return [$staff, $objective];

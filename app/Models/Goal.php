@@ -10,13 +10,29 @@ class Goal extends Model
 {
     protected $fillable = [
         'quarter_id',
-        'department_id',
-        'unit_id',
+        'created_by',
         'owner_id',
         'title',
-        'description',
+        'specific',
+        'measurable',
+        'achievable',
+        'relevant',
+        'time_bound',
+        'key_action_steps',
+        'primary_metric',
+        'deadline',
         'level',
         'status',
+        'submitted_at',
+        'approved_at',
+        'approved_by',
+    ];
+
+    protected $casts = [
+        'deadline' => 'date',
+        'submitted_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'key_action_steps' => 'array',
     ];
 
     public function quarter()
@@ -24,24 +40,43 @@ class Goal extends Model
         return $this->belongsTo(Quarter::class);
     }
 
-    public function department()
+    public function creator()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function assignments()
+    {
+        return $this->hasMany(GoalAssignment::class);
     }
 
     public function assignedDepartments()
     {
-        return $this->belongsToMany(Department::class, 'goal_department')->withTimestamps();
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsToMany(Department::class, 'goal_assignments', 'goal_id', 'department_id')
+            ->wherePivotNotNull('department_id')
+            ->distinct()
+            ->withTimestamps();
     }
 
     public function assignedUnits()
     {
-        return $this->belongsToMany(Unit::class, 'goal_unit')->withTimestamps();
+        return $this->belongsToMany(Unit::class, 'goal_assignments', 'goal_id', 'unit_id')
+            ->wherePivotNotNull('unit_id')
+            ->distinct()
+            ->withTimestamps();
+    }
+
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'goal_assignments', 'goal_id', 'user_id')
+            ->wherePivotNotNull('user_id')
+            ->distinct()
+            ->withTimestamps();
     }
 
     public function owner()

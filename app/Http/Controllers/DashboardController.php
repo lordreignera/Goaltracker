@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $goals = Goal::query()->visibleTo($user)->with('objectives')->get();
 
         $goalProgress = $goals->map(fn (Goal $goal) => $goal->progress());
-        $organizationScore = $user->isAdmin()
+        $organizationScore = ($user->isAdmin() || $user->can('view organization dashboard'))
             ? Department::with('goals.objectives')->get()->avg(fn ($department) => $department->goals->avg(fn ($goal) => $goal->progress()) ?? 0)
             : null;
 

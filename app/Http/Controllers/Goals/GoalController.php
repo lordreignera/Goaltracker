@@ -19,17 +19,21 @@ class GoalController extends Controller
     {
         $user = $request->user();
 
-        $goals = Goal::visibleTo($request->user())
-            ->with(['quarter', 'department', 'unit', 'assignedDepartments', 'assignedUnits', 'objectives'])
+        $goals = Goal::visibleTo($user)
+            ->with(['quarter', 'assignedDepartments', 'assignedUnits', 'objectives'])
             ->when($request->filled('search'), function ($query) use ($request) {
-                $query->where(function ($query) use ($request) {
-                    $query->where('title', 'like', '%'.$request->search.'%')
-                        ->orWhere('description', 'like', '%'.$request->search.'%');
+                $search = $request->search;
+
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'like', '%' . $search . '%')
+                        ->orWhere('specific', 'like', '%' . $search . '%')
+                        ->orWhere('measurable', 'like', '%' . $search . '%')
+                        ->orWhere('primary_metric', 'like', '%' . $search . '%');
                 });
             })
             ->when($request->filled('quarter_id'), fn ($query) => $query->where('quarter_id', $request->quarter_id))
-            ->when($request->filled('department_id'), fn ($query) => $query->where('department_id', $request->department_id))
-            ->when($request->filled('unit_id'), fn ($query) => $query->where('unit_id', $request->unit_id))
+            ->when($request->filled('department_id'), fn ($query) => $query->whereHas('assignedDepartments', fn ($query) => $query->whereKey($request->department_id)))
+            ->when($request->filled('unit_id'), fn ($query) => $query->whereHas('assignedUnits', fn ($query) => $query->whereKey($request->unit_id)))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
             ->latest()
             ->paginate(10)
@@ -42,13 +46,13 @@ class GoalController extends Controller
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'departments' => $departments,
             'units' => $units,
-            'canCreateGoals' => $user->isAdmin() || $user->isSupervisor(),
+            'canCreateGoals' => $user->canManageGoals(),
         ]);
     }
 
     public function create(Request $request)
     {
-        abort_unless($request->user()->isAdmin() || $request->user()->isSupervisor(), 403);
+        abort_unless($request->user()->canManageGoals(), 403);
 
         [$departments, $units] = $this->organizationOptions($request->user());
 
@@ -61,19 +65,30 @@ class GoalController extends Controller
 
     public function store(StoreGoalRequest $request, GoalManagementService $goals)
     {
-        $goal = $goals->createGoal($request->user(), $request->validated());
+        $data = $this->prepareGoalData($request->validated());
 
-        return redirect()->route('goals.show', $goal)->with('status', 'Goal and objectives created.');
+        $goal = $goals->createGoal($request->user(), $data);
+
+        return redirect()
+            ->route('goals.show', $goal)
+            ->with('status', 'Goal and objectives created.');
     }
 
     public function show(Request $request, Goal $goal)
     {
-        abort_unless(app(GoalAccessService::class)->canViewGoal($request->user(), $goal), 403);
+        $access = app(GoalAccessService::class);
+
+        abort_unless($access->canViewGoal($request->user(), $goal), 403);
 
         return view('goals.show', [
-            'goal' => $goal->load(['quarter', 'department', 'unit', 'assignedDepartments', 'assignedUnits', 'objectives.weeklyUpdates.reviews']),
-            'canUpdateGoal' => app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal),
-            'canReviewGoal' => app(GoalAccessService::class)->canReviewGoal($request->user(), $goal),
+            'goal' => $goal->load([
+                'quarter',
+                'assignedDepartments',
+                'assignedUnits',
+                'objectives.weeklyUpdates.reviews',
+            ]),
+            'canUpdateGoal' => $access->canUpdateGoal($request->user(), $goal),
+            'canReviewGoal' => $access->canReviewGoal($request->user(), $goal),
         ]);
     }
 
@@ -93,9 +108,13 @@ class GoalController extends Controller
 
     public function update(UpdateGoalRequest $request, Goal $goal, GoalManagementService $goals)
     {
-        $goals->updateGoal($goal, $request->validated());
+        $data = $this->prepareGoalData($request->validated());
 
-        return redirect()->route('goals.show', $goal)->with('status', 'Goal and objectives updated.');
+        $goals->updateGoal($goal, $data);
+
+        return redirect()
+            ->route('goals.show', $goal)
+            ->with('status', 'Goal and objectives updated.');
     }
 
     public function submit(Request $request, Goal $goal)
@@ -103,24 +122,61 @@ class GoalController extends Controller
         abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
 
         $weightTotal = $goal->objectives()->sum('weight');
+
         if ($weightTotal !== 100) {
-            return back()->withErrors(['objectives' => "Objective weights must equal 100%. Current total is {$weightTotal}%."]);
+            return back()->withErrors([
+                'objectives' => "Objective weights must equal 100%. Current total is {$weightTotal}%.",
+            ]);
         }
 
-        $goal->update(['status' => 'submitted']);
+        $goal->update([
+            'status' => 'submitted',
+            'submitted_at' => now(),
+        ]);
 
         return back()->with('status', 'Goal submitted for review.');
     }
 
+    private function prepareGoalData(array $data): array
+    {
+        $raw = $data['key_action_steps'] ?? [];
+
+        if (is_string($raw)) {
+            $parts = preg_split('/\r\n|\r|\n|,/', $raw);
+            $raw = $parts ?: [];
+        }
+
+        if (! is_array($raw)) {
+            $raw = [];
+        }
+
+        $data['key_action_steps'] = array_values(array_filter(array_map(function ($step) {
+            return trim((string) $step);
+        }, $raw), function ($step) {
+            return $step !== '';
+        }));
+
+        return $data;
+    }
+
     private function organizationOptions($user): array
     {
-        $departments = $user->isAdmin() || $user->isSupervisor()
-            ? Department::orderBy('name')->get()
-            : Department::whereKey($user->department_id)->orderBy('name')->get();
+        if ($user->isAdmin()) {
+            return [
+                Department::orderBy('name')->get(),
+                Unit::with('department')->orderBy('name')->get(),
+            ];
+        }
 
-        $units = $user->isAdmin() || $user->isSupervisor()
-            ? Unit::with('department')->orderBy('name')->get()
-            : Unit::with('department')->whereKey($user->unit_id)->orderBy('name')->get();
+        $departments = Department::whereKey($user->department_id)
+            ->orderBy('name')
+            ->get();
+
+        $units = Unit::with('department')
+            ->where('department_id', $user->department_id)
+            ->when($user->unit_id, fn ($query) => $query->whereKey($user->unit_id))
+            ->orderBy('name')
+            ->get();
 
         return [$departments, $units];
     }

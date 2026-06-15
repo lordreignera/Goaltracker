@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Department;
+use App\Models\CompanySetting;
+use App\Models\Quarter;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -18,21 +20,65 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $departments = [
-            'ICT Department' => ['Software Development Unit', 'Infrastructure Unit', 'Helpdesk Unit'],
-            'Finance Department' => ['Accounts Unit', 'Procurement Unit'],
-            'Programs Department' => ['Child Sponsorship Unit', 'Community Development Unit'],
-            'Human Resources Department' => ['People Operations Unit', 'Training Unit'],
-            'Administration Department' => ['Facilities Unit', 'Transport Unit'],
+            'ICT Department' => [
+                'description' => 'Technology support, systems, infrastructure, and digital service delivery.',
+                'units' => ['Software Development Unit', 'Infrastructure Unit', 'Helpdesk Unit'],
+            ],
+            'Finance Department' => [
+                'description' => 'Financial planning, accounting, procurement, and stewardship controls.',
+                'units' => ['Accounts Unit', 'Procurement Unit'],
+            ],
+            'Programs Department' => [
+                'description' => 'Program delivery, sponsorship, community development, and field operations.',
+                'units' => ['Child Sponsorship Unit', 'Community Development Unit'],
+            ],
+            'Human Resources Department' => [
+                'description' => 'People operations, performance, staff support, and learning coordination.',
+                'units' => ['People Operations Unit', 'Training Unit'],
+            ],
+            'Administration Department' => [
+                'description' => 'Facilities, transport, office coordination, and operational administration.',
+                'units' => ['Facilities Unit', 'Transport Unit'],
+            ],
         ];
 
-        foreach ($departments as $departmentName => $units) {
-            $department = Department::firstOrCreate(['name' => $departmentName], [
-                'code' => strtoupper(substr(str_replace(' Department', '', $departmentName), 0, 3)),
+        CompanySetting::firstOrCreate([], [
+            'company_name' => 'Africa Renewal Ministries',
+            'company_short_name' => 'Africa Renewal',
+            'brand_mark' => '90',
+            'product_name' => 'SMART Goals Tracker',
+            'tagline' => 'Plan, review, approve, and report on measurable goals.',
+        ]);
+
+        $departmentIndex = 1;
+
+        foreach ($departments as $departmentName => $details) {
+            $department = Department::updateOrCreate(['name' => $departmentName], [
+                'code' => $this->departmentCode($departmentIndex),
+                'description' => $details['description'],
             ]);
 
-            foreach ($units as $unitName) {
-                $department->units()->firstOrCreate(['name' => $unitName]);
+            foreach ($details['units'] as $unitIndex => $unitName) {
+                $department->units()->updateOrCreate(['name' => $unitName], [
+                    'code' => $this->unitCode($departmentIndex, $unitIndex + 1),
+                    'description' => "Operational unit under {$departmentName}.",
+                ]);
             }
+
+            $departmentIndex++;
+        }
+
+        $quarters = [
+            ['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31'],
+            ['name' => 'Q2 2026', 'starts_at' => '2026-04-01', 'ends_at' => '2026-06-30'],
+            ['name' => 'Q3 2026', 'starts_at' => '2026-07-01', 'ends_at' => '2026-09-30'],
+            ['name' => 'Q4 2026', 'starts_at' => '2026-10-01', 'ends_at' => '2026-12-31'],
+        ];
+
+        foreach ($quarters as $quarter) {
+            Quarter::updateOrCreate(['name' => $quarter['name']], $quarter + [
+                'is_active' => now()->betweenIncluded($quarter['starts_at'], $quarter['ends_at']),
+            ]);
         }
 
         $permissions = [
@@ -91,5 +137,15 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $superAdmin->assignRole($superAdminRole);
+    }
+
+    private function departmentCode(int $index): string
+    {
+        return (string) (100000 + $index);
+    }
+
+    private function unitCode(int $departmentIndex, int $unitIndex): string
+    {
+        return 'U'.str_pad((string) $departmentIndex, 2, '0', STR_PAD_LEFT).str_pad((string) $unitIndex, 2, '0', STR_PAD_LEFT);
     }
 }

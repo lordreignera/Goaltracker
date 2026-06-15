@@ -15,12 +15,13 @@ class WeeklyUpdate extends Model
         'achievements',
         'challenges',
         'next_actions',
-        'percentage_estimate',
         'status',
+        'submitted_at',
     ];
 
     protected $casts = [
         'week_starting' => 'date',
+        'submitted_at' => 'datetime',
     ];
 
     public function objective()

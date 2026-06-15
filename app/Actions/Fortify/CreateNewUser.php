@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
+use Spatie\Permission\Models\Role;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -20,6 +21,10 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        $requestableRoles = Role::whereNotIn('name', ['Super Admin', 'Admin'])
+            ->pluck('name')
+            ->all() ?: ['Staff', 'Supervisor', 'Manager'];
+
         Validator::make($input, [
             'first_name' => ['required', 'string', 'max:100'],
             'second_name' => ['required', 'string', 'max:100'],
@@ -27,7 +32,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'department_id' => ['required', 'exists:departments,id'],
             'unit_id' => ['nullable', 'exists:units,id'],
-            'requested_role' => ['required', Rule::in(['Staff', 'Supervisor', 'Manager'])],
+            'requested_role' => ['required', Rule::in($requestableRoles)],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();

@@ -20,24 +20,48 @@ return new class extends Migration
         Schema::create('goals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('quarter_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('department_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('title');
-            $table->text('description')->nullable();
+            $table->text('specific')->nullable();
+            $table->text('measurable')->nullable();
+            $table->text('achievable')->nullable();
+            $table->text('relevant')->nullable();
+            $table->text('time_bound')->nullable();
+            $table->text('key_action_steps')->nullable();
+            $table->string('primary_metric')->nullable();
+            $table->date('deadline')->nullable();
             $table->enum('level', ['department', 'unit', 'individual'])->default('department');
             $table->enum('status', ['draft', 'submitted', 'approved', 'in_progress', 'completed', 'archived'])->default('draft');
+            $table->timestamp('submitted_at')->nullable();
+            $table->timestamp('approved_at')->nullable();
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+        });
+
+        Schema::create('goal_assignments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('goal_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->timestamps();
+
+            $table->index(['department_id', 'unit_id']);
+            $table->index(['user_id']);
         });
 
         Schema::create('goal_objectives', function (Blueprint $table) {
             $table->id();
             $table->foreignId('goal_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->text('description')->nullable();
+            $table->text('specific_output');
+            $table->text('success_measure');
             $table->unsignedTinyInteger('weight');
+            $table->unsignedTinyInteger('planned_weeks');
             $table->enum('status', ['pending', 'approved', 'rejected', 'revision_requested', 'completed'])->default('pending');
-            $table->date('due_at')->nullable();
+            $table->date('starts_at');
+            $table->date('due_at');
             $table->timestamps();
         });
 
@@ -51,9 +75,11 @@ return new class extends Migration
             $table->text('achievements')->nullable();
             $table->text('challenges')->nullable();
             $table->text('next_actions')->nullable();
-            $table->unsignedTinyInteger('percentage_estimate')->default(0);
             $table->enum('status', ['submitted', 'approved', 'rejected', 'revision_requested'])->default('submitted');
+            $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
+
+            $table->unique(['goal_objective_id', 'user_id', 'week_starting']);
         });
 
         Schema::create('supervisor_reviews', function (Blueprint $table) {
@@ -67,8 +93,12 @@ return new class extends Migration
 
         Schema::create('quarterly_reflections', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('quarter_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->text('goals_completed')->nullable();
+            $table->text('goals_partially_completed')->nullable();
             $table->text('key_wins')->nullable();
             $table->text('challenges')->nullable();
             $table->text('lessons_learned')->nullable();
@@ -83,6 +113,7 @@ return new class extends Migration
         Schema::dropIfExists('supervisor_reviews');
         Schema::dropIfExists('weekly_updates');
         Schema::dropIfExists('goal_objectives');
+        Schema::dropIfExists('goal_assignments');
         Schema::dropIfExists('goals');
         Schema::dropIfExists('quarters');
     }

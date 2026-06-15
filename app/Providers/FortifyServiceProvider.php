@@ -19,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
+use Spatie\Permission\Models\Role;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -42,6 +43,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
         Fortify::registerView(fn () => view('auth.register', [
             'departments' => Department::with('units')->orderBy('name')->get(),
+            'requestableRoles' => $this->requestableRoles(),
         ]));
 
         Fortify::authenticateUsing(function (Request $request) {
@@ -91,5 +93,16 @@ class FortifyServiceProvider extends ServiceProvider
                 ($credentialId ?: $request->session()->getId()).'|'.$request->ip()
             );
         });
+    }
+
+    private function requestableRoles()
+    {
+        $roles = Role::whereNotIn('name', ['Super Admin', 'Admin'])
+            ->orderBy('name')
+            ->pluck('name');
+
+        return $roles->isNotEmpty()
+            ? $roles
+            : collect(['Staff', 'Supervisor', 'Manager']);
     }
 }

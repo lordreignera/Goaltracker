@@ -12,15 +12,15 @@
         }
 
         .btn-maroon {
-            background: #8f171b;
-            border-color: #8f171b;
+            background: var(--arm-maroon);
+            border-color: var(--arm-maroon);
             color: #fff;
             font-weight: 800;
         }
 
         .btn-maroon:hover {
-            background: #721216;
-            border-color: #721216;
+            background: var(--arm-maroon-dark);
+            border-color: var(--arm-maroon-dark);
             color: #fff;
         }
 
@@ -30,25 +30,35 @@
             background: #fbfcfd;
             padding: 14px;
         }
+
+        .field-hint {
+            color: #6b7280;
+            font-size: .82rem;
+            margin-top: .35rem;
+        }
     </style>
 
     @php
-        $selectedDepartments = old('department_ids', $goal->assignedDepartments->pluck('id')->all() ?: [$goal->department_id]);
-        $selectedUnits = old('unit_ids', $goal->assignedUnits->pluck('id')->all() ?: array_filter([$goal->unit_id]));
-        $oldObjectives = old('objectives', $goal->objectives->map(fn ($objective) => [
-            'id' => $objective->id,
-            'title' => $objective->title,
-            'description' => $objective->description,
-            'weight' => $objective->weight,
-            'starts_at' => $objective->starts_at?->toDateString() ?? $goal->quarter->starts_at?->toDateString(),
-            'due_at' => $objective->due_at?->toDateString(),
-        ])->values()->all());
+        $selectedDepartments = old('department_ids', $goal->assignedDepartments->pluck('id')->all());
+        $selectedUnits = old('unit_ids', $goal->assignedUnits->pluck('id')->all());
+        $oldObjectives = old('objectives', $goal->objectives->map(function ($objective) {
+            return [
+                'id' => $objective->id,
+                'title' => $objective->title,
+                'specific_output' => $objective->specific_output,
+                'success_measure' => $objective->success_measure,
+                'weight' => $objective->weight,
+                'planned_weeks' => $objective->planned_weeks,
+                'starts_at' => $objective->starts_at?->toDateString() ?? $goal->quarter->starts_at?->toDateString(),
+                'due_at' => $objective->due_at?->toDateString(),
+            ];
+        })->values()->all());
     @endphp
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
             <h2 class="h5 fw-bold mb-1">Edit Main Goal & Objectives</h2>
-            <div class="text-muted small">Add/remove objectives here only. The total weight must remain 100%.</div>
+            <div class="text-muted small">Keep the main SMART goal broad, then use objectives for the concrete deliverables.</div>
         </div>
         <a class="btn btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Back to Goal</a>
     </div>
@@ -98,16 +108,95 @@
                 <label class="form-label fw-semibold">Main Goal Title</label>
                 <input class="form-control" name="title" value="{{ old('title', $goal->title) }}" required>
             </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Primary Metric of Success</label>
+                <input class="form-control" name="primary_metric" value="{{ old('primary_metric', $goal->primary_metric) }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Deadline</label>
+                <input class="form-control" type="date" name="deadline" value="{{ old('deadline', $goal->deadline?->toDateString()) }}" required data-goal-deadline>
+                <small class="text-muted" data-goal-deadline-help>Select a quarter first.</small>
+            </div>
             <div class="col-12">
-                <label class="form-label fw-semibold">Expected Outcome</label>
-                <textarea class="form-control" name="description" rows="3">{{ old('description', $goal->description) }}</textarea>
+                <label class="form-label fw-semibold">Main Goal Scope</label>
+                <textarea class="form-control" name="specific" rows="2" required>{{ old('specific', $goal->specific) }}</textarea>
+                <div class="field-hint">Use this to define the main goal direction, not every activity.</div>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold">Main Success Measure</label>
+                <textarea class="form-control" name="measurable" rows="2" required>{{ old('measurable', $goal->measurable) }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Why This Is Achievable</label>
+                <textarea class="form-control" name="achievable" rows="3" required>{{ old('achievable', $goal->achievable) }}</textarea>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Why This Matters</label>
+                <textarea class="form-control" name="relevant" rows="3" required>{{ old('relevant', $goal->relevant) }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold">Main Timeline</label>
+                <textarea class="form-control" name="time_bound" rows="2" required>{{ old('time_bound', $goal->time_bound) }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold">Key Action Steps</label>
+
+                @php
+                    $steps = old('key_action_steps', $goal->key_action_steps ?? []);
+
+                    if (is_string($steps)) {
+                        $steps = array_filter(array_map('trim', explode("\n", (string) $steps)));
+                    }
+                @endphp
+
+                <div id="action-steps-container">
+                    @if (! empty($steps) && is_array($steps))
+                        @foreach ($steps as $step)
+                            <div class="input-group mb-2">
+                                <input type="text"
+                                       name="key_action_steps[]"
+                                       class="form-control"
+                                       placeholder="Enter action step"
+                                       value="{{ $step }}">
+                                <button type="button"
+                                        class="btn btn-danger remove-step">
+                                    Remove
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="input-group mb-2">
+                            <input type="text"
+                                   name="key_action_steps[]"
+                                   class="form-control"
+                                   placeholder="Enter action step">
+                            <button type="button"
+                                    class="btn btn-danger remove-step">
+                                Remove
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                <button type="button"
+                        id="add-step"
+                        class="btn btn-sm btn-primary mt-2">
+                    + Add Action Step
+                </button>
+
+                <small class="text-muted d-block mt-2">
+                    Add as many action steps as needed.
+                </small>
             </div>
         </div>
 
         <hr class="my-4">
 
         <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
-            <label class="form-label fw-semibold mb-0">Objectives / Sub-Goals</label>
+            <div>
+                <label class="form-label fw-semibold mb-0">Objectives / Sub-Goals</label>
+                <div class="field-hint mb-0">Use objectives to specify the actual deliverables that make the main goal happen.</div>
+            </div>
             <button class="btn btn-sm btn-outline-secondary" type="button" data-add-objective>Add Objective</button>
         </div>
 
@@ -124,22 +213,36 @@
                         <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
                     </div>
                     <div class="row g-2">
-                        <div class="col-md-5">
+                        <div class="col-md-4">
                             <input class="form-control" name="objectives[{{ $index }}][title]" value="{{ $objective['title'] ?? '' }}" placeholder="Objective title" required>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <input class="form-control" type="number" min="1" max="100" name="objectives[{{ $index }}][weight]" value="{{ $objective['weight'] ?? '' }}" placeholder="Weight %" required>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="objectives[{{ $index }}][planned_weeks]" data-objective-weeks required>
+                                <option value="">Weeks</option>
+                                @for ($week = 1; $week <= 13; $week++)
+                                    <option value="{{ $week }}" @selected(($objective['planned_weeks'] ?? '') == $week)>{{ $week }} week{{ $week === 1 ? '' : 's' }}</option>
+                                @endfor
+                            </select>
+                            <small class="text-muted">Planned duration</small>
                         </div>
                         <div class="col-md-2">
                             <input class="form-control" type="date" name="objectives[{{ $index }}][starts_at]" value="{{ $objective['starts_at'] ?? '' }}" required>
                             <small class="text-muted" data-objective-date-help>Start date</small>
                         </div>
                         <div class="col-md-2">
-                            <input class="form-control" type="date" name="objectives[{{ $index }}][due_at]" value="{{ $objective['due_at'] ?? '' }}">
-                            <small class="text-muted" data-objective-date-help>Due date</small>
+                            <input class="form-control" type="date" name="objectives[{{ $index }}][due_at]" value="{{ $objective['due_at'] ?? '' }}" readonly required>
+                            <small class="text-muted" data-objective-date-help>Auto end date</small>
                         </div>
-                        <div class="col-12">
-                            <textarea class="form-control" name="objectives[{{ $index }}][description]" rows="2" placeholder="Specific, measurable objective">{{ $objective['description'] ?? '' }}</textarea>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Objective Deliverable</label>
+                            <textarea class="form-control" name="objectives[{{ $index }}][specific_output]" rows="3" placeholder="What concrete deliverable will this objective produce?" required>{{ $objective['specific_output'] ?? '' }}</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Objective Evidence</label>
+                            <textarea class="form-control" name="objectives[{{ $index }}][success_measure]" rows="3" placeholder="What evidence will prove this objective is complete?" required>{{ $objective['success_measure'] ?? '' }}</textarea>
                         </div>
                         <div class="col-12">
                             <div class="small fw-semibold text-muted" data-planned-weeks-preview>Choose start and due dates to preview planned reporting weeks.</div>
@@ -164,7 +267,7 @@
         function renumberObjectives() {
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row, index) => {
                 row.querySelector('strong').textContent = `Objective ${index + 1}`;
-                row.querySelectorAll('input, textarea').forEach((field) => {
+                row.querySelectorAll('input, textarea, select').forEach((field) => {
                     field.name = field.name.replace(/objectives\[\d+\]/, `objectives[${index}]`);
                 });
             });
@@ -182,22 +285,34 @@
                     <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
                 </div>
                 <div class="row g-2">
-                    <div class="col-md-5">
+                    <div class="col-md-4">
                         <input class="form-control" name="objectives[${index}][title]" placeholder="Objective title" required>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <input class="form-control" type="number" min="1" max="100" name="objectives[${index}][weight]" placeholder="Weight %" required>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="objectives[${index}][planned_weeks]" data-objective-weeks required>
+                            <option value="">Weeks</option>
+                            ${Array.from({ length: 13 }, (_, i) => `<option value="${i + 1}">${i + 1} week${i === 0 ? '' : 's'}</option>`).join('')}
+                        </select>
+                        <small class="text-muted">Planned duration</small>
                     </div>
                     <div class="col-md-2">
                         <input class="form-control" type="date" name="objectives[${index}][starts_at]" required>
                         <small class="text-muted" data-objective-date-help>Start date</small>
                     </div>
                     <div class="col-md-2">
-                        <input class="form-control" type="date" name="objectives[${index}][due_at]">
-                        <small class="text-muted" data-objective-date-help>Due date</small>
+                        <input class="form-control" type="date" name="objectives[${index}][due_at]" readonly required>
+                        <small class="text-muted" data-objective-date-help>Auto end date</small>
                     </div>
-                    <div class="col-12">
-                        <textarea class="form-control" name="objectives[${index}][description]" rows="2" placeholder="Specific, measurable objective"></textarea>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Objective Deliverable</label>
+                        <textarea class="form-control" name="objectives[${index}][specific_output]" rows="3" placeholder="What concrete deliverable will this objective produce?" required></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Objective Evidence</label>
+                        <textarea class="form-control" name="objectives[${index}][success_measure]" rows="3" placeholder="What evidence will prove this objective is complete?" required></textarea>
                     </div>
                     <div class="col-12">
                         <div class="small fw-semibold text-muted" data-planned-weeks-preview>Choose start and due dates to preview planned reporting weeks.</div>
@@ -227,6 +342,19 @@
             const selectedQuarter = document.querySelector('[name="quarter_id"]')?.selectedOptions[0];
             const start = selectedQuarter?.dataset.start || '';
             const end = selectedQuarter?.dataset.end || '';
+            const goalDeadline = document.querySelector('[data-goal-deadline]');
+            const goalDeadlineHelp = document.querySelector('[data-goal-deadline-help]');
+
+            if (goalDeadline) {
+                goalDeadline.min = start;
+                goalDeadline.max = end;
+            }
+
+            if (goalDeadlineHelp) {
+                goalDeadlineHelp.textContent = start && end
+                    ? `Deadline must be between ${start} and ${end}.`
+                    : 'Select a quarter first.';
+            }
 
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row) => {
                 const dateInputs = row.querySelectorAll('input[type="date"]');
@@ -261,6 +389,85 @@
             return Math.min(13, Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24 * 7)) + 1);
         }
 
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+
+            return `${year}-${month}-${day}`;
+        }
+
+        function maxWeeksForStart(start, quarterEnd) {
+            if (! start || ! quarterEnd) {
+                return 13;
+            }
+
+            const startDate = new Date(`${start}T00:00:00`);
+            const endDate = new Date(`${quarterEnd}T00:00:00`);
+
+            if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate < startDate) {
+                return 0;
+            }
+
+            return Math.min(13, Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24 * 7)) + 1);
+        }
+
+        function updateWeekOptions(row) {
+            const selectedQuarter = document.querySelector('[name="quarter_id"]')?.selectedOptions[0];
+            const quarterEnd = selectedQuarter?.dataset.end || '';
+            const startsAt = row.querySelector('[name$="[starts_at]"]')?.value;
+            const weekSelect = row.querySelector('[data-objective-weeks]');
+            const maxWeeks = maxWeeksForStart(startsAt, quarterEnd);
+
+            if (! weekSelect) {
+                return;
+            }
+
+            weekSelect.querySelectorAll('option[value]').forEach((option) => {
+                option.disabled = Number(option.value) > maxWeeks;
+            });
+
+            if (weekSelect.value && Number(weekSelect.value) > maxWeeks) {
+                weekSelect.value = '';
+            }
+        }
+
+        function updateObjectiveDueDate(row) {
+            updateWeekOptions(row);
+
+            const startsAt = row.querySelector('[name$="[starts_at]"]')?.value;
+            const weekSelect = row.querySelector('[data-objective-weeks]');
+            const dueInput = row.querySelector('[name$="[due_at]"]');
+            const weeks = Number(weekSelect?.value || 0);
+
+            if (! dueInput) {
+                return;
+            }
+
+            if (! startsAt || ! weeks) {
+                dueInput.value = '';
+                return;
+            }
+
+            const dueDate = new Date(`${startsAt}T00:00:00`);
+            dueDate.setDate(dueDate.getDate() + (weeks * 7) - 1);
+            dueInput.value = formatDate(dueDate);
+        }
+
+        function hydratePlannedWeekSelections() {
+            objectivesList.querySelectorAll('[data-objective-row]').forEach((row) => {
+                const startsAt = row.querySelector('[name$="[starts_at]"]')?.value;
+                const dueAt = row.querySelector('[name$="[due_at]"]')?.value;
+                const weekSelect = row.querySelector('[data-objective-weeks]');
+
+                if (weekSelect && ! weekSelect.value && startsAt && dueAt) {
+                    weekSelect.value = objectiveWeeks(startsAt, dueAt) || '';
+                }
+
+                updateWeekOptions(row);
+            });
+        }
+
         function updatePlannedWeekPreviews() {
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row) => {
                 const startsAt = row.querySelector('[name$="[starts_at]"]')?.value;
@@ -282,13 +489,42 @@
         }
 
         document.querySelector('[name="quarter_id"]')?.addEventListener('change', applyObjectiveDateLimits);
-        document.querySelector('[name="quarter_id"]')?.addEventListener('change', updatePlannedWeekPreviews);
+        document.querySelector('[name="quarter_id"]')?.addEventListener('change', () => {
+            objectivesList.querySelectorAll('[data-objective-row]').forEach(updateObjectiveDueDate);
+            updatePlannedWeekPreviews();
+        });
         objectivesList?.addEventListener('change', (event) => {
-            if (event.target.matches('input[type="date"]')) {
+            if (event.target.matches('input[type="date"], [data-objective-weeks]')) {
+                updateObjectiveDueDate(event.target.closest('[data-objective-row]'));
                 updatePlannedWeekPreviews();
             }
         });
         applyObjectiveDateLimits();
+        hydratePlannedWeekSelections();
         updatePlannedWeekPreviews();
+
+        // Action steps add/remove handlers (matches create view behavior)
+        document.getElementById('add-step')?.addEventListener('click', function () {
+            const html = `
+                <div class="input-group mb-2">
+                    <input type="text"
+                           name="key_action_steps[]"
+                           class="form-control"
+                           placeholder="Enter action step">
+                    <button type="button"
+                            class="btn btn-danger remove-step">
+                        Remove
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('action-steps-container')?.insertAdjacentHTML('beforeend', html);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-step')) {
+                e.target.closest('.input-group')?.remove();
+            }
+        });
     </script>
 </x-app-layout>

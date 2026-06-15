@@ -30,10 +30,9 @@ class GoalAccessServiceTest extends TestCase
 
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $department->id,
-            'unit_id' => $unit->id,
             'title' => 'Improve ICT Service Delivery',
         ]);
+        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
 
         $superAdmin = User::factory()->create();
         $superAdmin->assignRole('Super Admin');
@@ -58,8 +57,38 @@ class GoalAccessServiceTest extends TestCase
         $this->assertFalse($service->canViewGoal($otherDepartmentSupervisor, $goal));
         $this->assertTrue($service->canViewGoal($staff, $goal));
 
-        $goal->update(['unit_id' => $otherUnit->id]);
+        $goal->assignments()->delete();
+        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $otherUnit->id]);
+        $goal->refresh();
 
         $this->assertFalse($service->canViewGoal($staff, $goal));
+    }
+
+    public function test_owner_field_does_not_bypass_department_or_unit_visibility(): void
+    {
+        Role::findOrCreate('Staff');
+
+        $department = Department::create(['name' => 'ICT Department']);
+        $otherDepartment = Department::create(['name' => 'Finance Department']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $staff = User::factory()->create([
+            'department_id' => $department->id,
+            'role' => 'staff',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        $staff->assignRole('Staff');
+
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'owner_id' => $staff->id,
+            'title' => 'Finance Only Goal',
+        ]);
+        $goal->assignments()->create(['department_id' => $otherDepartment->id]);
+
+        $service = app(GoalAccessService::class);
+
+        $this->assertFalse($service->canViewGoal($staff, $goal));
+        $this->assertFalse($service->canUpdateGoal($staff, $goal));
     }
 }

@@ -61,20 +61,18 @@ class QuarterlyReportTest extends TestCase
 
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
-            'department_id' => $department->id,
-            'unit_id' => $unit->id,
             'owner_id' => $user->id,
             'title' => 'Improve ICT Service Delivery',
             'level' => 'unit',
         ]);
-
-        $goal->assignedDepartments()->sync([$department->id]);
-        $goal->assignedUnits()->sync([$unit->id]);
+        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade staff computers',
-            'description' => 'Replace outdated machines.',
+            'specific_output' => 'Replace outdated machines.',
+            'success_measure' => 'All assigned computers are functional and signed off.',
             'weight' => 100,
+            'planned_weeks' => 2,
             'starts_at' => '2026-01-01',
             'due_at' => '2026-01-14',
         ]);
@@ -87,7 +85,6 @@ class QuarterlyReportTest extends TestCase
             'achievements' => 'Installed computers',
             'challenges' => 'Procurement delay',
             'next_actions' => 'Finish staff onboarding',
-            'percentage_estimate' => 0,
             'status' => 'approved',
         ]);
 

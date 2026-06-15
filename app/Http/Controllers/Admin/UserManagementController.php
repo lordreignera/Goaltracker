@@ -9,12 +9,13 @@ use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage users'), 403);
 
         $status = $request->input('status', 'pending');
 
@@ -42,7 +43,7 @@ class UserManagementController extends Controller
             'editUser' => $editUser,
             'departments' => Department::with('units')->orderBy('name')->get(),
             'units' => Unit::with('department')->orderBy('name')->get(),
-            'roles' => ['Staff', 'Supervisor', 'Manager', 'Admin'],
+            'roles' => Role::where('name', '!=', 'Super Admin')->orderBy('name')->pluck('name'),
             'status' => $status,
         ]);
     }

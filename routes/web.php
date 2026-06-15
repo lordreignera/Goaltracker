@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\CompanySettingController;
 use App\Http\Controllers\Admin\QuarterController;
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\UnitController;
@@ -19,7 +20,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('units', UnitController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('quarters', QuarterController::class)->only(['index', 'store']);
+    Route::resource('quarters', QuarterController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('settings/company', [CompanySettingController::class, 'edit'])->name('settings.company.edit');
+    Route::put('settings/company', [CompanySettingController::class, 'update'])->name('settings.company.update');
     Route::get('users/management', [UserManagementController::class, 'index'])->name('users.management.index');
     Route::get('roles/management', [RoleManagementController::class, 'index'])->name('roles.management.index');
     Route::post('roles/management', [RoleManagementController::class, 'store'])->name('roles.management.store');

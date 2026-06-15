@@ -32,7 +32,6 @@ class UpdateWeeklyUpdateRequest extends FormRequest
             'challenges.*' => ['nullable', 'string', 'max:1000'],
             'next_actions' => ['nullable', 'array'],
             'next_actions.*' => ['nullable', 'string', 'max:1000'],
-            'percentage_estimate' => ['nullable', 'integer', 'min:0', 'max:100'],
         ];
     }
 
@@ -108,7 +107,7 @@ class UpdateWeeklyUpdateRequest extends FormRequest
                 ->implode("\n");
         }
 
-        $data['percentage_estimate'] = $data['percentage_estimate'] ?? 0;
+        $data['submitted_at'] = now();
 
         return $data;
     }

@@ -7,11 +7,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class GoalObjective extends Model
 {
-    protected $fillable = ['goal_id', 'title', 'description', 'weight', 'status', 'starts_at', 'due_at'];
+    protected $fillable = [
+        'goal_id',
+        'title',
+        'specific_output',
+        'success_measure',
+        'weight',
+        'planned_weeks',
+        'status',
+        'starts_at',
+        'due_at',
+    ];
 
     protected $casts = [
         'starts_at' => 'date',
         'due_at' => 'date',
+        'planned_weeks' => 'integer',
     ];
 
     public function goal()
@@ -50,7 +61,7 @@ class GoalObjective extends Model
             return 0;
         }
 
-        return min(13, (int) floor($firstReportingDate->diffInDays($lastReportingDate) / 7) + 1);
+        return min($this->planned_weeks ?: 13, (int) floor($firstReportingDate->diffInDays($lastReportingDate) / 7) + 1);
     }
 
     public function approvedReportingWeeksCount(): int

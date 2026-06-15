@@ -30,7 +30,7 @@
         .chart-fill {
             height: 100%;
             border-radius: 999px;
-            background: #8f171b;
+            background: var(--arm-maroon);
         }
 
         @media (max-width: 575.98px) {

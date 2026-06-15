@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -15,6 +16,7 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->route('user');
+        $assignableRoles = Role::where('name', '!=', 'Super Admin')->pluck('name')->all();
 
         return [
             'first_name' => ['required', 'string', 'max:100'],
@@ -23,7 +25,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user?->id)],
             'department_id' => ['required', 'exists:departments,id'],
             'unit_id' => ['nullable', 'exists:units,id'],
-            'requested_role' => ['required', Rule::in(['Staff', 'Supervisor', 'Manager', 'Admin'])],
+            'requested_role' => ['required', Rule::in($assignableRoles)],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

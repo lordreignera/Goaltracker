@@ -1,7 +1,13 @@
 <div class="report-card mb-4">
+    @php($companySettings = $companySettings ?? \App\Models\CompanySetting::current())
     <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
         <div>
-            <div class="text-muted small">Africa Renewal Ministries</div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                @if (! ($isPdf ?? false) && $companySettings->logoUrl())
+                    <img src="{{ $companySettings->logoUrl() }}" alt="{{ $companySettings->company_name }} logo" style="width: 34px; height: 34px; object-fit: contain;">
+                @endif
+                <div class="text-muted small">{{ $companySettings->company_name }}</div>
+            </div>
             <h2 class="h4 fw-bold mb-1">{{ $quarter->name }} Quarterly Performance Report</h2>
             <div class="text-muted">{{ $quarter->starts_at->format('M d, Y') }} - {{ $quarter->ends_at->format('M d, Y') }}</div>
         </div>
@@ -79,6 +85,9 @@
                         <td>
                             <strong>{{ $row['goal'] }}</strong>
                             <div class="text-muted small">{{ $row['objective'] }}</div>
+                            <div class="small"><strong>Output:</strong> {{ $row['objective_specific_output'] }}</div>
+                            <div class="small"><strong>Measure:</strong> {{ $row['objective_success_measure'] }}</div>
+                            <div class="text-muted small">{{ $row['objective_planned_weeks'] }} planned week{{ $row['objective_planned_weeks'] === 1 ? '' : 's' }}</div>
                         </td>
                         <td>
                             Week {{ $row['week_number'] }}

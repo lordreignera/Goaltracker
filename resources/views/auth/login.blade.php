@@ -1,11 +1,12 @@
 <x-guest-layout>
+    @php($companySettings = \App\Models\CompanySetting::current())
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         :root {
-            --arm-maroon: #8f171b;
-            --arm-maroon-dark: #5d0d11;
-            --arm-maroon-soft: #b92b31;
+            --arm-maroon: #c43b3f;
+            --arm-maroon-dark: #a12d31;
+            --arm-maroon-soft: #e66b6f;
             --arm-gold: #f3b23a;
             --arm-ink: #20242a;
             --arm-muted: #66707e;
@@ -17,7 +18,7 @@
         body {
             background:
                 linear-gradient(180deg, var(--arm-maroon) 0 10px, transparent 10px),
-                radial-gradient(circle at 15% 20%, rgba(143, 23, 27, .08), transparent 28%),
+                radial-gradient(circle at 15% 20%, rgba(196, 59, 63, .08), transparent 28%),
                 var(--arm-page);
         }
 
@@ -37,11 +38,7 @@
         }
 
         .brand-panel {
-            background:
-                linear-gradient(155deg, rgba(93, 13, 17, .94), rgba(143, 23, 27, .9)),
-                url("https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80");
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(155deg, rgba(196,59,63,0.94), rgba(196,59,63,0.9));
             color: #fff;
             padding: 30px;
             position: relative;
@@ -71,6 +68,16 @@
             justify-content: center;
             font-size: 2rem;
             font-weight: 500;
+            flex: 0 0 auto;
+        }
+
+        .brand-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            background: #fff;
+            object-fit: contain;
+            padding: 7px;
             flex: 0 0 auto;
         }
 
@@ -157,7 +164,7 @@
 
         .form-control:focus {
             border-color: var(--arm-maroon);
-            box-shadow: 0 0 0 .2rem rgba(143, 23, 27, .14);
+            box-shadow: 0 0 0 .18rem rgba(196, 59, 63, .12);
             background: var(--arm-field);
         }
 
@@ -194,13 +201,13 @@
             border: 0;
             color: #fff;
             font-weight: 800;
-            box-shadow: 0 12px 24px rgba(143, 23, 27, .2);
+            box-shadow: 0 10px 20px rgba(196, 59, 63, .14);
         }
 
         .btn-maroon:hover,
         .btn-maroon:focus {
             color: #fff;
-            background: linear-gradient(90deg, #4e0a0d, #7d1317);
+            background: linear-gradient(90deg, #8a1f23, #b11e22);
         }
 
         .divider {
@@ -269,6 +276,11 @@
                 font-size: 1.5rem;
             }
 
+            .brand-logo {
+                width: 60px;
+                height: 60px;
+            }
+
             .brand-panel .fs-3 {
                 font-size: 1.25rem !important;
             }
@@ -313,17 +325,21 @@
             <section class="brand-panel col-lg-6 d-flex align-items-center">
                 <div class="brand-inner">
                     <div class="d-flex align-items-center gap-3 mb-5">
-                        <div class="brand-mark">90</div>
+                        @if ($companySettings->logoUrl())
+                            <img class="brand-logo" src="{{ $companySettings->logoUrl() }}" alt="{{ $companySettings->company_name }} logo">
+                        @else
+                            <div class="brand-mark">{{ $companySettings->brand_mark }}</div>
+                        @endif
                         <div class="lh-sm">
-                            <div class="fw-bold fs-3">Africa Renewal Ministries</div>
-                            <div class="fs-5 opacity-75 mt-2">SMART Goals Accountability Tracker</div>
+                            <div class="fw-bold fs-3">{{ $companySettings->company_name }}</div>
+                            <div class="fs-5 opacity-75 mt-2">{{ $companySettings->product_name }}</div>
                         </div>
                     </div>
 
                     <div class="brand-title">
                         <h1 class="brand-heading fw-bold mb-4">Track the work that moves the mission.</h1>
                         <p class="brand-copy mb-0">
-                            Set 90-day goals, approve weighted objectives, review weekly progress, and measure accountability across teams.
+                            {{ $companySettings->tagline }}
                         </p>
                     </div>
 

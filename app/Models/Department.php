@@ -18,8 +18,16 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
+    public function goalAssignments()
+    {
+        return $this->hasMany(GoalAssignment::class);
+    }
+
     public function goals()
     {
-        return $this->hasMany(Goal::class);
+        return $this->belongsToMany(Goal::class, 'goal_assignments', 'department_id', 'goal_id')
+            ->wherePivotNotNull('department_id')
+            ->distinct()
+            ->withTimestamps();
     }
 }

@@ -27,24 +27,10 @@ return new class extends Migration
         });
 
         Schema::table('users', function (Blueprint $table) {
-            if (! Schema::hasColumn('users', 'department_id')) {
-                $table->unsignedBigInteger('department_id')->nullable()->after('password');
-            }
-            if (! Schema::hasColumn('users', 'unit_id')) {
-                $table->unsignedBigInteger('unit_id')->nullable()->after('department_id');
-            }
-            if (! Schema::hasColumn('users', 'supervisor_id')) {
-                $table->unsignedBigInteger('supervisor_id')->nullable()->after('unit_id');
-            }
-            if (! Schema::hasColumn('users', 'role')) {
-                $table->string('role')->default('staff')->after('supervisor_id');
-            }
-        });
-
-        Schema::table('users', function (Blueprint $table) {
             $table->foreign('department_id')->references('id')->on('departments')->nullOnDelete();
             $table->foreign('unit_id')->references('id')->on('units')->nullOnDelete();
             $table->foreign('supervisor_id')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('approved_by')->references('id')->on('users')->nullOnDelete();
         });
     }
 
@@ -54,6 +40,7 @@ return new class extends Migration
             $table->dropForeign(['department_id']);
             $table->dropForeign(['unit_id']);
             $table->dropForeign(['supervisor_id']);
+            $table->dropForeign(['approved_by']);
         });
 
         Schema::dropIfExists('units');

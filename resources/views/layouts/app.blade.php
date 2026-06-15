@@ -17,11 +17,12 @@
 
         <style>
             :root {
-                --arm-maroon: #8f171b;
-                --arm-maroon-dark: #5d0d11;
-                --arm-gold: #f3b23a;
-                --arm-bg: #f4f6f9;
-                --arm-ink: #20242a;
+                --arm-maroon: #1f2329;
+                --arm-maroon-dark: #0f1115;
+                --arm-maroon-soft: #4b5563;
+                --arm-gold: #f3f4f6;
+                --arm-bg: #f6f7f9;
+                --arm-ink: #171a1f;
                 --arm-muted: #6b7280;
                 --arm-line: #e5e7eb;
             }
@@ -40,29 +41,41 @@
 
             .admin-sidebar {
                 background:
-                    linear-gradient(180deg, rgba(93, 13, 17, .98), rgba(143, 23, 27, .96)),
-                    url("https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80");
-                background-size: cover;
+                    linear-gradient(180deg, #15171b, #20242a 58%, #111318),
+                    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+                background-size: auto;
                 background-position: center;
-                color: #fff;
+                color: #f8fafc;
                 position: sticky;
                 top: 0;
                 height: 100vh;
                 padding: 24px 18px;
                 overflow-y: auto;
+                backdrop-filter: none;
+                border-right: 1px solid #2f343b;
             }
 
             .brand-tile {
                 width: 52px;
                 height: 52px;
                 border-radius: 10px;
-                background: var(--arm-gold);
-                color: #251b13;
+                background: #fff;
+                color: #111318;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 1.35rem;
                 font-weight: 800;
+                box-shadow: inset 0 0 0 1px rgba(17, 24, 39, .08);
+            }
+
+            .brand-logo {
+                width: 52px;
+                height: 52px;
+                border-radius: 10px;
+                object-fit: contain;
+                background: #fff;
+                padding: 5px;
             }
 
             .sidebar-nav {
@@ -78,7 +91,7 @@
                 min-height: 44px;
                 padding: 10px 12px;
                 border-radius: 8px;
-                color: rgba(255, 255, 255, .78);
+                color: rgba(248, 250, 252, .72);
                 text-decoration: none;
                 font-weight: 700;
                 font-size: .94rem;
@@ -86,23 +99,29 @@
 
             .sidebar-link:hover,
             .sidebar-link.active {
-                color: #fff;
-                background: rgba(255, 255, 255, .14);
+                color: #111318;
+                background: #f3f4f6;
             }
 
             .sidebar-icon {
                 width: 25px;
                 height: 25px;
                 border-radius: 7px;
-                background: rgba(255, 255, 255, .14);
+                background: rgba(255, 255, 255, .09);
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 font-size: .8rem;
             }
 
+            .sidebar-link:hover .sidebar-icon,
+            .sidebar-link.active .sidebar-icon {
+                background: #111318;
+                color: #fff;
+            }
+
             .sidebar-section {
-                color: rgba(255, 255, 255, .5);
+                color: rgba(248, 250, 252, .48);
                 font-size: .72rem;
                 font-weight: 800;
                 text-transform: uppercase;
@@ -155,7 +174,7 @@
                 width: 34px;
                 height: 34px;
                 border-radius: 50%;
-                background: var(--arm-maroon);
+                background: #111318;
                 color: #fff;
                 display: inline-flex;
                 align-items: center;
@@ -175,7 +194,7 @@
             .logout-button {
                 border: 0;
                 background: transparent;
-                color: var(--arm-maroon);
+                color: #111318;
                 font-weight: 800;
                 padding: 0;
             }
@@ -266,11 +285,12 @@
             .admin-content summary.btn:focus-visible {
                 outline: 3px solid rgba(243, 178, 58, .45);
                 outline-offset: 2px;
-                box-shadow: 0 0 0 .2rem rgba(143, 23, 27, .16);
+                box-shadow: 0 0 0 .18rem rgba(17, 24, 39, .12);
             }
 
             .admin-content .btn-maroon,
-            .admin-content .btn[style*="background:#8f171b"] {
+            .admin-content .btn[style*="#8f171b"],
+            .admin-content .btn[style*="#c43b3f"] {
                 background: var(--arm-maroon) !important;
                 border-color: var(--arm-maroon) !important;
                 color: #fff !important;
@@ -279,9 +299,12 @@
             .admin-content .btn-maroon:hover,
             .admin-content .btn-maroon:focus,
             .admin-content .btn-maroon:active,
-            .admin-content .btn[style*="background:#8f171b"]:hover,
-            .admin-content .btn[style*="background:#8f171b"]:focus,
-            .admin-content .btn[style*="background:#8f171b"]:active {
+            .admin-content .btn[style*="#8f171b"]:hover,
+            .admin-content .btn[style*="#8f171b"]:focus,
+            .admin-content .btn[style*="#8f171b"]:active,
+            .admin-content .btn[style*="#c43b3f"]:hover,
+            .admin-content .btn[style*="#c43b3f"]:focus,
+            .admin-content .btn[style*="#c43b3f"]:active {
                 background: var(--arm-maroon-dark) !important;
                 border-color: var(--arm-maroon-dark) !important;
                 color: #fff !important;
@@ -410,10 +433,10 @@
                     height: 38px;
                     align-items: center;
                     justify-content: center;
-                    border: 1px solid rgba(255, 255, 255, .22);
+                    border: 1px solid rgba(255, 255, 255, .18);
                     border-radius: 8px;
                     color: #fff;
-                    background: rgba(255, 255, 255, .12);
+                    background: rgba(255, 255, 255, .08);
                     font-weight: 900;
                     margin-left: auto;
                 }
@@ -427,7 +450,7 @@
                     border: 1px solid var(--arm-line);
                     border-radius: 9px;
                     background: #fff;
-                    color: var(--arm-maroon);
+                    color: #111318;
                     font-weight: 900;
                 }
 
@@ -493,6 +516,11 @@
                     font-size: 1.1rem;
                 }
 
+                .brand-logo {
+                    width: 46px;
+                    height: 46px;
+                }
+
                 .sidebar-link {
                     min-height: 42px;
                     font-size: .9rem;
@@ -534,8 +562,15 @@
         <x-banner />
 
         @php
+            $companySettings = \App\Models\CompanySetting::current();
             $currentUser = Auth::user();
-            $canManageAdministration = $currentUser->isAdmin();
+            $canManageDepartments = $currentUser->isAdmin() || $currentUser->can('manage departments');
+            $canManageUnits = $currentUser->isAdmin() || $currentUser->can('manage units');
+            $canManageUsers = $currentUser->isAdmin() || $currentUser->can('manage users');
+            $canManageQuarters = $currentUser->isAdmin() || $currentUser->can('manage quarters');
+            $canManageRoles = $currentUser->isAdmin();
+            $canManageSettings = $currentUser->isAdmin();
+            $canManageAdministration = $currentUser->canManageAdministration();
         @endphp
 
         <div class="sidebar-backdrop" data-sidebar-close></div>
@@ -543,10 +578,14 @@
         <div class="admin-shell">
             <aside class="admin-sidebar">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="brand-tile">90</div>
+                    @if ($companySettings->logoUrl())
+                        <img class="brand-logo" src="{{ $companySettings->logoUrl() }}" alt="{{ $companySettings->company_name }} logo">
+                    @else
+                        <div class="brand-tile">{{ $companySettings->brand_mark }}</div>
+                    @endif
                     <div>
-                        <div class="fw-bold fs-5 lh-sm">Africa Renewal</div>
-                        <div class="opacity-75 small">SMART Goals Tracker</div>
+                        <div class="fw-bold fs-5 lh-sm">{{ $companySettings->company_short_name }}</div>
+                        <div class="opacity-75 small">{{ $companySettings->product_name }}</div>
                     </div>
                     <button class="mobile-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>&times;</button>
                 </div>
@@ -562,10 +601,12 @@
                     <a class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.quarterly.index') }}">
                         <span class="sidebar-icon">RP</span> Reports
                     </a>
-                    @if ($canManageAdministration)
+                    @if ($canManageUsers)
                         <a class="sidebar-link {{ request()->routeIs('users.management.*') || request()->routeIs('users.approvals.*') ? 'active' : '' }}" href="{{ route('users.management.index') }}">
                             <span class="sidebar-icon">UM</span> User Management
                         </a>
+                    @endif
+                    @if ($canManageRoles)
                          <a class="sidebar-link {{ request()->routeIs('roles.management.*') ? 'active' : '' }}" href="{{ route('roles.management.index') }}">
                             <span class="sidebar-icon">R</span> Roles & Permissions
                         </a>
@@ -575,19 +616,30 @@
                 @if ($canManageAdministration)
                     <div class="sidebar-section">Administration</div>
                     <nav class="sidebar-nav">
-                        <a class="sidebar-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
-                            <span class="sidebar-icon">DP</span> Departments
-                        </a>
-                        <a class="sidebar-link {{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
-                            <span class="sidebar-icon">U</span> Units
-                        </a>
-                        <a class="sidebar-link {{ request()->routeIs('quarters.*') ? 'active' : '' }}" href="{{ route('quarters.index') }}">
-                            <span class="sidebar-icon">Q</span> Quarters
-                        </a>
+                        @if ($canManageDepartments)
+                            <a class="sidebar-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
+                                <span class="sidebar-icon">DP</span> Departments
+                            </a>
+                        @endif
+                        @if ($canManageUnits)
+                            <a class="sidebar-link {{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
+                                <span class="sidebar-icon">U</span> Units
+                            </a>
+                        @endif
+                        @if ($canManageQuarters)
+                            <a class="sidebar-link {{ request()->routeIs('quarters.*') ? 'active' : '' }}" href="{{ route('quarters.index') }}">
+                                <span class="sidebar-icon">Q</span> Quarters
+                            </a>
+                        @endif
+                        @if ($canManageSettings)
+                            <a class="sidebar-link {{ request()->routeIs('settings.company.*') ? 'active' : '' }}" href="{{ route('settings.company.edit') }}">
+                                <span class="sidebar-icon">S</span> Company Settings
+                            </a>
+                        @endif
                     </nav>
                 @endif
 
-                <div class="mt-5 p-3 rounded-3" style="background: rgba(255,255,255,.12);">
+                <div class="mt-5 p-3 rounded-3" style="background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.10);">
                     <div class="small opacity-75">Current focus</div>
                     <div class="fw-bold mt-1">90-day accountability cycle</div>
                 </div>
@@ -603,12 +655,12 @@
                             @else
                                 <h1 class="page-title">Dashboard</h1>
                             @endif
-                            <div class="text-muted small mt-1">Plan, review, approve, and report on measurable goals.</div>
+                            <div class="text-muted small mt-1">{{ $companySettings->tagline }}</div>
                         </div>
                     </div>
 
                     <div class="topbar-actions d-flex align-items-center gap-3">
-                        <a class="text-decoration-none fw-bold" style="color: var(--arm-maroon);" href="{{ route('profile.show') }}">Profile</a>
+                        <a class="text-decoration-none fw-bold" style="color: #111318;" href="{{ route('profile.show') }}">Profile</a>
                         <div class="user-pill">
                             <span class="avatar-dot">{{ strtoupper(substr($currentUser->name, 0, 1)) }}</span>
                             <div>
@@ -634,6 +686,7 @@
         @stack('modals')
 
         @livewireScripts
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
             document.querySelectorAll('[data-sidebar-open]').forEach((button) => {

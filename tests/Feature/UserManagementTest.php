@@ -136,6 +136,39 @@ class UserManagementTest extends TestCase
         $this->assertTrue($role->hasPermissionTo('view reports'));
     }
 
+    public function test_super_admin_can_assign_custom_role_to_user(): void
+    {
+        $department = Department::create(['name' => 'Programs Department']);
+        $superAdmin = $this->createSuperAdmin();
+        Role::firstOrCreate(['name' => 'Program Manager']);
+
+        $user = User::factory()->create([
+            'first_name' => 'Grace',
+            'second_name' => 'Planner',
+            'name' => 'Grace Planner',
+            'email' => 'grace@example.com',
+            'phone_number' => '+256700000099',
+            'department_id' => $department->id,
+            'requested_role' => 'Staff',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($superAdmin)->put(route('users.management.update', $user), [
+            'first_name' => 'Grace',
+            'second_name' => 'Planner',
+            'email' => 'grace@example.com',
+            'phone_number' => '+256700000099',
+            'department_id' => $department->id,
+            'unit_id' => null,
+            'requested_role' => 'Program Manager',
+            'is_active' => '1',
+        ])->assertRedirect();
+
+        $this->assertSame('Program Manager', $user->fresh()->requested_role);
+        $this->assertTrue($user->fresh()->hasRole('Program Manager'));
+    }
+
     public function test_admin_cannot_create_roles(): void
     {
         Role::firstOrCreate(['name' => 'Admin']);

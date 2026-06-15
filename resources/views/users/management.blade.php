@@ -12,15 +12,15 @@
         }
 
         .btn-maroon {
-            background: #8f171b;
-            border-color: #8f171b;
+            background: var(--arm-maroon);
+            border-color: var(--arm-maroon);
             color: #fff;
             font-weight: 800;
         }
 
         .btn-maroon:hover {
-            background: #721216;
-            border-color: #721216;
+            background: var(--arm-maroon-dark);
+            border-color: var(--arm-maroon-dark);
             color: #fff;
         }
 
@@ -73,7 +73,7 @@
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', $listQuery) }}">Back to current list</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_filter($allUsersQuery, fn ($value) => filled($value))) }}">All users</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_filter($allUsersQuery, function ($value) { return filled($value); })) }}">All users</a>
                 </div>
             </div>
 
@@ -144,7 +144,7 @@
                 <div class="text-muted small">Edit department, unit, role, and active state before or after approval. Passwords are not editable here.</div>
             </div>
             @if (request('status') !== 'all')
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_filter($allUsersQuery, fn ($value) => filled($value))) }}">View all users</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_filter($allUsersQuery, function ($value) { return filled($value); })) }}">View all users</a>
             @endif
         </div>
 
@@ -222,5 +222,4 @@
 
     <div class="mt-3">{{ $users->links() }}</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </x-app-layout>

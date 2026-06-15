@@ -8,6 +8,8 @@ use App\Models\Quarter;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class GoalCreationTest extends TestCase
@@ -39,6 +41,37 @@ class GoalCreationTest extends TestCase
             ->assertSee('Objectives / Sub-Goals');
     }
 
+    public function test_custom_role_with_manage_goals_permission_can_create_goal(): void
+    {
+        Permission::findOrCreate('manage goals');
+        $role = Role::findOrCreate('Program Lead');
+        $role->syncPermissions(['manage goals']);
+
+        $department = Department::create(['name' => 'Programs Department']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $user = User::factory()->create([
+            'department_id' => $department->id,
+            'role' => 'program_lead',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        $user->assignRole($role);
+
+        $this->actingAs($user)->post(route('goals.store'), [
+            'quarter_id' => $quarter->id,
+            'department_ids' => [$department->id],
+            'unit_ids' => [],
+            'level' => 'department',
+            'title' => 'Improve Program Follow-up',
+        ] + $this->smartFields() + [
+            'objectives' => [
+                $this->objectiveFields(['title' => 'Follow-up schedule', 'weight' => 100]),
+            ],
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('goals', ['title' => 'Improve Program Follow-up']);
+    }
+
     public function test_supervisor_can_create_goal_with_objectives(): void
     {
         $department = Department::create(['name' => 'ICT Department']);
@@ -59,10 +92,10 @@ class GoalCreationTest extends TestCase
             'unit_ids' => [$unit->id],
             'level' => 'unit',
             'title' => 'Improve ICT Service Delivery',
-            'description' => 'Better support response across the unit.',
+        ] + $this->smartFields() + [
             'objectives' => [
-                ['title' => 'Upgrade Staff Computers', 'description' => 'Replace old machines.', 'weight' => 40, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-21'],
-                ['title' => 'Improve Internet Stability', 'description' => 'Reduce downtime.', 'weight' => 60, 'starts_at' => '2026-01-22', 'due_at' => '2026-02-11'],
+                $this->objectiveFields(['title' => 'Upgrade Staff Computers', 'specific_output' => 'Replace old machines.', 'weight' => 40, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-21', 'planned_weeks' => 3]),
+                $this->objectiveFields(['title' => 'Improve Internet Stability', 'specific_output' => 'Reduce downtime.', 'weight' => 60, 'starts_at' => '2026-01-22', 'due_at' => '2026-02-11', 'planned_weeks' => 3]),
             ],
         ]);
 
@@ -96,9 +129,10 @@ class GoalCreationTest extends TestCase
             'unit_ids' => [$unit->id],
             'level' => 'unit',
             'title' => 'Improve ICT Service Delivery',
+        ] + $this->smartFields() + [
             'objectives' => [
-                ['title' => 'Upgrade Staff Computers', 'weight' => 40, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-21'],
-                ['title' => 'Improve Internet Stability', 'weight' => 40, 'starts_at' => '2026-01-22', 'due_at' => '2026-02-11'],
+                $this->objectiveFields(['title' => 'Upgrade Staff Computers', 'weight' => 40, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-21', 'planned_weeks' => 3]),
+                $this->objectiveFields(['title' => 'Improve Internet Stability', 'weight' => 40, 'starts_at' => '2026-01-22', 'due_at' => '2026-02-11', 'planned_weeks' => 3]),
             ],
         ]);
 
@@ -114,38 +148,42 @@ class GoalCreationTest extends TestCase
         $financeUnit = Unit::create(['department_id' => $finance->id, 'name' => 'Accounts Unit']);
         $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
 
-        $supervisor = User::factory()->create([
+        $admin = User::factory()->create([
             'department_id' => $ict->id,
             'unit_id' => $ictUnit->id,
-            'role' => 'supervisor',
+            'role' => 'admin',
             'approval_status' => 'approved',
             'is_active' => true,
         ]);
 
-        $this->actingAs($supervisor)->post(route('goals.store'), [
+        $this->actingAs($admin)->post(route('goals.store'), [
             'quarter_id' => $quarter->id,
             'department_ids' => [$ict->id, $finance->id],
             'unit_ids' => [$ictUnit->id, $financeUnit->id],
             'level' => 'unit',
             'title' => 'Cross Department Controls',
+        ] + $this->smartFields() + [
             'objectives' => [
-                ['title' => 'Policy rollout', 'weight' => 50, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-14'],
-                ['title' => 'Training', 'weight' => 50, 'starts_at' => '2026-01-15', 'due_at' => '2026-01-28'],
+                $this->objectiveFields(['title' => 'Policy rollout', 'weight' => 50, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-14', 'planned_weeks' => 2]),
+                $this->objectiveFields(['title' => 'Training', 'weight' => 50, 'starts_at' => '2026-01-15', 'due_at' => '2026-01-28', 'planned_weeks' => 2]),
             ],
         ])->assertRedirect();
 
         $goal = Goal::where('title', 'Cross Department Controls')->firstOrFail();
         $firstObjective = $goal->objectives()->first();
 
-        $this->actingAs($supervisor)->put(route('goals.update', $goal), [
+        $this->actingAs($admin)->put(route('goals.update', $goal), [
             'quarter_id' => $quarter->id,
             'department_ids' => [$ict->id, $finance->id],
             'unit_ids' => [$ictUnit->id],
             'level' => 'unit',
             'title' => 'Cross Department Controls Updated',
+        ] + $this->smartFields([
+            'primary_metric' => 'All cross-department controls reviewed',
+        ]) + [
             'objectives' => [
-                ['id' => $firstObjective->id, 'title' => 'Policy rollout updated', 'weight' => 40, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-14'],
-                ['title' => 'Evidence review', 'weight' => 60, 'starts_at' => '2026-01-15', 'due_at' => '2026-01-28'],
+                $this->objectiveFields(['id' => $firstObjective->id, 'title' => 'Policy rollout updated', 'weight' => 40, 'starts_at' => '2026-01-01', 'due_at' => '2026-01-14', 'planned_weeks' => 2]),
+                $this->objectiveFields(['title' => 'Evidence review', 'weight' => 60, 'starts_at' => '2026-01-15', 'due_at' => '2026-01-28', 'planned_weeks' => 2]),
             ],
         ])->assertRedirect(route('goals.show', $goal));
 
@@ -157,5 +195,32 @@ class GoalCreationTest extends TestCase
         $this->assertTrue($goal->assignedDepartments()->whereKey($finance->id)->exists());
         $this->assertTrue($goal->assignedUnits()->whereKey($ictUnit->id)->exists());
         $this->assertFalse($goal->assignedUnits()->whereKey($financeUnit->id)->exists());
+    }
+
+    private function smartFields(array $overrides = []): array
+    {
+        return $overrides + [
+            'specific' => 'Improve service delivery for assigned teams.',
+            'measurable' => 'Success is measured by completed approved objective reports.',
+            'achievable' => 'The work is realistic within the quarter and staffing plan.',
+            'relevant' => 'The goal supports department accountability and mission delivery.',
+            'time_bound' => 'The goal will be completed before the end of the quarter.',
+            'key_action_steps' => 'Plan work, execute objectives, report weekly, and review evidence.',
+            'primary_metric' => 'Approved objective reporting coverage',
+            'deadline' => '2026-03-31',
+        ];
+    }
+
+    private function objectiveFields(array $overrides = []): array
+    {
+        return $overrides + [
+            'title' => 'Objective',
+            'specific_output' => 'Complete a clearly defined objective output.',
+            'success_measure' => 'Supervisor verifies the output with submitted evidence.',
+            'weight' => 100,
+            'planned_weeks' => 1,
+            'starts_at' => '2026-01-01',
+            'due_at' => '2026-01-07',
+        ];
     }
 }

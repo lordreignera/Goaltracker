@@ -12,7 +12,7 @@ class UnitController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage units'), 403);
 
         return view('units.index', [
             'departments' => Department::orderBy('name')->get(),
@@ -34,7 +34,7 @@ class UnitController extends Controller
 
     public function store(Request $request)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage units'), 403);
 
         Unit::create($request->validate([
             'department_id' => ['required', 'exists:departments,id'],
@@ -48,7 +48,7 @@ class UnitController extends Controller
 
     public function update(Request $request, Unit $unit)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage units'), 403);
 
         $data = $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
@@ -71,7 +71,7 @@ class UnitController extends Controller
 
     public function destroy(Request $request, Unit $unit)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        abort_unless($request->user()->isAdmin() || $request->user()->can('manage units'), 403);
 
         if ($unit->users()->exists() || $unit->goals()->exists()) {
             return back()->withErrors(['unit' => 'This unit has users or goals and cannot be deleted.']);

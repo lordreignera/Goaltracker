@@ -6,11 +6,7 @@
     <style>
         .dashboard-hero {
             border-radius: 16px;
-            background:
-                linear-gradient(135deg, rgba(93, 13, 17, .96), rgba(143, 23, 27, .88)),
-                url("https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1400&q=80");
-            background-size: cover;
-            background-position: center;
+            background: linear-gradient(135deg, #171a1f, #343941);
             color: #fff;
             padding: 28px;
             overflow: hidden;
@@ -39,8 +35,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #fff0f1;
-            color: #8f171b;
+            background: #f3f4f6;
+            color: #111318;
             font-weight: 900;
         }
 
@@ -56,7 +52,7 @@
         }
 
         .progress-bar {
-            background: linear-gradient(90deg, #8f171b, #c2363d);
+            background: linear-gradient(90deg, #111318, #4b5563);
         }
 
         @media (max-width: 575.98px) {

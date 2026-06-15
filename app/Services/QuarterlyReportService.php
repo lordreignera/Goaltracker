@@ -15,8 +15,6 @@ class QuarterlyReportService
             ->visibleTo($user)
             ->where('quarter_id', $quarter->id)
             ->with([
-                'department',
-                'unit',
                 'assignedDepartments',
                 'assignedUnits',
                 'objectives.weeklyUpdates.user',
@@ -50,8 +48,8 @@ class QuarterlyReportService
     {
         return [
             'title' => $goal->title,
-            'department' => $goal->assignedDepartments->pluck('name')->join(', ') ?: $goal->department?->name,
-            'unit' => $goal->assignedUnits->pluck('name')->join(', ') ?: ($goal->unit?->name ?: 'Department-wide'),
+            'department' => $goal->assignedDepartments->pluck('name')->unique()->join(', '),
+            'unit' => $goal->assignedUnits->pluck('name')->unique()->join(', ') ?: 'Department-wide',
             'progress' => $goal->progress(),
             'objectives_count' => $goal->objectives->count(),
             'approved_weeks' => $goal->objectives->sum(fn ($objective) => $objective->approvedReportingWeeksCount()),
@@ -63,9 +61,7 @@ class QuarterlyReportService
     {
         return $goals
             ->flatMap(function (Goal $goal) {
-                $departments = $goal->assignedDepartments->isNotEmpty()
-                    ? $goal->assignedDepartments
-                    : collect([$goal->department])->filter();
+                $departments = $goal->assignedDepartments;
 
                 return $departments->map(fn ($department) => [
                     'department' => $department->name,
@@ -92,6 +88,9 @@ class QuarterlyReportService
                     return [
                         'goal' => $goal->title,
                         'objective' => $objective->title,
+                        'objective_specific_output' => $objective->specific_output,
+                        'objective_success_measure' => $objective->success_measure,
+                        'objective_planned_weeks' => $objective->planned_weeks,
                         'week_number' => $update->week_number,
                         'week_starting' => $update->week_starting,
                         'staff' => $update->user?->name,

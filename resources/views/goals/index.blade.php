@@ -13,15 +13,15 @@
         }
 
         .btn-maroon {
-            background: #8f171b;
-            border-color: #8f171b;
+            background: var(--arm-maroon);
+            border-color: var(--arm-maroon);
             color: #fff;
             font-weight: 800;
         }
 
         .btn-maroon:hover {
-            background: #721216;
-            border-color: #721216;
+            background: var(--arm-maroon-dark);
+            border-color: var(--arm-maroon-dark);
             color: #fff;
         }
 
@@ -31,7 +31,7 @@
         }
 
         .progress-bar {
-            background: linear-gradient(90deg, #8f171b, #c2363d);
+            background: linear-gradient(90deg, var(--arm-maroon-dark), var(--arm-maroon));
         }
     </style>
 
@@ -49,7 +49,7 @@
         <div class="row g-2 align-items-end">
             <div class="col-lg-4">
                 <label class="form-label small fw-semibold">Search</label>
-                <input class="form-control" name="search" value="{{ request('search') }}" placeholder="Goal title or description">
+                <input class="form-control" name="search" value="{{ request('search') }}" placeholder="Goal title, metric, or SMART detail">
             </div>
             <div class="col-lg-2">
                 <label class="form-label small fw-semibold">Quarter</label>
@@ -102,12 +102,12 @@
                     <td>
                         <strong>{{ $goal->title }}</strong>
                         <br>
-                        <small class="text-muted">{{ $goal->department->name }}</small>
+                        <small class="text-muted">{{ $goal->primary_metric }}</small>
                     </td>
                     <td>{{ $goal->quarter->name }}</td>
                     <td>
-                        <div>{{ $goal->assignedDepartments->pluck('name')->join(', ') ?: $goal->department->name }}</div>
-                        <small class="text-muted">{{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->join(', ') : 'Department-wide' }}</small>
+                        <div>{{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }}</div>
+                        <small class="text-muted">{{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->unique()->join(', ') : 'Department-wide' }}</small>
                     </td>
                     <td>
                         <span class="badge text-bg-light border">{{ $goal->objectives->count() }} total</span>

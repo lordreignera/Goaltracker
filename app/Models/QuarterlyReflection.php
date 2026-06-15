@@ -6,7 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuarterlyReflection extends Model
 {
-    protected $fillable = ['user_id', 'quarter_id', 'key_wins', 'challenges', 'lessons_learned', 'next_quarter_focus'];
+    protected $fillable = [
+        'quarter_id',
+        'user_id',
+        'department_id',
+        'unit_id',
+        'goals_completed',
+        'goals_partially_completed',
+        'key_wins',
+        'challenges',
+        'lessons_learned',
+        'next_quarter_focus',
+    ];
 
     public function user()
     {
@@ -16,5 +27,15 @@ class QuarterlyReflection extends Model
     public function quarter()
     {
         return $this->belongsTo(Quarter::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 }
