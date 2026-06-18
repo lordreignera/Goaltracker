@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\CompanySettingController;
 use App\Http\Controllers\Admin\QuarterController;
 use App\Http\Controllers\Admin\RoleManagementController;
+use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
@@ -19,6 +20,7 @@ Route::redirect('/', '/login')->name('home');
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('sections', SectionController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('units', UnitController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('quarters', QuarterController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('settings/company', [CompanySettingController::class, 'edit'])->name('settings.company.edit');

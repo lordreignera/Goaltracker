@@ -57,7 +57,16 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-lg-3 d-grid">
+                    <div class="col-lg-3">
+                        <label class="form-label small fw-semibold">Section</label>
+                        <select class="form-select" name="section_id">
+                            <option value="">All sections</option>
+                            @foreach ($sections as $section)
+                                <option value="{{ $section->id }}" @selected(request('section_id') == $section->id)>{{ $section->department->name }} - {{ $section->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-lg-12 d-grid">
                         <button class="btn btn-maroon">Filter</button>
                     </div>
                 </div>
@@ -76,6 +85,7 @@
                 <tr>
                     <th>Unit</th>
                     <th>Department</th>
+                    <th>Section</th>
                     <th>Code</th>
                     <th>Users</th>
                     <th>Goals</th>
@@ -92,6 +102,7 @@
                         @endif
                     </td>
                     <td>{{ $unit->department->name }}</td>
+                    <td>{{ $unit->section->name }}</td>
                     <td><span class="badge text-bg-light border">{{ $unit->code ?: '-' }}</span></td>
                     <td>{{ $unit->users_count }}</td>
                     <td>{{ $unit->goals_count }}</td>
@@ -107,7 +118,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="p-4 text-muted">No units match your filters.</td></tr>
+                <tr><td colspan="7" class="p-4 text-muted">No units match your filters.</td></tr>
             @endforelse
             </tbody>
         </table>
@@ -135,8 +146,16 @@
                         @endforeach
                     </select>
 
+                    <label class="form-label fw-semibold">Section</label>
+                    <select class="form-select mb-3" name="section_id" required>
+                        <option value="">Select section</option>
+                        @foreach ($sections as $section)
+                            <option value="{{ $section->id }}" @selected(old('section_id') == $section->id)>{{ $section->department->name }} - {{ $section->name }}</option>
+                        @endforeach
+                    </select>
+
                     <label class="form-label fw-semibold">Unit Name</label>
-                    <input class="form-control mb-3" name="name" value="{{ old('name') }}" placeholder="Software Development Unit" required>
+                    <input class="form-control mb-3" name="name" value="{{ old('name') }}" placeholder="Receptionist" required>
 
                     <label class="form-label fw-semibold">Code</label>
                     <input class="form-control mb-3" name="code" value="{{ old('code') }}" placeholder="SDU">
@@ -170,6 +189,13 @@
                         <select class="form-select mb-3" name="department_id" required>
                             @foreach ($departments as $department)
                                 <option value="{{ $department->id }}" @selected(old('department_id', $unit->department_id) == $department->id)>{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+
+                        <label class="form-label fw-semibold">Section</label>
+                        <select class="form-select mb-3" name="section_id" required>
+                            @foreach ($sections as $section)
+                                <option value="{{ $section->id }}" @selected(old('section_id', $unit->section_id) == $section->id)>{{ $section->department->name }} - {{ $section->name }}</option>
                             @endforeach
                         </select>
 

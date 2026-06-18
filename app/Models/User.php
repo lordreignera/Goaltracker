@@ -37,6 +37,7 @@ class User extends Authenticatable
         'phone_number',
         'password',
         'department_id',
+        'section_id',
         'unit_id',
         'supervisor_id',
         'role',
@@ -90,9 +91,34 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class);
     }
 
+    public function accessibleDepartments()
+    {
+        return $this->belongsToMany(Department::class)->withTimestamps();
+    }
+
+    public function accessibleDepartmentIds(): array
+    {
+        $ids = $this->relationLoaded('accessibleDepartments')
+            ? $this->accessibleDepartments->pluck('id')
+            : $this->accessibleDepartments()->pluck('departments.id');
+
+        return $ids
+            ->push($this->department_id)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
     }
 
     public function supervisor()
@@ -151,6 +177,7 @@ class User extends Authenticatable
         return $this->isAdmin()
             || $this->hasAnyPermission([
                 'manage departments',
+                'manage sections',
                 'manage units',
                 'manage users',
                 'manage quarters',

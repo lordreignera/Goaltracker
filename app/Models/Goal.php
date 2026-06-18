@@ -71,6 +71,14 @@ class Goal extends Model
             ->withTimestamps();
     }
 
+    public function assignedSections()
+    {
+        return $this->belongsToMany(Section::class, 'goal_assignments', 'goal_id', 'section_id')
+            ->wherePivotNotNull('section_id')
+            ->distinct()
+            ->withTimestamps();
+    }
+
     public function assignedUsers()
     {
         return $this->belongsToMany(User::class, 'goal_assignments', 'goal_id', 'user_id')

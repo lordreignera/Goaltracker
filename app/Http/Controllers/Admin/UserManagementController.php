@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Department;
+use App\Models\Section;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ class UserManagementController extends Controller
 
         $status = $request->input('status', 'pending');
 
-        $users = User::with(['department', 'unit', 'roles'])
+        $users = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'roles'])
             ->when($status !== 'all', fn ($query) => $query->where('approval_status', $status))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where(function ($query) use ($request) {
@@ -35,14 +36,15 @@ class UserManagementController extends Controller
 
         $editUser = null;
         if ($request->filled('edit_user')) {
-            $editUser = User::with(['department', 'unit', 'roles'])->find($request->edit_user);
+            $editUser = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'roles'])->find($request->edit_user);
         }
 
         return view('users.management', [
             'users' => $users,
             'editUser' => $editUser,
-            'departments' => Department::with('units')->orderBy('name')->get(),
-            'units' => Unit::with('department')->orderBy('name')->get(),
+            'departments' => Department::with('sections.units')->orderBy('name')->get(),
+            'sections' => Section::with('department')->orderBy('name')->get(),
+            'units' => Unit::with(['department', 'section'])->orderBy('name')->get(),
             'roles' => Role::where('name', '!=', 'Super Admin')->orderBy('name')->pluck('name'),
             'status' => $status,
         ]);
@@ -59,10 +61,13 @@ class UserManagementController extends Controller
             'phone_number' => $data['phone_number'],
             'email' => $data['email'],
             'department_id' => $data['department_id'],
+            'section_id' => $data['section_id'] ?? null,
             'unit_id' => $data['unit_id'] ?? null,
             'requested_role' => $data['requested_role'],
             'is_active' => $request->boolean('is_active'),
         ])->save();
+
+        $this->syncDepartmentAccess($user, $data['department_ids'] ?? []);
 
         if ($user->approval_status === 'approved') {
             $this->assignApprovedRole($user);
@@ -83,6 +88,7 @@ class UserManagementController extends Controller
         ])->save();
 
         $this->assignApprovedRole($user);
+        $this->syncDepartmentAccess($user, $user->accessibleDepartmentIds());
 
         return back()->with('status', "{$user->name} has been approved.");
     }
@@ -124,5 +130,18 @@ class UserManagementController extends Controller
         ])->save();
 
         $user->syncRoles([$role]);
+    }
+
+    private function syncDepartmentAccess(User $user, array $departmentIds): void
+    {
+        $ids = collect($departmentIds)
+            ->push($user->department_id)
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        $user->accessibleDepartments()->sync($ids);
     }
 }

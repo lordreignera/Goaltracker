@@ -4,18 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Unit extends Model
+class Section extends Model
 {
-    protected $fillable = ['department_id', 'section_id', 'name', 'code', 'description'];
+    protected $fillable = ['department_id', 'name', 'code', 'description'];
 
     public function department()
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function section()
+    public function units()
     {
-        return $this->belongsTo(Section::class);
+        return $this->hasMany(Unit::class);
     }
 
     public function users()
@@ -30,8 +30,8 @@ class Unit extends Model
 
     public function goals()
     {
-        return $this->belongsToMany(Goal::class, 'goal_assignments', 'unit_id', 'goal_id')
-            ->wherePivotNotNull('unit_id')
+        return $this->belongsToMany(Goal::class, 'goal_assignments', 'section_id', 'goal_id')
+            ->wherePivotNotNull('section_id')
             ->distinct()
             ->withTimestamps();
     }

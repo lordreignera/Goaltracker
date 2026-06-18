@@ -4,51 +4,68 @@
 
     <style>
         :root {
-            --arm-maroon: #c43b3f;
-            --arm-maroon-dark: #a12d31;
-            --arm-maroon-soft: #e66b6f;
+            --arm-maroon: #c81936;
+            --arm-maroon-dark: #a80005;
+            --arm-maroon-soft: #d63d5b;
             --arm-gold: #f3b23a;
-            --arm-ink: #20242a;
-            --arm-muted: #66707e;
-            --arm-field: #eef3fb;
-            --arm-line: #dfe5ec;
-            --arm-page: #f6f4f2;
+            --arm-ink: #0f2237;
+            --arm-muted: #5f6f82;
+            --arm-field: #eaf2ff;
+            --arm-line: #d9e1ec;
+            --arm-page: #f4f6fb;
         }
 
         body {
             background:
-                linear-gradient(180deg, var(--arm-maroon) 0 10px, transparent 10px),
-                radial-gradient(circle at 15% 20%, rgba(196, 59, 63, .08), transparent 28%),
+                linear-gradient(90deg, rgba(200, 25, 54, .1), transparent 34%),
+                radial-gradient(circle at 11% 18%, rgba(200, 25, 54, .08), transparent 24%),
                 var(--arm-page);
         }
 
         .login-page {
             min-height: 100vh;
-            padding: 32px 16px;
+            padding: 42px 16px;
             color: var(--arm-ink);
         }
 
         .login-frame {
-            width: min(100%, 940px);
-            min-height: 660px;
+            width: min(100%, 1146px);
+            min-height: 548px;
             overflow: hidden;
-            border-radius: 18px;
+            border-radius: 24px;
             background: #fff;
-            box-shadow: 0 22px 60px rgba(30, 20, 20, .13);
+            border: 1px solid rgba(15, 34, 55, .07);
+            box-shadow: 0 30px 80px rgba(15, 34, 55, .12);
         }
 
         .brand-panel {
-            background: linear-gradient(155deg, rgba(196,59,63,0.94), rgba(196,59,63,0.9));
+            background: linear-gradient(145deg, var(--arm-maroon-dark), var(--arm-maroon));
             color: #fff;
-            padding: 30px;
+            padding: 44px;
             position: relative;
+            overflow: hidden;
         }
 
+        .brand-panel::before,
         .brand-panel::after {
             content: "";
             position: absolute;
-            inset: 0;
-            background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .16));
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .13);
+        }
+
+        .brand-panel::before {
+            width: 270px;
+            height: 270px;
+            right: -66px;
+            top: -90px;
+        }
+
+        .brand-panel::after {
+            width: 206px;
+            height: 206px;
+            left: -64px;
+            bottom: -84px;
         }
 
         .brand-inner {
@@ -58,23 +75,23 @@
         }
 
         .brand-mark {
-            width: 80px;
-            height: 80px;
-            border-radius: 10px;
+            width: 58px;
+            height: 58px;
+            border-radius: 12px;
             background: var(--arm-gold);
             color: #20312b;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 1.35rem;
             font-weight: 500;
             flex: 0 0 auto;
         }
 
         .brand-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 10px;
+            width: 58px;
+            height: 58px;
+            border-radius: 12px;
             background: #fff;
             object-fit: contain;
             padding: 7px;
@@ -82,59 +99,63 @@
         }
 
         .brand-title {
-            max-width: 100%;
+            max-width: 430px;
         }
 
         .brand-heading {
-            font-size: clamp(2.15rem, 4vw, 2.95rem);
-            line-height: 1.12;
+            font-size: clamp(2rem, 3.4vw, 2.9rem);
+            line-height: 1.08;
             letter-spacing: 0;
         }
 
         .brand-copy {
-            font-size: 1.16rem;
-            line-height: 1.7;
-            color: rgba(255, 255, 255, .84);
+            max-width: 430px;
+            font-size: 1.1rem;
+            line-height: 1.65;
+            color: rgba(255, 255, 255, .88);
         }
 
         .metric-tile {
-            height: 126px;
+            height: auto;
             border: 1px solid rgba(255, 255, 255, .24);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, .1);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
-            display: flex;
-            flex-direction: column;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, .12);
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
             overflow: hidden;
+            padding: 9px 13px !important;
+            margin-right: 8px;
+            margin-bottom: 8px;
         }
 
         .metric-value {
-            min-height: 38px;
-            font-size: 2rem;
+            min-height: 0;
+            font-size: .85rem;
             line-height: 1;
             font-weight: 800;
             white-space: nowrap;
         }
 
         .metric-label {
+            display: none;
             color: rgba(255, 255, 255, .76);
-            font-size: .82rem;
+            font-size: .8rem;
             font-weight: 700;
             line-height: 1.3;
         }
 
         .metric-value.word {
-            font-size: 1.55rem;
+            font-size: .85rem;
         }
 
         .form-panel {
-            padding: 44px 46px;
-            background: linear-gradient(180deg, #fff, #fbfcfd);
+            padding: 44px 36px;
+            background: #fff;
         }
 
         .login-form {
-            width: min(100%, 390px);
+            width: min(100%, 472px);
         }
 
         .login-kicker {
@@ -155,8 +176,8 @@
         }
 
         .form-control {
-            height: 56px;
-            border-radius: 9px;
+            height: 58px;
+            border-radius: 14px;
             background: var(--arm-field);
             border: 1px solid #d2d9e2;
             padding-inline: 17px;
@@ -195,8 +216,8 @@
         }
 
         .btn-maroon {
-            height: 60px;
-            border-radius: 9px;
+            height: 58px;
+            border-radius: 13px;
             background: linear-gradient(90deg, var(--arm-maroon-dark), var(--arm-maroon));
             border: 0;
             color: #fff;
@@ -228,7 +249,7 @@
 
         .btn-outline-maroon {
             min-height: 52px;
-            border-radius: 9px;
+            border-radius: 13px;
             border: 2px solid var(--arm-maroon);
             color: var(--arm-maroon);
             font-weight: 800;
@@ -251,7 +272,7 @@
 
             .brand-panel,
             .form-panel {
-                padding: 34px 24px;
+                padding: 34px 26px;
             }
         }
 
@@ -262,7 +283,7 @@
             }
 
             .login-frame {
-                border-radius: 14px;
+                border-radius: 18px;
             }
 
             .brand-panel,
@@ -299,7 +320,7 @@
             }
 
             .metric-tile {
-                height: 96px;
+                height: auto;
             }
 
             .metric-value {
@@ -343,20 +364,20 @@
                         </p>
                     </div>
 
-                    <div class="row g-3 mt-5">
-                        <div class="col-md-4">
+                    <div class="d-flex flex-wrap mt-4">
+                        <div>
                             <div class="metric-tile p-3">
                                 <div class="metric-value">90</div>
                                 <div class="metric-label mt-3">Day cycles</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div>
                             <div class="metric-tile p-3">
                                 <div class="metric-value">100%</div>
                                 <div class="metric-label mt-3">Objective weights</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div>
                             <div class="metric-tile p-3">
                                 <div class="metric-value word">Weekly</div>
                                 <div class="metric-label mt-3">Reviews</div>

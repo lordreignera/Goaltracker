@@ -31,7 +31,7 @@ return new class extends Migration
             $table->text('key_action_steps')->nullable();
             $table->string('primary_metric')->nullable();
             $table->date('deadline')->nullable();
-            $table->enum('level', ['department', 'unit', 'individual'])->default('department');
+            $table->enum('level', ['department', 'section', 'unit', 'individual'])->default('department');
             $table->enum('status', ['draft', 'submitted', 'approved', 'in_progress', 'completed', 'archived'])->default('draft');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('approved_at')->nullable();
@@ -43,11 +43,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('goal_id')->constrained()->cascadeOnDelete();
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('section_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('unit_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->timestamps();
 
-            $table->index(['department_id', 'unit_id']);
+            $table->index(['department_id', 'section_id', 'unit_id']);
             $table->index(['user_id']);
         });
 
@@ -96,6 +97,7 @@ return new class extends Migration
             $table->foreignId('quarter_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('section_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('unit_id')->nullable()->constrained()->cascadeOnDelete();
             $table->text('goals_completed')->nullable();
             $table->text('goals_partially_completed')->nullable();

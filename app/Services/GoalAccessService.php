@@ -42,37 +42,65 @@ class GoalAccessService
             return $query;
         }
 
-        return $query->where(function (Builder $query) use ($user) {
-            $query->whereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
-                ->orWhereHas('assignments', function (Builder $query) use ($user) {
-                    $query->where('department_id', $user->department_id)
-                    ->where(function (Builder $query) use ($user) {
-                        $query->whereNull('unit_id');
+        $departmentIds = $user->accessibleDepartmentIds();
 
-                        if ($user->unit_id) {
-                            $query->orWhere('unit_id', $user->unit_id);
-                        }
-                    });
+        return $query->where(function (Builder $query) use ($user, $departmentIds) {
+            $query->whereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
+                ->orWhereHas('assignments', function (Builder $query) use ($user, $departmentIds) {
+                    $query->whereIn('department_id', $departmentIds)
+                        ->where(function (Builder $query) use ($user) {
+                            $query->whereNull('section_id')
+                                ->whereNull('unit_id');
+
+                            if ($user->section_id) {
+                                $query->orWhere(function (Builder $query) use ($user) {
+                                    $query->where('department_id', $user->department_id)
+                                        ->where('section_id', $user->section_id)
+                                        ->whereNull('unit_id');
+                                });
+                            }
+
+                            if ($user->unit_id) {
+                                $query->orWhere(function (Builder $query) use ($user) {
+                                    $query->where('department_id', $user->department_id)
+                                        ->where('unit_id', $user->unit_id);
+                                });
+                            }
+                        });
                 });
         });
     }
 
     private function belongsToUserDepartmentOrUnit(User $user, Goal $goal): bool
     {
-        if (! $user->department_id) {
+        $departmentIds = $user->accessibleDepartmentIds();
+
+        if (empty($departmentIds)) {
             return false;
         }
 
         return $goal->assignments()
-            ->where(function (Builder $query) use ($user) {
+            ->where(function (Builder $query) use ($user, $departmentIds) {
                 $query->where('user_id', $user->id)
-                    ->orWhere(function (Builder $query) use ($user) {
-                        $query->where('department_id', $user->department_id)
+                    ->orWhere(function (Builder $query) use ($user, $departmentIds) {
+                        $query->whereIn('department_id', $departmentIds)
                             ->where(function (Builder $query) use ($user) {
-                                $query->whereNull('unit_id');
+                                $query->whereNull('section_id')
+                                    ->whereNull('unit_id');
+
+                                if ($user->section_id) {
+                                    $query->orWhere(function (Builder $query) use ($user) {
+                                        $query->where('department_id', $user->department_id)
+                                            ->where('section_id', $user->section_id)
+                                            ->whereNull('unit_id');
+                                    });
+                                }
 
                                 if ($user->unit_id) {
-                                    $query->orWhere('unit_id', $user->unit_id);
+                                    $query->orWhere(function (Builder $query) use ($user) {
+                                        $query->where('department_id', $user->department_id)
+                                            ->where('unit_id', $user->unit_id);
+                                    });
                                 }
                             });
                     });

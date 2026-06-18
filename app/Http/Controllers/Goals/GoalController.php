@@ -8,6 +8,7 @@ use App\Http\Requests\Goals\UpdateGoalRequest;
 use App\Models\Department;
 use App\Models\Goal;
 use App\Models\Quarter;
+use App\Models\Section;
 use App\Models\Unit;
 use App\Services\GoalAccessService;
 use App\Services\GoalManagementService;
@@ -20,7 +21,7 @@ class GoalController extends Controller
         $user = $request->user();
 
         $goals = Goal::visibleTo($user)
-            ->with(['quarter', 'assignedDepartments', 'assignedUnits', 'objectives'])
+            ->with(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
 
@@ -33,18 +34,20 @@ class GoalController extends Controller
             })
             ->when($request->filled('quarter_id'), fn ($query) => $query->where('quarter_id', $request->quarter_id))
             ->when($request->filled('department_id'), fn ($query) => $query->whereHas('assignedDepartments', fn ($query) => $query->whereKey($request->department_id)))
+            ->when($request->filled('section_id'), fn ($query) => $query->whereHas('assignedSections', fn ($query) => $query->whereKey($request->section_id)))
             ->when($request->filled('unit_id'), fn ($query) => $query->whereHas('assignedUnits', fn ($query) => $query->whereKey($request->unit_id)))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        [$departments, $units] = $this->organizationOptions($user);
+        [$departments, $sections, $units] = $this->organizationOptions($user);
 
         return view('goals.index', [
             'goals' => $goals,
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'departments' => $departments,
+            'sections' => $sections,
             'units' => $units,
             'canCreateGoals' => $user->canManageGoals(),
         ]);
@@ -54,11 +57,12 @@ class GoalController extends Controller
     {
         abort_unless($request->user()->canManageGoals(), 403);
 
-        [$departments, $units] = $this->organizationOptions($request->user());
+        [$departments, $sections, $units] = $this->organizationOptions($request->user());
 
         return view('goals.create', [
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'departments' => $departments,
+            'sections' => $sections,
             'units' => $units,
         ]);
     }
@@ -84,6 +88,7 @@ class GoalController extends Controller
             'goal' => $goal->load([
                 'quarter',
                 'assignedDepartments',
+                'assignedSections',
                 'assignedUnits',
                 'objectives.weeklyUpdates.reviews',
             ]),
@@ -96,12 +101,13 @@ class GoalController extends Controller
     {
         abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
 
-        [$departments, $units] = $this->organizationOptions($request->user());
+        [$departments, $sections, $units] = $this->organizationOptions($request->user());
 
         return view('goals.edit', [
-            'goal' => $goal->load(['quarter', 'assignedDepartments', 'assignedUnits', 'objectives']),
+            'goal' => $goal->load(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives']),
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'departments' => $departments,
+            'sections' => $sections,
             'units' => $units,
         ]);
     }
@@ -164,7 +170,8 @@ class GoalController extends Controller
         if ($user->isAdmin()) {
             return [
                 Department::orderBy('name')->get(),
-                Unit::with('department')->orderBy('name')->get(),
+                Section::with('department')->orderBy('name')->get(),
+                Unit::with(['department', 'section'])->orderBy('name')->get(),
             ];
         }
 
@@ -172,12 +179,19 @@ class GoalController extends Controller
             ->orderBy('name')
             ->get();
 
-        $units = Unit::with('department')
+        $sections = Section::with('department')
             ->where('department_id', $user->department_id)
+            ->when($user->section_id, fn ($query) => $query->whereKey($user->section_id))
+            ->orderBy('name')
+            ->get();
+
+        $units = Unit::with(['department', 'section'])
+            ->where('department_id', $user->department_id)
+            ->when($user->section_id, fn ($query) => $query->where('section_id', $user->section_id))
             ->when($user->unit_id, fn ($query) => $query->whereKey($user->unit_id))
             ->orderBy('name')
             ->get();
 
-        return [$departments, $units];
+        return [$departments, $sections, $units];
     }
 }

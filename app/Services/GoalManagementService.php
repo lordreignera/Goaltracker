@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Goal;
+use App\Models\Section;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class GoalManagementService
 
         $this->validateObjectiveWeights($data['objectives']);
 
-        [$departmentIds, $unitIds] = $this->assignmentIds($data);
+        [$departmentIds, $sectionIds, $unitIds] = $this->assignmentIds($data);
 
         $goal = new Goal([
             'quarter_id' => $data['quarter_id'],
@@ -35,10 +36,10 @@ class GoalManagementService
             'status' => 'draft',
         ]);
 
-        DB::transaction(function () use ($goal, $data, $departmentIds, $unitIds) {
+        DB::transaction(function () use ($goal, $data, $departmentIds, $sectionIds, $unitIds) {
             $goal->save();
 
-            $this->syncAssignments($goal, $departmentIds->all(), $unitIds->all());
+            $this->syncAssignments($goal, $departmentIds->all(), $sectionIds->all(), $unitIds->all());
 
             foreach ($data['objectives'] as $objective) {
                 $goal->objectives()->create($objective + ['status' => 'pending']);
@@ -54,7 +55,7 @@ class GoalManagementService
 
         $this->validateObjectiveWeights($data['objectives']);
 
-        [$departmentIds, $unitIds] = $this->assignmentIds($data);
+        [$departmentIds, $sectionIds, $unitIds] = $this->assignmentIds($data);
 
         $keptObjectiveIds = collect($data['objectives'])
             ->pluck('id')
@@ -62,7 +63,7 @@ class GoalManagementService
             ->map(fn ($id) => (int) $id)
             ->values();
 
-        DB::transaction(function () use ($goal, $data, $departmentIds, $unitIds, $keptObjectiveIds) {
+        DB::transaction(function () use ($goal, $data, $departmentIds, $sectionIds, $unitIds, $keptObjectiveIds) {
             $goal->update([
                 'quarter_id' => $data['quarter_id'],
                 'title' => $data['title'],
@@ -77,7 +78,7 @@ class GoalManagementService
                 'level' => $data['level'],
             ]);
 
-            $this->syncAssignments($goal, $departmentIds->all(), $unitIds->all());
+            $this->syncAssignments($goal, $departmentIds->all(), $sectionIds->all(), $unitIds->all());
 
             $goal->objectives()
                 ->whereNotIn('id', $keptObjectiveIds)
@@ -137,25 +138,41 @@ class GoalManagementService
             ->unique()
             ->values();
 
-        return [$departmentIds, $unitIds];
+        $sectionIds = collect($data['section_ids'] ?? [])
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        return [$departmentIds, $sectionIds, $unitIds];
     }
 
-    private function syncAssignments(Goal $goal, array $departmentIds, array $unitIds): void
+    private function syncAssignments(Goal $goal, array $departmentIds, array $sectionIds, array $unitIds): void
     {
         $goal->assignments()->delete();
 
-        $units = Unit::whereIn('id', $unitIds)->get(['id', 'department_id']);
+        $units = Unit::whereIn('id', $unitIds)->get(['id', 'department_id', 'section_id']);
+        $sections = Section::whereIn('id', $sectionIds)->get(['id', 'department_id']);
         $unitDepartmentIds = $units->pluck('department_id')->unique();
+        $sectionDepartmentIds = $sections->pluck('department_id')->unique();
 
-        foreach (collect($departmentIds)->diff($unitDepartmentIds) as $departmentId) {
+        foreach (collect($departmentIds)->diff($unitDepartmentIds)->diff($sectionDepartmentIds) as $departmentId) {
             $goal->assignments()->create([
                 'department_id' => $departmentId,
             ]);
         }
 
+        $sections->each(function (Section $section) use ($goal) {
+            $goal->assignments()->create([
+                'department_id' => $section->department_id,
+                'section_id' => $section->id,
+            ]);
+        });
+
         $units->each(function (Unit $unit) use ($goal) {
             $goal->assignments()->create([
                 'department_id' => $unit->department_id,
+                'section_id' => $unit->section_id,
                 'unit_id' => $unit->id,
             ]);
         });

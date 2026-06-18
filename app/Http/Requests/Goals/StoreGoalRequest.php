@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Goals;
 
 use App\Models\Quarter;
+use App\Models\Section;
 use App\Models\Unit;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -22,6 +23,8 @@ class StoreGoalRequest extends FormRequest
             'quarter_id' => ['required', 'exists:quarters,id'],
             'department_ids' => ['required', 'array', 'min:1'],
             'department_ids.*' => ['integer', 'exists:departments,id'],
+            'section_ids' => ['nullable', 'array'],
+            'section_ids.*' => ['integer', 'exists:sections,id'],
             'unit_ids' => ['nullable', 'array'],
             'unit_ids.*' => ['integer', 'exists:units,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -34,7 +37,7 @@ class StoreGoalRequest extends FormRequest
             'key_action_steps.*' => ['string'],
             'primary_metric' => ['required', 'string', 'max:255'],
             'deadline' => ['required', 'date'],
-            'level' => ['required', 'in:department,unit,individual'],
+            'level' => ['required', 'in:department,section,unit,individual'],
             'objectives' => ['required', 'array', 'min:1'],
             'objectives.*.title' => ['required', 'string', 'max:255'],
             'objectives.*.specific_output' => ['required', 'string'],
@@ -65,6 +68,26 @@ class StoreGoalRequest extends FormRequest
                     $validator->errors()->add('department_ids', 'You can only assign goals to your own department.');
                 }
 
+                $sectionIds = collect($this->input('section_ids', []))
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
+
+                if ($user->section_id && $sectionIds->isNotEmpty() && ($sectionIds->count() !== 1 || $sectionIds->first() !== (int) $user->section_id)) {
+                    $validator->errors()->add('section_ids', 'You can only assign goals to your own section.');
+                }
+
+                if ($sectionIds->isNotEmpty()) {
+                    $validSections = Section::whereIn('id', $sectionIds->all())
+                        ->where('department_id', $user->department_id)
+                        ->count();
+
+                    if ($validSections !== $sectionIds->count()) {
+                        $validator->errors()->add('section_ids', 'Selected sections must belong to your department.');
+                    }
+                }
+
                 $unitIds = collect($this->input('unit_ids', []))
                     ->filter()
                     ->map(fn ($id) => (int) $id)
@@ -83,6 +106,7 @@ class StoreGoalRequest extends FormRequest
 
                 $validUnits = Unit::whereIn('id', $unitIds->all())
                     ->where('department_id', $user->department_id)
+                    ->when($user->section_id, fn ($query) => $query->where('section_id', $user->section_id))
                     ->count();
 
                 if ($validUnits !== $unitIds->count()) {

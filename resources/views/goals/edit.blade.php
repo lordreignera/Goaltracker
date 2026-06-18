@@ -40,6 +40,7 @@
 
     @php
         $selectedDepartments = old('department_ids', $goal->assignedDepartments->pluck('id')->all());
+        $selectedSections = old('section_ids', $goal->assignedSections->pluck('id')->all());
         $selectedUnits = old('unit_ids', $goal->assignedUnits->pluck('id')->all());
         $oldObjectives = old('objectives', $goal->objectives->map(function ($objective) {
             return [
@@ -88,18 +89,27 @@
                 <small class="text-muted">Hold Ctrl to select more than one.</small>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Units</label>
-                <select class="form-select" name="unit_ids[]" multiple size="5">
-                    @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" @selected(in_array($unit->id, $selectedUnits))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->name }}</option>
+                <label class="form-label fw-semibold">Sections</label>
+                <select class="form-select mb-2" name="section_ids[]" multiple size="5">
+                    @foreach ($sections as $section)
+                        <option value="{{ $section->id }}" @selected(in_array($section->id, $selectedSections))>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
                     @endforeach
                 </select>
-                <small class="text-muted">Leave empty for department-wide assignment.</small>
+                <small class="text-muted d-block mb-2">Select sections for section-wide goals.</small>
+
+                <label class="form-label fw-semibold">Lower Units</label>
+                <select class="form-select" name="unit_ids[]" multiple size="5">
+                    @foreach ($units as $unit)
+                        <option value="{{ $unit->id }}" @selected(in_array($unit->id, $selectedUnits))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</option>
+                    @endforeach
+                </select>
+                <small class="text-muted">Leave sections and units empty for department-wide assignment.</small>
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Goal Level</label>
                 <select class="form-select" name="level" required>
                     <option value="department" @selected(old('level', $goal->level) === 'department')>Department</option>
+                    <option value="section" @selected(old('level', $goal->level) === 'section')>Section</option>
                     <option value="unit" @selected(old('level', $goal->level) === 'unit')>Unit</option>
                     <option value="individual" @selected(old('level', $goal->level) === 'individual')>Individual</option>
                 </select>

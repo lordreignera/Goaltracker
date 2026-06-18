@@ -80,6 +80,14 @@
             <form method="post" action="{{ route('users.management.update', $editUser) }}">
                 @csrf
                 @method('PUT')
+                @php
+                    $selectedDepartmentIds = collect(old('department_ids', $editUser->accessibleDepartments->pluck('id')->all()))
+                        ->push($editUser->department_id)
+                        ->filter()
+                        ->map(fn ($id) => (int) $id)
+                        ->unique()
+                        ->all();
+                @endphp
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label small fw-semibold">First Name</label>
@@ -98,10 +106,19 @@
                         <input class="form-control" name="phone_number" value="{{ old('phone_number', $editUser->phone_number) }}" required>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small fw-semibold">Department</label>
+                        <label class="form-label small fw-semibold">Primary Department</label>
                         <select class="form-select" name="department_id" required>
                             @foreach ($departments as $department)
                                 <option value="{{ $department->id }}" @selected($editUser->department_id === $department->id)>{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Section</label>
+                        <select class="form-select" name="section_id">
+                            <option value="">No section</option>
+                            @foreach ($sections as $section)
+                                <option value="{{ $section->id }}" @selected($editUser->section_id === $section->id)>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -110,7 +127,7 @@
                         <select class="form-select" name="unit_id">
                             <option value="">No unit</option>
                             @foreach ($units as $unit)
-                                <option value="{{ $unit->id }}" @selected($editUser->unit_id === $unit->id)>{{ $unit->department->name ?? 'Department' }} - {{ $unit->name }}</option>
+                                <option value="{{ $unit->id }}" @selected($editUser->unit_id === $unit->id)>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -127,6 +144,15 @@
                             <input class="form-check-input" type="checkbox" name="is_active" value="1" @checked($editUser->is_active)>
                             <span class="form-check-label">Active user</span>
                         </label>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Departments This User Can Access</label>
+                        <select class="form-select" name="department_ids[]" multiple size="6">
+                            @foreach ($departments as $department)
+                                <option value="{{ $department->id }}" @selected(in_array($department->id, $selectedDepartmentIds, true))>{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">The primary department is always included. Hold Ctrl to grant more departments.</small>
                     </div>
                     <div class="col-12">
                         <button class="btn btn-maroon">Save User Changes</button>
@@ -170,7 +196,10 @@
                         </td>
                         <td>
                             <div>{{ $user->department?->name ?? 'Not selected' }}</div>
-                            <small class="text-muted">{{ $user->unit?->name ?? 'No unit' }}</small>
+                            <small class="text-muted d-block">{{ $user->section?->name ?? 'No section' }} / {{ $user->unit?->name ?? 'No unit' }}</small>
+                            @if ($user->accessibleDepartments->isNotEmpty())
+                                <small class="text-muted d-block">Access: {{ $user->accessibleDepartments->pluck('name')->join(', ') }}</small>
+                            @endif
                         </td>
                         <td>
                             <span class="badge text-bg-light border">{{ $user->requested_role }}</span>
