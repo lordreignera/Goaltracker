@@ -71,7 +71,7 @@
                 <small class="text-muted">Hold Ctrl to select more than one.</small>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Units</label>
+                <label class="form-label fw-semibold">Sections</label>
                 <select class="form-select mb-2" name="section_ids[]" multiple size="5">
                     @foreach ($sections as $section)
                         <option value="{{ $section->id }}" @selected(in_array($section->id, old('section_ids', [])))>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>

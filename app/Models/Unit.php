@@ -23,6 +23,11 @@ class Unit extends Model
         return $this->hasMany(User::class);
     }
 
+    public function positions()
+    {
+        return $this->hasMany(Position::class);
+    }
+
     public function goalAssignments()
     {
         return $this->hasMany(GoalAssignment::class);

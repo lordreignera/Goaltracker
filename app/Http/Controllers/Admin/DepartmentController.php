@@ -14,7 +14,7 @@ class DepartmentController extends Controller
 
         return view('departments.index', [
             'nextDepartmentCode' => $this->generateDepartmentCode(),
-            'departments' => Department::withCount(['units', 'users', 'goals'])
+            'departments' => Department::withCount(['sections', 'users', 'goals'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     $query->where(function ($query) use ($request) {
                         $query->where('name', 'like', '%'.$request->search.'%')
@@ -60,8 +60,8 @@ class DepartmentController extends Controller
     {
         abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
-        if ($department->units()->exists() || $department->users()->exists() || $department->goals()->exists()) {
-            return back()->withErrors(['department' => 'This department has units, users, or goals and cannot be deleted.']);
+        if ($department->sections()->exists() || $department->users()->exists() || $department->goals()->exists()) {
+            return back()->withErrors(['department' => 'This department has sections, users, or goals and cannot be deleted.']);
         }
 
         $department->delete();

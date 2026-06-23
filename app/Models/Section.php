@@ -18,6 +18,11 @@ class Section extends Model
         return $this->hasMany(Unit::class);
     }
 
+    public function positions()
+    {
+        return $this->hasMany(Position::class);
+    }
+
     public function users()
     {
         return $this->hasMany(User::class);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,14 +17,31 @@
 
         <style>
             :root {
-                --arm-maroon: #1f2329;
-                --arm-maroon-dark: #0f1115;
-                --arm-maroon-soft: #4b5563;
+                --arm-maroon: #111827;
+                --arm-maroon-dark: #000000;
+                --arm-maroon-soft: #e5e7eb;
                 --arm-gold: #f3f4f6;
                 --arm-bg: #f6f7f9;
                 --arm-ink: #171a1f;
                 --arm-muted: #6b7280;
                 --arm-line: #e5e7eb;
+                --arm-surface: #ffffff;
+                --arm-surface-soft: #fafbfc;
+                --arm-topbar: rgba(255, 255, 255, .92);
+                --arm-field: #ffffff;
+                --arm-table-divider: #f0f2f5;
+            }
+
+            html[data-theme="dark"] {
+                --arm-bg: #0f1217;
+                --arm-ink: #f3f4f6;
+                --arm-muted: #a4adbb;
+                --arm-line: #29313d;
+                --arm-surface: #171b22;
+                --arm-surface-soft: #1e242d;
+                --arm-topbar: rgba(23, 27, 34, .92);
+                --arm-field: #11161d;
+                --arm-table-divider: #26303c;
             }
 
             body {
@@ -41,18 +58,18 @@
 
             .admin-sidebar {
                 background:
-                    linear-gradient(180deg, #15171b, #20242a 58%, #111318),
-                    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+                    linear-gradient(180deg, #ffffff, #f3f4f6 58%, #e5e7eb),
+                    linear-gradient(180deg, rgba(0,0,0,.02), rgba(0,0,0,.01));
                 background-size: auto;
                 background-position: center;
-                color: #f8fafc;
+                color: #111827;
                 position: sticky;
                 top: 0;
                 height: 100vh;
                 padding: 24px 18px;
                 overflow-y: auto;
                 backdrop-filter: none;
-                border-right: 1px solid #2f343b;
+                border-right: 1px solid #d1d5db;
             }
 
             .brand-tile {
@@ -60,7 +77,7 @@
                 height: 52px;
                 border-radius: 10px;
                 background: #fff;
-                color: #111318;
+                color: #111827;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -91,7 +108,7 @@
                 min-height: 44px;
                 padding: 10px 12px;
                 border-radius: 8px;
-                color: rgba(248, 250, 252, .72);
+                color: rgba(17, 24, 39, .78);
                 text-decoration: none;
                 font-weight: 700;
                 font-size: .94rem;
@@ -99,15 +116,15 @@
 
             .sidebar-link:hover,
             .sidebar-link.active {
-                color: #111318;
-                background: #f3f4f6;
+                color: #000;
+                background: rgba(255, 255, 255, .78);
             }
 
             .sidebar-icon {
                 width: 25px;
                 height: 25px;
                 border-radius: 7px;
-                background: rgba(255, 255, 255, .09);
+                background: rgba(17, 24, 39, .08);
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -116,12 +133,12 @@
 
             .sidebar-link:hover .sidebar-icon,
             .sidebar-link.active .sidebar-icon {
-                background: #111318;
+                background: #111827;
                 color: #fff;
             }
 
             .sidebar-section {
-                color: rgba(248, 250, 252, .48);
+                color: rgba(17, 24, 39, .58);
                 font-size: .72rem;
                 font-weight: 800;
                 text-transform: uppercase;
@@ -141,7 +158,7 @@
 
             .admin-topbar {
                 min-height: 74px;
-                background: rgba(255, 255, 255, .92);
+                background: var(--arm-topbar);
                 border-bottom: 1px solid var(--arm-line);
                 display: flex;
                 align-items: center;
@@ -163,7 +180,7 @@
             .user-pill {
                 border: 1px solid var(--arm-line);
                 border-radius: 999px;
-                background: #fff;
+                background: var(--arm-surface);
                 padding: 8px 12px;
                 display: flex;
                 align-items: center;
@@ -174,7 +191,7 @@
                 width: 34px;
                 height: 34px;
                 border-radius: 50%;
-                background: #111318;
+                background: #111827;
                 color: #fff;
                 display: inline-flex;
                 align-items: center;
@@ -194,9 +211,89 @@
             .logout-button {
                 border: 0;
                 background: transparent;
-                color: #111318;
+                color: var(--arm-ink);
                 font-weight: 800;
                 padding: 0;
+            }
+
+            .theme-toggle {
+                border: 1px solid var(--arm-line);
+                border-radius: 999px;
+                background: var(--arm-surface);
+                color: var(--arm-ink);
+                min-height: 38px;
+                padding: 7px 12px;
+                font-weight: 800;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .theme-toggle:hover,
+            .theme-toggle:focus {
+                background: var(--arm-surface-soft);
+            }
+
+            .notification-button {
+                width: 40px;
+                height: 40px;
+                border: 1px solid var(--arm-line);
+                border-radius: 999px;
+                background: var(--arm-surface);
+                color: var(--arm-ink);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                font-weight: 900;
+                position: relative;
+            }
+
+            .notification-button:hover,
+            .notification-button:focus {
+                background: var(--arm-surface-soft);
+            }
+
+            .notification-count {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                min-width: 19px;
+                height: 19px;
+                border-radius: 999px;
+                background: #dc3545;
+                color: #fff;
+                border: 2px solid var(--arm-topbar);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: .68rem;
+                line-height: 1;
+                font-weight: 900;
+                padding: 0 5px;
+            }
+
+            .notification-menu {
+                width: min(92vw, 360px);
+                padding: 0;
+                border-color: var(--arm-line);
+                background: var(--arm-surface);
+                color: var(--arm-ink);
+                box-shadow: 0 18px 48px rgba(17, 24, 39, .14);
+            }
+
+            .notification-item {
+                display: block;
+                padding: 12px 14px;
+                color: var(--arm-ink);
+                text-decoration: none;
+                border-top: 1px solid var(--arm-line);
+            }
+
+            .notification-item:hover,
+            .notification-item:focus {
+                background: var(--arm-surface-soft);
+                color: var(--arm-ink);
             }
 
             .mobile-menu {
@@ -210,7 +307,7 @@
             .admin-content .table-responsive {
                 border: 1px solid var(--arm-line);
                 border-radius: 12px;
-                background: #fff;
+                background: var(--arm-surface);
                 overflow: auto;
             }
 
@@ -228,12 +325,12 @@
             }
 
             .admin-content .table > :not(caption) > * > *:not(:last-child) {
-                border-right: 1px solid #f0f2f5;
+                border-right: 1px solid var(--arm-table-divider);
             }
 
             .admin-content .table thead th {
-                background: #fff;
-                color: #1f2329;
+                background: var(--arm-surface);
+                color: var(--arm-ink);
                 font-size: .86rem;
                 font-weight: 800;
                 letter-spacing: 0;
@@ -242,12 +339,12 @@
             }
 
             .admin-content .table tbody tr {
-                background: #fff;
+                background: var(--arm-surface);
                 transition: background-color .16s ease;
             }
 
             .admin-content .table tbody tr:hover {
-                background: #fafbfc;
+                background: var(--arm-surface-soft);
             }
 
             .admin-content .table tbody tr:last-child > * {
@@ -313,7 +410,7 @@
             .admin-content .btn-outline-secondary,
             .admin-content .btn-outline-dark,
             .admin-content .btn-outline-danger {
-                background: #fff;
+                background: var(--arm-surface);
             }
 
             .admin-content .btn-outline-secondary {
@@ -334,7 +431,70 @@
             .admin-content .btn-outline-success {
                 color: #147a48;
                 border-color: #198754;
-                background: #fff;
+                background: var(--arm-surface);
+            }
+
+            .admin-content .form-control,
+            .admin-content .form-select,
+            .admin-content textarea.form-control {
+                background-color: var(--arm-field);
+                border-color: var(--arm-line);
+                color: var(--arm-ink);
+            }
+
+            .admin-content .form-control:focus,
+            .admin-content .form-select:focus,
+            .admin-content textarea.form-control:focus {
+                background-color: var(--arm-field);
+                border-color: #6b7280;
+                color: var(--arm-ink);
+                box-shadow: 0 0 0 .2rem rgba(107, 114, 128, .18);
+            }
+
+            .admin-content .form-control::placeholder,
+            .admin-content textarea.form-control::placeholder {
+                color: var(--arm-muted);
+            }
+
+            html[data-theme="dark"] .admin-content .card,
+            html[data-theme="dark"] .admin-content .modal-content,
+            html[data-theme="dark"] .admin-content .dropdown-menu,
+            html[data-theme="dark"] .admin-content .dashboard-card,
+            html[data-theme="dark"] .admin-content .stat-card,
+            html[data-theme="dark"] .admin-content .admin-panel,
+            html[data-theme="dark"] .admin-content .user-panel,
+            html[data-theme="dark"] .admin-content .goal-panel,
+            html[data-theme="dark"] .admin-content .goal-filter {
+                background: var(--arm-surface) !important;
+                border-color: var(--arm-line) !important;
+                color: var(--arm-ink) !important;
+                box-shadow: none !important;
+            }
+
+            html[data-theme="dark"] .admin-content .text-muted,
+            html[data-theme="dark"] .admin-topbar .text-muted {
+                color: var(--arm-muted) !important;
+            }
+
+            html[data-theme="dark"] .admin-content .table-light,
+            html[data-theme="dark"] .admin-content .table-light > * > * {
+                background: var(--arm-surface-soft) !important;
+                color: var(--arm-ink) !important;
+            }
+
+            html[data-theme="dark"] .admin-content .text-bg-light {
+                background-color: var(--arm-surface-soft) !important;
+                color: var(--arm-ink) !important;
+                border-color: var(--arm-line) !important;
+            }
+
+            html[data-theme="dark"] .admin-content .border,
+            html[data-theme="dark"] .admin-content .border-bottom {
+                border-color: var(--arm-line) !important;
+            }
+
+            html[data-theme="dark"] .admin-content .progress {
+                background-color: #2a3340;
             }
 
             .admin-content .btn-outline-success:hover,
@@ -565,12 +725,23 @@
             $companySettings = \App\Models\CompanySetting::current();
             $currentUser = Auth::user();
             $canManageDepartments = $currentUser->isAdmin() || $currentUser->can('manage departments');
+            $canManageSections = $currentUser->isAdmin() || $currentUser->can('manage sections');
             $canManageUnits = $currentUser->isAdmin() || $currentUser->can('manage units');
             $canManageUsers = $currentUser->isAdmin() || $currentUser->can('manage users');
             $canManageQuarters = $currentUser->isAdmin() || $currentUser->can('manage quarters');
             $canManageRoles = $currentUser->isAdmin();
             $canManageSettings = $currentUser->isAdmin();
             $canManageAdministration = $currentUser->canManageAdministration();
+            $pendingRegistrationCount = $canManageUsers
+                ? \App\Models\User::where('approval_status', 'pending')->count()
+                : 0;
+            $recentPendingUsers = $canManageUsers
+                ? \App\Models\User::with('department')
+                    ->where('approval_status', 'pending')
+                    ->latest()
+                    ->take(5)
+                    ->get()
+                : collect();
         @endphp
 
         <div class="sidebar-backdrop" data-sidebar-close></div>
@@ -621,6 +792,11 @@
                                 <span class="sidebar-icon">DP</span> Departments
                             </a>
                         @endif
+                        @if ($canManageSections)
+                            <a class="sidebar-link {{ request()->routeIs('sections.*') ? 'active' : '' }}" href="{{ route('sections.index') }}">
+                                <span class="sidebar-icon">SC</span> Sections
+                            </a>
+                        @endif
                         @if ($canManageUnits)
                             <a class="sidebar-link {{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
                                 <span class="sidebar-icon">U</span> Units
@@ -660,7 +836,41 @@
                     </div>
 
                     <div class="topbar-actions d-flex align-items-center gap-3">
-                        <a class="text-decoration-none fw-bold" style="color: #111318;" href="{{ route('profile.show') }}">Profile</a>
+                        @if ($canManageUsers)
+                            <div class="dropdown">
+                                <button class="notification-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Registration notifications">
+                                    &#128276;
+                                    @if ($pendingRegistrationCount > 0)
+                                        <span class="notification-count">{{ $pendingRegistrationCount > 9 ? '9+' : $pendingRegistrationCount }}</span>
+                                    @endif
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end notification-menu">
+                                    <div class="p-3">
+                                        <div class="fw-bold">Registration Requests</div>
+                                        <div class="text-muted small">{{ $pendingRegistrationCount }} waiting approval</div>
+                                    </div>
+
+                                    @forelse ($recentPendingUsers as $pendingUser)
+                                        <a class="notification-item" href="{{ route('users.management.index', ['status' => 'pending', 'edit_user' => $pendingUser->id]) }}">
+                                            <div class="fw-bold">{{ $pendingUser->name }}</div>
+                                            <div class="text-muted small">{{ $pendingUser->email }}</div>
+                                            <div class="text-muted small">{{ $pendingUser->department?->name ?? 'No department selected' }}</div>
+                                        </a>
+                                    @empty
+                                        <div class="px-3 py-4 text-muted small border-top">No new registration requests.</div>
+                                    @endforelse
+
+                                    <div class="p-2 border-top">
+                                        <a class="btn btn-sm btn-maroon w-100" href="{{ route('users.management.index', ['status' => 'pending']) }}">View Approvals</a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark mode">
+                            <span data-theme-icon>L</span>
+                            <span data-theme-label>Light</span>
+                        </button>
+                        <a class="text-decoration-none fw-bold" style="color: var(--arm-ink);" href="{{ route('profile.show') }}">Profile</a>
                         <div class="user-pill">
                             <span class="avatar-dot">{{ strtoupper(substr($currentUser->name, 0, 1)) }}</span>
                             <div>
@@ -689,6 +899,31 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
+            const themeKey = 'smart-goals-theme';
+            const root = document.documentElement;
+
+            function applyTheme(theme) {
+                const nextTheme = theme === 'dark' ? 'dark' : 'light';
+                root.dataset.theme = nextTheme;
+                localStorage.setItem(themeKey, nextTheme);
+
+                document.querySelectorAll('[data-theme-label]').forEach((label) => {
+                    label.textContent = nextTheme === 'dark' ? 'Dark' : 'Light';
+                });
+
+                document.querySelectorAll('[data-theme-icon]').forEach((icon) => {
+                    icon.textContent = nextTheme === 'dark' ? 'D' : 'L';
+                });
+            }
+
+            applyTheme(localStorage.getItem(themeKey) || 'light');
+
+            document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    applyTheme(root.dataset.theme === 'dark' ? 'light' : 'dark');
+                });
+            });
+
             document.querySelectorAll('[data-sidebar-open]').forEach((button) => {
                 button.addEventListener('click', () => document.body.classList.add('sidebar-open'));
             });

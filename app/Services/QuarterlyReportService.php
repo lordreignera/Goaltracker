@@ -16,6 +16,7 @@ class QuarterlyReportService
             ->where('quarter_id', $quarter->id)
             ->with([
                 'assignedDepartments',
+                'assignedSections',
                 'assignedUnits',
                 'objectives.weeklyUpdates.user',
                 'objectives.weeklyUpdates.reviews.supervisor',
@@ -49,7 +50,8 @@ class QuarterlyReportService
         return [
             'title' => $goal->title,
             'department' => $goal->assignedDepartments->pluck('name')->unique()->join(', '),
-            'unit' => $goal->assignedUnits->pluck('name')->unique()->join(', ') ?: 'Department-wide',
+            'section' => $goal->assignedSections->pluck('name')->unique()->join(', ') ?: 'Department-wide',
+            'unit' => $goal->assignedUnits->pluck('name')->unique()->join(', ') ?: 'All units',
             'progress' => $goal->progress(),
             'objectives_count' => $goal->objectives->count(),
             'approved_weeks' => $goal->objectives->sum(fn ($objective) => $objective->approvedReportingWeeksCount()),

@@ -39,6 +39,7 @@ class User extends Authenticatable
         'department_id',
         'section_id',
         'unit_id',
+        'position_id',
         'supervisor_id',
         'role',
         'requested_role',
@@ -119,6 +120,11 @@ class User extends Authenticatable
     public function section()
     {
         return $this->belongsTo(Section::class);
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
     }
 
     public function supervisor()

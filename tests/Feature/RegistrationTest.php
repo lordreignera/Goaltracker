@@ -42,7 +42,11 @@ class RegistrationTest extends TestCase
         }
 
         $department = Department::create(['name' => 'ICT Department']);
-        $unit = $department->units()->create(['name' => 'Software Development Unit']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
+        $position = $section->positions()->create([
+            'department_id' => $department->id,
+            'title' => 'Software Developer',
+        ]);
 
         $response = $this->post('/register', [
             'first_name' => 'Test',
@@ -50,7 +54,8 @@ class RegistrationTest extends TestCase
             'phone_number' => '+256700000000',
             'email' => 'test@example.com',
             'department_id' => $department->id,
-            'unit_id' => $unit->id,
+            'section_id' => $section->id,
+            'position_id' => $position->id,
             'requested_role' => 'Supervisor',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',
@@ -66,6 +71,8 @@ class RegistrationTest extends TestCase
         $this->assertSame('pending', $user->approval_status);
         $this->assertSame('Supervisor', $user->requested_role);
         $this->assertSame('Test User', $user->name);
+        $this->assertSame($position->id, $user->position_id);
+        $this->assertTrue($user->accessibleDepartments()->whereKey($department->id)->exists());
     }
 
     public function test_duplicate_email_and_phone_number_cannot_register(): void
@@ -75,7 +82,11 @@ class RegistrationTest extends TestCase
         }
 
         $department = Department::create(['name' => 'ICT Department']);
-        $unit = $department->units()->create(['name' => 'Software Development Unit']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
+        $position = $section->positions()->create([
+            'department_id' => $department->id,
+            'title' => 'Software Developer',
+        ]);
 
         User::factory()->create([
             'email' => 'taken@example.com',
@@ -88,7 +99,8 @@ class RegistrationTest extends TestCase
             'phone_number' => '+256700000000',
             'email' => 'taken@example.com',
             'department_id' => $department->id,
-            'unit_id' => $unit->id,
+            'section_id' => $section->id,
+            'position_id' => $position->id,
             'requested_role' => 'Staff',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',

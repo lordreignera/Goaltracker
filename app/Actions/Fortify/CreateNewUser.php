@@ -31,8 +31,18 @@ class CreateNewUser implements CreatesNewUsers
             'phone_number' => ['required', 'string', 'max:30', 'unique:users,phone_number'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'department_id' => ['required', 'exists:departments,id'],
-            'section_id' => ['nullable', 'exists:sections,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
+            'section_id' => [
+                'required',
+                Rule::exists('sections', 'id')
+                    ->where(fn ($query) => $query->where('department_id', $input['department_id'] ?? null)),
+            ],
+            'position_id' => [
+                'required',
+                Rule::exists('positions', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('department_id', $input['department_id'] ?? null)
+                        ->where('section_id', $input['section_id'] ?? null)),
+            ],
             'requested_role' => ['required', Rule::in($requestableRoles)],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
@@ -45,13 +55,16 @@ class CreateNewUser implements CreatesNewUsers
             'email' => $input['email'],
             'phone_number' => $input['phone_number'],
             'department_id' => $input['department_id'],
-            'section_id' => $input['section_id'] ?? null,
-            'unit_id' => $input['unit_id'] ?? null,
+            'section_id' => $input['section_id'],
+            'position_id' => $input['position_id'],
+            'unit_id' => null,
             'role' => 'staff',
             'requested_role' => $input['requested_role'],
             'approval_status' => 'pending',
             'password' => Hash::make($input['password']),
         ]);
+
+        $user->accessibleDepartments()->sync([(int) $input['department_id']]);
 
         return $user;
     }

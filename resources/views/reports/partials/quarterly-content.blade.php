@@ -54,7 +54,7 @@
             <div class="d-flex justify-content-between gap-2 mb-1">
                 <div>
                     <div class="fw-semibold">{{ $row['title'] }}</div>
-                    <div class="text-muted small">{{ $row['department'] }} / {{ $row['unit'] }} / {{ $row['approved_weeks'] }} of {{ $row['planned_weeks'] }} planned reports approved</div>
+                    <div class="text-muted small">{{ $row['department'] }} / {{ $row['section'] }} / {{ $row['unit'] }} / {{ $row['approved_weeks'] }} of {{ $row['planned_weeks'] }} planned reports approved</div>
                 </div>
                 <div class="fw-bold">{{ $row['progress'] }}%</div>
             </div>

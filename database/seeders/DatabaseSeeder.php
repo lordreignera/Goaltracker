@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\CompanySetting;
 use App\Models\Quarter;
 use App\Models\User;
+use App\Models\Position;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -191,6 +192,15 @@ class DatabaseSeeder extends Seeder
                         'code' => $this->unitCode($departmentIndex, $unitIndex + 1),
                         'description' => "Operational unit under {$sectionName}.",
                     ]);
+
+                    Position::updateOrCreate([
+                        'department_id' => $department->id,
+                        'section_id' => $section->id,
+                        'title' => $unitName,
+                    ], [
+                        'code' => $this->positionCode($departmentIndex, $unitIndex + 1),
+                        'description' => "Organogram position under {$sectionName}.",
+                    ]);
                 }
             }
 
@@ -285,5 +295,10 @@ class DatabaseSeeder extends Seeder
         $index = is_int($sectionIndex) ? $sectionIndex + 1 : crc32($sectionIndex) % 90 + 10;
 
         return 'S'.str_pad((string) $departmentIndex, 2, '0', STR_PAD_LEFT).str_pad((string) $index, 2, '0', STR_PAD_LEFT);
+    }
+
+    private function positionCode(int $departmentIndex, int $positionIndex): string
+    {
+        return 'P'.str_pad((string) $departmentIndex, 2, '0', STR_PAD_LEFT).str_pad((string) $positionIndex, 3, '0', STR_PAD_LEFT);
     }
 }

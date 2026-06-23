@@ -2,19 +2,33 @@
     @php
         $companySettings = \App\Models\CompanySetting::current();
 
-        $departmentUnits = collect([]);
+        $departmentSections = collect([]);
+        $sectionPositions = collect([]);
 
         if (isset($departments) && $departments->isNotEmpty()) {
-            $departmentUnits = $departments->mapWithKeys(function ($department) {
+            $departmentSections = $departments->mapWithKeys(function ($department) {
                 return [
-                    $department->id => $department->units->map(function ($unit) {
+                    $department->id => $department->sections->map(function ($section) {
                         return [
-                            'id' => $unit->id,
-                            'name' => $unit->name,
+                            'id' => $section->id,
+                            'name' => $section->name,
                         ];
                     })->values(),
                 ];
             });
+
+            $sectionPositions = $departments
+                ->flatMap(fn ($department) => $department->sections)
+                ->mapWithKeys(function ($section) {
+                    return [
+                        $section->id => $section->positions->map(function ($position) {
+                            return [
+                                'id' => $position->id,
+                                'title' => $position->title,
+                            ];
+                        })->values(),
+                    ];
+                });
         }
     @endphp
 
@@ -222,9 +236,16 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="unit_id" class="form-label fw-semibold">Unit</label>
-                            <select id="unit_id" class="form-select" name="unit_id">
+                            <label for="section_id" class="form-label fw-semibold">Section</label>
+                            <select id="section_id" class="form-select" name="section_id" required>
                                 <option value="">Select department first</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="position_id" class="form-label fw-semibold">Position</label>
+                            <select id="position_id" class="form-select" name="position_id" required>
+                                <option value="">Select section first</option>
                             </select>
                         </div>
 
@@ -279,44 +300,74 @@
     </div>
 
     <script>
-        const departmentUnits = @json($departmentUnits);
+        const departmentSections = @json($departmentSections);
+        const sectionPositions = @json($sectionPositions);
         const oldDepartmentId = @json((string) old('department_id', ''));
-        const oldUnitId = @json((string) old('unit_id', ''));
+        const oldSectionId = @json((string) old('section_id', ''));
+        const oldPositionId = @json((string) old('position_id', ''));
 
         const departmentSelect = document.getElementById('department_id');
-        const unitSelect = document.getElementById('unit_id');
+        const sectionSelect = document.getElementById('section_id');
+        const positionSelect = document.getElementById('position_id');
 
-        function refreshUnits() {
+        function refreshSections() {
             const selectedDepartment = departmentSelect.value;
-            const units = departmentUnits[selectedDepartment] || [];
+            const sections = departmentSections[selectedDepartment] || [];
 
-            unitSelect.innerHTML = '';
+            sectionSelect.innerHTML = '';
 
             const placeholder = document.createElement('option');
             placeholder.value = '';
-            placeholder.textContent = selectedDepartment ? 'Select unit' : 'Select department first';
-            unitSelect.appendChild(placeholder);
+            placeholder.textContent = selectedDepartment ? 'Select section' : 'Select department first';
+            sectionSelect.appendChild(placeholder);
 
-            units.forEach((unit) => {
+            sections.forEach((section) => {
                 const option = document.createElement('option');
-                option.value = unit.id;
-                option.textContent = unit.name;
+                option.value = section.id;
+                option.textContent = section.name;
 
-                if (String(unit.id) === oldUnitId) {
+                if (String(section.id) === oldSectionId) {
                     option.selected = true;
                 }
 
-                unitSelect.appendChild(option);
+                sectionSelect.appendChild(option);
+            });
+
+            refreshPositions();
+        }
+
+        function refreshPositions() {
+            const selectedSection = sectionSelect.value;
+            const positions = sectionPositions[selectedSection] || [];
+
+            positionSelect.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = selectedSection ? 'Select position' : 'Select section first';
+            positionSelect.appendChild(placeholder);
+
+            positions.forEach((position) => {
+                const option = document.createElement('option');
+                option.value = position.id;
+                option.textContent = position.title;
+
+                if (String(position.id) === oldPositionId) {
+                    option.selected = true;
+                }
+
+                positionSelect.appendChild(option);
             });
         }
 
-        if (departmentSelect && unitSelect) {
+        if (departmentSelect && sectionSelect && positionSelect) {
             if (oldDepartmentId) {
                 departmentSelect.value = oldDepartmentId;
             }
 
-            departmentSelect.addEventListener('change', refreshUnits);
-            refreshUnits();
+            departmentSelect.addEventListener('change', refreshSections);
+            sectionSelect.addEventListener('change', refreshPositions);
+            refreshSections();
         }
 
         document.querySelectorAll('[data-password-toggle]').forEach((button) => {

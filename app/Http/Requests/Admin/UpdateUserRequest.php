@@ -26,8 +26,18 @@ class UpdateUserRequest extends FormRequest
             'department_id' => ['required', 'exists:departments,id'],
             'department_ids' => ['nullable', 'array'],
             'department_ids.*' => ['integer', 'exists:departments,id'],
-            'section_id' => ['nullable', 'exists:sections,id'],
-            'unit_id' => ['nullable', 'exists:units,id'],
+            'section_id' => [
+                'nullable',
+                Rule::exists('sections', 'id')
+                    ->where(fn ($query) => $query->where('department_id', $this->input('department_id'))),
+            ],
+            'unit_id' => [
+                'nullable',
+                Rule::exists('units', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('department_id', $this->input('department_id'))
+                        ->when($this->filled('section_id'), fn ($query) => $query->where('section_id', $this->input('section_id')))),
+            ],
             'requested_role' => ['required', Rule::in($assignableRoles)],
             'is_active' => ['nullable', 'boolean'],
         ];

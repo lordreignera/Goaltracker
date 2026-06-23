@@ -13,6 +13,11 @@ class Department extends Model
         return $this->hasMany(Unit::class);
     }
 
+    public function positions()
+    {
+        return $this->hasMany(Position::class);
+    }
+
     public function sections()
     {
         return $this->hasMany(Section::class);

@@ -6,8 +6,9 @@
     <style>
         .dashboard-hero {
             border-radius: 16px;
-            background: linear-gradient(135deg, #171a1f, #343941);
-            color: #fff;
+            background: linear-gradient(135deg, #ffffff, #e5e7eb);
+            color: #111827;
+            border: 1px solid #d1d5db;
             padding: 28px;
             overflow: hidden;
         }
@@ -52,7 +53,7 @@
         }
 
         .progress-bar {
-            background: linear-gradient(90deg, #111318, #4b5563);
+            background: linear-gradient(90deg, #000000, #4b5563);
         }
 
         @media (max-width: 575.98px) {
@@ -85,7 +86,7 @@
             <div class="col-lg-8">
                 <span class="badge text-bg-light mb-3">90-day accountability cycle</span>
                 <h2 class="display-6 fw-bold mb-3">Track progress from staff goals to organization performance.</h2>
-                <p class="lead mb-0 opacity-75">Review active goals, pending approvals, and measurable progress across departments and units.</p>
+                <p class="lead mb-0 opacity-75">Review active goals, pending approvals, and measurable progress across departments, sections, and units.</p>
             </div>
             <div class="col-lg-4">
                 <div class="p-4 rounded-4" style="background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.22);">
@@ -138,7 +139,7 @@
         <div class="p-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
             <div>
                 <h2 class="h5 mb-1 fw-bold">Visible Goals</h2>
-                <div class="text-muted small">Goals filtered by your department, unit, and role access.</div>
+                <div class="text-muted small">Goals filtered by your department, section, unit, and role access.</div>
             </div>
             <a class="btn btn-sm btn-maroon" href="{{ route('goals.index') }}">Manage Goals</a>
         </div>
@@ -157,7 +158,7 @@
                         <td class="text-end"><a href="{{ route('goals.show', $goal) }}" class="btn btn-sm btn-outline-secondary">Open</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="text-muted p-4">No goals are visible for your department or unit yet.</td></tr>
+                    <tr><td colspan="4" class="text-muted p-4">No goals are visible for your department, section, or unit yet.</td></tr>
                 @endforelse
                 </tbody>
             </table>

@@ -80,7 +80,8 @@
                         <div class="text-muted">
                             {{ $goal->quarter->name }} /
                             {{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }} /
-                            {{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->join(', ') : 'Department-wide' }}
+                            {{ $goal->assignedSections->isNotEmpty() ? $goal->assignedSections->pluck('name')->unique()->join(', ') : 'Department-wide' }} /
+                            {{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->unique()->join(', ') : 'All units' }}
                         </div>
 
                         <div class="row g-3 mt-2">

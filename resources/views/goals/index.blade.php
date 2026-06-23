@@ -38,7 +38,7 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
             <h2 class="h5 fw-bold mb-1">All Visible Goals</h2>
-            <div class="text-muted small">Goals filtered by your department, unit, and role access.</div>
+            <div class="text-muted small">Goals filtered by your department, section, unit, and role access.</div>
         </div>
         @if ($canCreateGoals)
             <a class="btn btn-maroon" href="{{ route('goals.create') }}">Create Goal</a>
@@ -78,6 +78,15 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-lg-2">
+                <label class="form-label small fw-semibold">Section</label>
+                <select class="form-select" name="section_id">
+                    <option value="">All</option>
+                    @foreach ($sections as $section)
+                        <option value="{{ $section->id }}" @selected(request('section_id') == $section->id)>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-lg-2 d-grid">
                 <button class="btn btn-maroon">Filter</button>
             </div>
@@ -107,7 +116,12 @@
                     <td>{{ $goal->quarter->name }}</td>
                     <td>
                         <div>{{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }}</div>
-                        <small class="text-muted">{{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->unique()->join(', ') : 'Department-wide' }}</small>
+                        <small class="text-muted d-block">
+                            Sections: {{ $goal->assignedSections->isNotEmpty() ? $goal->assignedSections->pluck('name')->unique()->join(', ') : 'Department-wide' }}
+                        </small>
+                        <small class="text-muted d-block">
+                            Units: {{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->unique()->join(', ') : 'All units' }}
+                        </small>
                     </td>
                     <td>
                         <span class="badge text-bg-light border">{{ $goal->objectives->count() }} total</span>

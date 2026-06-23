@@ -24,15 +24,15 @@
 
         .login-page {
             min-height: 100vh;
-            padding: 42px 16px;
+            padding: 20px 14px;
             color: var(--arm-ink);
         }
 
         .login-frame {
-            width: min(100%, 1146px);
-            min-height: 548px;
+            width: min(100%, 820px);
+            min-height: 430px;
             overflow: hidden;
-            border-radius: 24px;
+            border-radius: 20px;
             background: #fff;
             border: 1px solid rgba(15, 34, 55, .07);
             box-shadow: 0 30px 80px rgba(15, 34, 55, .12);
@@ -41,7 +41,7 @@
         .brand-panel {
             background: linear-gradient(145deg, var(--arm-maroon-dark), var(--arm-maroon));
             color: #fff;
-            padding: 44px;
+            padding: 26px 30px;
             position: relative;
             overflow: hidden;
         }
@@ -55,17 +55,17 @@
         }
 
         .brand-panel::before {
-            width: 270px;
-            height: 270px;
-            right: -66px;
-            top: -90px;
+            width: 190px;
+            height: 190px;
+            right: -58px;
+            top: -76px;
         }
 
         .brand-panel::after {
-            width: 206px;
-            height: 206px;
-            left: -64px;
-            bottom: -84px;
+            width: 138px;
+            height: 138px;
+            left: -48px;
+            bottom: -62px;
         }
 
         .brand-inner {
@@ -75,23 +75,23 @@
         }
 
         .brand-mark {
-            width: 58px;
-            height: 58px;
-            border-radius: 12px;
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
             background: var(--arm-gold);
             color: #20312b;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.35rem;
+            font-size: 1.05rem;
             font-weight: 500;
             flex: 0 0 auto;
         }
 
         .brand-logo {
-            width: 58px;
-            height: 58px;
-            border-radius: 12px;
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
             background: #fff;
             object-fit: contain;
             padding: 7px;
@@ -103,15 +103,15 @@
         }
 
         .brand-heading {
-            font-size: clamp(2rem, 3.4vw, 2.9rem);
+            font-size: clamp(1.55rem, 2.6vw, 2.05rem);
             line-height: 1.08;
             letter-spacing: 0;
         }
 
         .brand-copy {
             max-width: 430px;
-            font-size: 1.1rem;
-            line-height: 1.65;
+            font-size: .92rem;
+            line-height: 1.5;
             color: rgba(255, 255, 255, .88);
         }
 
@@ -124,14 +124,14 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            padding: 9px 13px !important;
+            padding: 7px 11px !important;
             margin-right: 8px;
             margin-bottom: 8px;
         }
 
         .metric-value {
             min-height: 0;
-            font-size: .85rem;
+            font-size: .78rem;
             line-height: 1;
             font-weight: 800;
             white-space: nowrap;
@@ -146,16 +146,16 @@
         }
 
         .metric-value.word {
-            font-size: .85rem;
+            font-size: .78rem;
         }
 
         .form-panel {
-            padding: 44px 36px;
+            padding: 26px 30px;
             background: #fff;
         }
 
         .login-form {
-            width: min(100%, 472px);
+            width: min(100%, 350px);
         }
 
         .login-kicker {
@@ -167,7 +167,7 @@
             color: var(--arm-maroon);
             border-radius: 999px;
             padding: 7px 12px;
-            font-size: .82rem;
+            font-size: .76rem;
             font-weight: 700;
         }
 
@@ -176,8 +176,8 @@
         }
 
         .form-control {
-            height: 58px;
-            border-radius: 14px;
+            height: 46px;
+            border-radius: 11px;
             background: var(--arm-field);
             border: 1px solid #d2d9e2;
             padding-inline: 17px;
@@ -216,8 +216,8 @@
         }
 
         .btn-maroon {
-            height: 58px;
-            border-radius: 13px;
+            height: 46px;
+            border-radius: 11px;
             background: linear-gradient(90deg, var(--arm-maroon-dark), var(--arm-maroon));
             border: 0;
             color: #fff;
@@ -248,8 +248,8 @@
         }
 
         .btn-outline-maroon {
-            min-height: 52px;
-            border-radius: 13px;
+            min-height: 44px;
+            border-radius: 11px;
             border: 2px solid var(--arm-maroon);
             color: var(--arm-maroon);
             font-weight: 800;
@@ -345,7 +345,7 @@
         <div class="login-frame row g-0">
             <section class="brand-panel col-lg-6 d-flex align-items-center">
                 <div class="brand-inner">
-                    <div class="d-flex align-items-center gap-3 mb-5">
+                    <div class="d-flex align-items-center gap-3 mb-4">
                         @if ($companySettings->logoUrl())
                             <img class="brand-logo" src="{{ $companySettings->logoUrl() }}" alt="{{ $companySettings->company_name }} logo">
                         @else
@@ -358,7 +358,7 @@
                     </div>
 
                     <div class="brand-title">
-                        <h1 class="brand-heading fw-bold mb-4">Track the work that moves the mission.</h1>
+                        <h1 class="brand-heading fw-bold mb-3">Track the work that moves the mission.</h1>
                         <p class="brand-copy mb-0">
                             {{ $companySettings->tagline }}
                         </p>
@@ -389,8 +389,8 @@
 
             <section class="form-panel col-lg-6 d-flex align-items-center justify-content-center">
                 <div class="login-form">
-                    <div class="text-center mb-5">
-                        <div class="login-kicker mb-3">Secure staff login</div>
+                    <div class="text-center mb-4">
+                        <div class="login-kicker mb-2">Secure staff login</div>
                         <h2 class="fw-bold mb-2">Welcome Back</h2>
                         <p class="text-secondary mb-0">Use your staff account to continue to the goals dashboard.</p>
                     </div>
@@ -406,12 +406,12 @@
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
 
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label for="email" class="form-label fw-semibold">Email Address</label>
                             <input id="email" class="form-control" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="Enter email address">
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label for="password" class="form-label fw-semibold">Password</label>
                             <div class="password-wrap">
                                 <input id="password" class="form-control" type="password" name="password" required autocomplete="current-password" placeholder="Enter your password">
@@ -419,7 +419,7 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+                        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                             <label class="form-check d-flex align-items-center gap-2 mb-0">
                                 <input id="remember_me" class="form-check-input mt-0" type="checkbox" name="remember">
                                 <span class="form-check-label text-secondary">Remember me</span>
@@ -437,7 +437,7 @@
                         </button>
                     </form>
 
-                    <div class="divider my-4">New to the platform?</div>
+                    <div class="divider my-3">New to the platform?</div>
 
                     <a href="{{ Route::has('register') ? route('register') : '#' }}" class="btn btn-outline-maroon w-100 d-flex align-items-center justify-content-center">
                         Join as a Staff Member

@@ -67,7 +67,7 @@
                 <tr>
                     <th>Department</th>
                     <th>Code</th>
-                    <th>Units</th>
+                    <th>Sections</th>
                     <th>Users</th>
                     <th>Goals</th>
                     <th>Actions</th>
@@ -83,7 +83,7 @@
                         @endif
                     </td>
                     <td><span class="badge text-bg-light border">{{ $department->code ?: '-' }}</span></td>
-                    <td>{{ $department->units_count }}</td>
+                    <td>{{ $department->sections_count }}</td>
                     <td>{{ $department->users_count }}</td>
                     <td>{{ $department->goals_count }}</td>
                     <td>

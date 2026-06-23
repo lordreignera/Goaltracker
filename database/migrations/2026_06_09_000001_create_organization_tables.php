@@ -37,10 +37,23 @@ return new class extends Migration
             $table->unique(['section_id', 'name']);
         });
 
+        Schema::create('positions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('department_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('section_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('title');
+            $table->string('code')->nullable();
+            $table->text('description')->nullable();
+            $table->timestamps();
+            $table->unique(['department_id', 'section_id', 'unit_id', 'title'], 'positions_org_unique');
+        });
+
         Schema::table('users', function (Blueprint $table) {
             $table->foreign('department_id')->references('id')->on('departments')->nullOnDelete();
             $table->foreign('section_id')->references('id')->on('sections')->nullOnDelete();
             $table->foreign('unit_id')->references('id')->on('units')->nullOnDelete();
+            $table->foreign('position_id')->references('id')->on('positions')->nullOnDelete();
             $table->foreign('supervisor_id')->references('id')->on('users')->nullOnDelete();
             $table->foreign('approved_by')->references('id')->on('users')->nullOnDelete();
         });
@@ -63,10 +76,12 @@ return new class extends Migration
             $table->dropForeign(['department_id']);
             $table->dropForeign(['section_id']);
             $table->dropForeign(['unit_id']);
+            $table->dropForeign(['position_id']);
             $table->dropForeign(['supervisor_id']);
             $table->dropForeign(['approved_by']);
         });
 
+        Schema::dropIfExists('positions');
         Schema::dropIfExists('units');
         Schema::dropIfExists('sections');
         Schema::dropIfExists('departments');

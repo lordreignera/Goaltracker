@@ -42,7 +42,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
         Fortify::registerView(fn () => view('auth.register', [
-            'departments' => Department::with('units')->orderBy('name')->get(),
+            'departments' => Department::with('sections.positions')->orderBy('name')->get(),
             'requestableRoles' => $this->requestableRoles(),
         ]));
 

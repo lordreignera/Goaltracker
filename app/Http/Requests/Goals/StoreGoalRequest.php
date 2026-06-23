@@ -54,25 +54,51 @@ class StoreGoalRequest extends FormRequest
         return [
             function (Validator $validator) {
                 $user = $this->user();
-
-                if (! $user || $user->isAdmin()) {
-                    return;
-                }
-
                 $departmentIds = collect($this->input('department_ids', []))
                     ->map(fn ($id) => (int) $id)
                     ->unique()
                     ->values();
-
-                if ($departmentIds->count() !== 1 || $departmentIds->first() !== (int) $user->department_id) {
-                    $validator->errors()->add('department_ids', 'You can only assign goals to your own department.');
-                }
 
                 $sectionIds = collect($this->input('section_ids', []))
                     ->filter()
                     ->map(fn ($id) => (int) $id)
                     ->unique()
                     ->values();
+
+                $unitIds = collect($this->input('unit_ids', []))
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
+
+                if ($sectionIds->isNotEmpty()) {
+                    $validSections = Section::whereIn('id', $sectionIds->all())
+                        ->whereIn('department_id', $departmentIds->all())
+                        ->count();
+
+                    if ($validSections !== $sectionIds->count()) {
+                        $validator->errors()->add('section_ids', 'Selected sections must belong to the selected departments.');
+                    }
+                }
+
+                if ($unitIds->isNotEmpty()) {
+                    $validUnits = Unit::whereIn('id', $unitIds->all())
+                        ->whereIn('department_id', $departmentIds->all())
+                        ->when($sectionIds->isNotEmpty(), fn ($query) => $query->whereIn('section_id', $sectionIds->all()))
+                        ->count();
+
+                    if ($validUnits !== $unitIds->count()) {
+                        $validator->errors()->add('unit_ids', 'Selected units must belong to the selected departments and sections.');
+                    }
+                }
+
+                if (! $user || $user->isAdmin()) {
+                    return;
+                }
+
+                if ($departmentIds->count() !== 1 || $departmentIds->first() !== (int) $user->department_id) {
+                    $validator->errors()->add('department_ids', 'You can only assign goals to your own department.');
+                }
 
                 if ($user->section_id && $sectionIds->isNotEmpty() && ($sectionIds->count() !== 1 || $sectionIds->first() !== (int) $user->section_id)) {
                     $validator->errors()->add('section_ids', 'You can only assign goals to your own section.');
@@ -87,12 +113,6 @@ class StoreGoalRequest extends FormRequest
                         $validator->errors()->add('section_ids', 'Selected sections must belong to your department.');
                     }
                 }
-
-                $unitIds = collect($this->input('unit_ids', []))
-                    ->filter()
-                    ->map(fn ($id) => (int) $id)
-                    ->unique()
-                    ->values();
 
                 if ($unitIds->isEmpty()) {
                     return;

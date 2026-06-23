@@ -41,7 +41,11 @@ class UnitController extends Controller
 
         Unit::create($request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'section_id' => ['required', 'exists:sections,id'],
+            'section_id' => [
+                'required',
+                Rule::exists('sections', 'id')
+                    ->where(fn ($query) => $query->where('department_id', $request->department_id)),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'code' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
@@ -56,7 +60,11 @@ class UnitController extends Controller
 
         $data = $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'section_id' => ['required', 'exists:sections,id'],
+            'section_id' => [
+                'required',
+                Rule::exists('sections', 'id')
+                    ->where(fn ($query) => $query->where('department_id', $request->department_id)),
+            ],
             'name' => [
                 'required',
                 'string',
