@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Department;
+use App\Models\Position;
 use App\Models\Section;
 use App\Models\Unit;
 use App\Models\User;
@@ -20,7 +21,7 @@ class UserManagementController extends Controller
 
         $status = $request->input('status', 'pending');
 
-        $users = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'roles'])
+        $users = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'position', 'roles'])
             ->when($status !== 'all', fn ($query) => $query->where('approval_status', $status))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where(function ($query) use ($request) {
@@ -36,7 +37,7 @@ class UserManagementController extends Controller
 
         $editUser = null;
         if ($request->filled('edit_user')) {
-            $editUser = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'roles'])->find($request->edit_user);
+            $editUser = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'position', 'roles'])->find($request->edit_user);
         }
 
         return view('users.management', [
@@ -45,6 +46,7 @@ class UserManagementController extends Controller
             'departments' => Department::with('sections.units')->orderBy('name')->get(),
             'sections' => Section::with('department')->orderBy('name')->get(),
             'units' => Unit::with(['department', 'section'])->orderBy('name')->get(),
+            'positions' => Position::with(['department', 'section', 'unit'])->orderBy('title')->get(),
             'roles' => Role::where('name', '!=', 'Super Admin')->orderBy('name')->pluck('name'),
             'status' => $status,
         ]);
@@ -63,6 +65,7 @@ class UserManagementController extends Controller
             'department_id' => $data['department_id'],
             'section_id' => $data['section_id'] ?? null,
             'unit_id' => $data['unit_id'] ?? null,
+            'position_id' => $data['position_id'] ?? null,
             'requested_role' => $data['requested_role'],
             'is_active' => $request->boolean('is_active'),
         ])->save();

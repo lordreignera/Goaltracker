@@ -3,7 +3,8 @@
         $companySettings = \App\Models\CompanySetting::current();
 
         $departmentSections = collect([]);
-        $sectionPositions = collect([]);
+        $sectionUnits = collect([]);
+        $unitPositions = collect([]);
 
         if (isset($departments) && $departments->isNotEmpty()) {
             $departmentSections = $departments->mapWithKeys(function ($department) {
@@ -17,11 +18,25 @@
                 ];
             });
 
-            $sectionPositions = $departments
+            $sectionUnits = $departments
                 ->flatMap(fn ($department) => $department->sections)
                 ->mapWithKeys(function ($section) {
                     return [
-                        $section->id => $section->positions->map(function ($position) {
+                        $section->id => $section->units->map(function ($unit) {
+                            return [
+                                'id' => $unit->id,
+                                'name' => $unit->name,
+                            ];
+                        })->values(),
+                    ];
+                });
+
+            $unitPositions = $departments
+                ->flatMap(fn ($department) => $department->sections)
+                ->flatMap(fn ($section) => $section->units)
+                ->mapWithKeys(function ($unit) {
+                    return [
+                        $unit->id => $unit->positions->map(function ($position) {
                             return [
                                 'id' => $position->id,
                                 'title' => $position->title,
@@ -243,25 +258,17 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="position_id" class="form-label fw-semibold">Position</label>
-                            <select id="position_id" class="form-select" name="position_id" required>
+                            <label for="unit_id" class="form-label fw-semibold">Unit</label>
+                            <select id="unit_id" class="form-select" name="unit_id" required>
                                 <option value="">Select section first</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label for="requested_role" class="form-label fw-semibold">Requested Role</label>
-                            <select id="requested_role" class="form-select" name="requested_role" required>
-                                <option value="">Select requested role</option>
-                                @foreach ($requestableRoles as $role)
-                                    <option value="{{ $role }}" @selected(old('requested_role') === $role)>
-                                        {{ $role }}
-                                    </option>
-                                @endforeach
+                            <label for="position_id" class="form-label fw-semibold">Position</label>
+                            <select id="position_id" class="form-select" name="position_id" required>
+                                <option value="">Select unit first</option>
                             </select>
-                            <small class="text-secondary">
-                                A Super Admin must approve this role before access is granted.
-                            </small>
                         </div>
 
                         <div class="col-md-6">
@@ -301,13 +308,16 @@
 
     <script>
         const departmentSections = @json($departmentSections);
-        const sectionPositions = @json($sectionPositions);
+        const sectionUnits = @json($sectionUnits);
+        const unitPositions = @json($unitPositions);
         const oldDepartmentId = @json((string) old('department_id', ''));
         const oldSectionId = @json((string) old('section_id', ''));
+        const oldUnitId = @json((string) old('unit_id', ''));
         const oldPositionId = @json((string) old('position_id', ''));
 
         const departmentSelect = document.getElementById('department_id');
         const sectionSelect = document.getElementById('section_id');
+        const unitSelect = document.getElementById('unit_id');
         const positionSelect = document.getElementById('position_id');
 
         function refreshSections() {
@@ -333,18 +343,44 @@
                 sectionSelect.appendChild(option);
             });
 
+            refreshUnits();
+        }
+
+        function refreshUnits() {
+            const selectedSection = sectionSelect.value;
+            const units = sectionUnits[selectedSection] || [];
+
+            unitSelect.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = selectedSection ? 'Select unit' : 'Select section first';
+            unitSelect.appendChild(placeholder);
+
+            units.forEach((unit) => {
+                const option = document.createElement('option');
+                option.value = unit.id;
+                option.textContent = unit.name;
+
+                if (String(unit.id) === oldUnitId) {
+                    option.selected = true;
+                }
+
+                unitSelect.appendChild(option);
+            });
+
             refreshPositions();
         }
 
         function refreshPositions() {
-            const selectedSection = sectionSelect.value;
-            const positions = sectionPositions[selectedSection] || [];
+            const selectedUnit = unitSelect.value;
+            const positions = unitPositions[selectedUnit] || [];
 
             positionSelect.innerHTML = '';
 
             const placeholder = document.createElement('option');
             placeholder.value = '';
-            placeholder.textContent = selectedSection ? 'Select position' : 'Select section first';
+            placeholder.textContent = selectedUnit ? 'Select position' : 'Select unit first';
             positionSelect.appendChild(placeholder);
 
             positions.forEach((position) => {
@@ -360,13 +396,14 @@
             });
         }
 
-        if (departmentSelect && sectionSelect && positionSelect) {
+        if (departmentSelect && sectionSelect && unitSelect && positionSelect) {
             if (oldDepartmentId) {
                 departmentSelect.value = oldDepartmentId;
             }
 
             departmentSelect.addEventListener('change', refreshSections);
-            sectionSelect.addEventListener('change', refreshPositions);
+            sectionSelect.addEventListener('change', refreshUnits);
+            unitSelect.addEventListener('change', refreshPositions);
             refreshSections();
         }
 

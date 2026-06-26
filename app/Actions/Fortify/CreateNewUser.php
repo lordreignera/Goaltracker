@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
-use Spatie\Permission\Models\Role;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -21,10 +20,6 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        $requestableRoles = Role::whereNotIn('name', ['Super Admin', 'Admin'])
-            ->pluck('name')
-            ->all() ?: ['Staff', 'Supervisor', 'Manager'];
-
         Validator::make($input, [
             'first_name' => ['required', 'string', 'max:100'],
             'second_name' => ['required', 'string', 'max:100'],
@@ -36,14 +31,21 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::exists('sections', 'id')
                     ->where(fn ($query) => $query->where('department_id', $input['department_id'] ?? null)),
             ],
+            'unit_id' => [
+                'required',
+                Rule::exists('units', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('department_id', $input['department_id'] ?? null)
+                        ->where('section_id', $input['section_id'] ?? null)),
+            ],
             'position_id' => [
                 'required',
                 Rule::exists('positions', 'id')
                     ->where(fn ($query) => $query
                         ->where('department_id', $input['department_id'] ?? null)
-                        ->where('section_id', $input['section_id'] ?? null)),
+                        ->where('section_id', $input['section_id'] ?? null)
+                        ->where('unit_id', $input['unit_id'] ?? null)),
             ],
-            'requested_role' => ['required', Rule::in($requestableRoles)],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
@@ -56,10 +58,10 @@ class CreateNewUser implements CreatesNewUsers
             'phone_number' => $input['phone_number'],
             'department_id' => $input['department_id'],
             'section_id' => $input['section_id'],
+            'unit_id' => $input['unit_id'],
             'position_id' => $input['position_id'],
-            'unit_id' => null,
             'role' => 'staff',
-            'requested_role' => $input['requested_role'],
+            'requested_role' => 'Staff',
             'approval_status' => 'pending',
             'password' => Hash::make($input['password']),
         ]);

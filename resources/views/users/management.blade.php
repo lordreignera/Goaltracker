@@ -132,6 +132,15 @@
                         </select>
                     </div>
                     <div class="col-md-3">
+                        <label class="form-label small fw-semibold">Position</label>
+                        <select class="form-select" name="position_id">
+                            <option value="">No position</option>
+                            @foreach ($positions as $position)
+                                <option value="{{ $position->id }}" @selected($editUser->position_id === $position->id)>{{ $position->department->name ?? 'Department' }} - {{ $position->section->name ?? 'Section' }} - {{ $position->unit->name ?? 'Unit' }} - {{ $position->title }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label small fw-semibold">Role</label>
                         <select class="form-select" name="requested_role" required>
                             @foreach ($roles as $role)
@@ -167,7 +176,7 @@
         <div class="p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
                 <h2 class="h5 fw-bold mb-1">Users</h2>
-                <div class="text-muted small">Edit department, section, unit, role, and active state before or after approval. Passwords are not editable here.</div>
+                <div class="text-muted small">Edit department, section, unit, position, role, and active state before or after approval. Passwords are not editable here.</div>
             </div>
             @if (request('status') !== 'all')
                     <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_filter($allUsersQuery, function ($value) { return filled($value); })) }}">View all users</a>
@@ -197,6 +206,7 @@
                         <td>
                             <div>{{ $user->department?->name ?? 'Not selected' }}</div>
                             <small class="text-muted d-block">{{ $user->section?->name ?? 'No section' }} / {{ $user->unit?->name ?? 'No unit' }}</small>
+                            <small class="text-muted d-block">{{ $user->position?->title ?? 'No position' }}</small>
                             @if ($user->accessibleDepartments->isNotEmpty())
                                 <small class="text-muted d-block">Access: {{ $user->accessibleDepartments->pluck('name')->join(', ') }}</small>
                             @endif

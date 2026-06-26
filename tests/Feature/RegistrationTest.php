@@ -43,8 +43,13 @@ class RegistrationTest extends TestCase
 
         $department = Department::create(['name' => 'ICT Department']);
         $section = $department->sections()->create(['name' => 'Software Development']);
-        $position = $section->positions()->create([
+        $unit = $section->units()->create([
             'department_id' => $department->id,
+            'name' => 'Application Team',
+        ]);
+        $position = $unit->positions()->create([
+            'department_id' => $department->id,
+            'section_id' => $section->id,
             'title' => 'Software Developer',
         ]);
 
@@ -55,8 +60,8 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'department_id' => $department->id,
             'section_id' => $section->id,
+            'unit_id' => $unit->id,
             'position_id' => $position->id,
-            'requested_role' => 'Supervisor',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
@@ -69,8 +74,9 @@ class RegistrationTest extends TestCase
 
         $this->assertNotNull($user);
         $this->assertSame('pending', $user->approval_status);
-        $this->assertSame('Supervisor', $user->requested_role);
+        $this->assertSame('Staff', $user->requested_role);
         $this->assertSame('Test User', $user->name);
+        $this->assertSame($unit->id, $user->unit_id);
         $this->assertSame($position->id, $user->position_id);
         $this->assertTrue($user->accessibleDepartments()->whereKey($department->id)->exists());
     }
@@ -83,8 +89,13 @@ class RegistrationTest extends TestCase
 
         $department = Department::create(['name' => 'ICT Department']);
         $section = $department->sections()->create(['name' => 'Software Development']);
-        $position = $section->positions()->create([
+        $unit = $section->units()->create([
             'department_id' => $department->id,
+            'name' => 'Application Team',
+        ]);
+        $position = $unit->positions()->create([
+            'department_id' => $department->id,
+            'section_id' => $section->id,
             'title' => 'Software Developer',
         ]);
 
@@ -100,8 +111,8 @@ class RegistrationTest extends TestCase
             'email' => 'taken@example.com',
             'department_id' => $department->id,
             'section_id' => $section->id,
+            'unit_id' => $unit->id,
             'position_id' => $position->id,
-            'requested_role' => 'Staff',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature(),

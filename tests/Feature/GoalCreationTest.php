@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Department;
 use App\Models\Goal;
 use App\Models\Quarter;
+use App\Models\Section;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -195,6 +196,40 @@ class GoalCreationTest extends TestCase
         $this->assertTrue($goal->assignedDepartments()->whereKey($finance->id)->exists());
         $this->assertTrue($goal->assignedUnits()->whereKey($ictUnit->id)->exists());
         $this->assertFalse($goal->assignedUnits()->whereKey($financeUnit->id)->exists());
+    }
+
+    public function test_unit_goal_does_not_store_duplicate_parent_section_assignment(): void
+    {
+        $department = Department::create(['name' => 'ICT Department']);
+        $section = Section::create(['department_id' => $department->id, 'name' => 'Software Development']);
+        $unit = Unit::create(['department_id' => $department->id, 'section_id' => $section->id, 'name' => 'Applications Unit']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+
+        $admin = User::factory()->create([
+            'department_id' => $department->id,
+            'unit_id' => $unit->id,
+            'role' => 'admin',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin)->post(route('goals.store'), [
+            'quarter_id' => $quarter->id,
+            'department_ids' => [$department->id],
+            'unit_ids' => [$unit->id],
+            'level' => 'unit',
+            'title' => 'Build Applications Workflow',
+        ] + $this->smartFields() + [
+            'objectives' => [
+                $this->objectiveFields(['title' => 'Workflow delivery', 'weight' => 100]),
+            ],
+        ])->assertRedirect();
+
+        $goal = Goal::where('title', 'Build Applications Workflow')->firstOrFail();
+
+        $this->assertSame(1, $goal->assignments()->count());
+        $this->assertTrue($goal->assignedUnits()->whereKey($unit->id)->exists());
+        $this->assertTrue($goal->assignedSections()->whereKey($section->id)->exists());
     }
 
     private function smartFields(array $overrides = []): array

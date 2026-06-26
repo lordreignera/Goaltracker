@@ -73,6 +73,27 @@ class UpdateGoalRequest extends FormRequest
                     ->map(fn ($id) => (int) $id)
                     ->unique()
                     ->values();
+                $level = $this->input('level');
+
+                if ($level === 'department' && ($sectionIds->isNotEmpty() || $unitIds->isNotEmpty())) {
+                    $validator->errors()->add('level', 'Department goals should only select departments.');
+                }
+
+                if ($level === 'section' && $sectionIds->isEmpty()) {
+                    $validator->errors()->add('section_ids', 'Section goals must select at least one section.');
+                }
+
+                if ($level === 'section' && $unitIds->isNotEmpty()) {
+                    $validator->errors()->add('unit_ids', 'Section goals should not also select units.');
+                }
+
+                if (in_array($level, ['unit', 'individual'], true) && $unitIds->isEmpty()) {
+                    $validator->errors()->add('unit_ids', 'Unit and individual goals must select at least one unit.');
+                }
+
+                if (in_array($level, ['unit', 'individual'], true) && $sectionIds->isNotEmpty()) {
+                    $validator->errors()->add('section_ids', 'Unit and individual goals should use units only. The section is taken from the selected unit.');
+                }
 
                 if ($sectionIds->isNotEmpty()) {
                     $validSections = Section::whereIn('id', $sectionIds->all())

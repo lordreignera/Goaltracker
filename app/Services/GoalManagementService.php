@@ -154,6 +154,7 @@ class GoalManagementService
         $units = Unit::whereIn('id', $unitIds)->get(['id', 'department_id', 'section_id']);
         $sections = Section::whereIn('id', $sectionIds)->get(['id', 'department_id']);
         $unitDepartmentIds = $units->pluck('department_id')->unique();
+        $unitSectionIds = $units->pluck('section_id')->filter()->unique();
         $sectionDepartmentIds = $sections->pluck('department_id')->unique();
 
         foreach (collect($departmentIds)->diff($unitDepartmentIds)->diff($sectionDepartmentIds) as $departmentId) {
@@ -162,7 +163,7 @@ class GoalManagementService
             ]);
         }
 
-        $sections->each(function (Section $section) use ($goal) {
+        $sections->whereNotIn('id', $unitSectionIds)->each(function (Section $section) use ($goal) {
             $goal->assignments()->create([
                 'department_id' => $section->department_id,
                 'section_id' => $section->id,

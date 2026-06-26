@@ -53,7 +53,7 @@
             .admin-shell {
                 min-height: 100vh;
                 display: grid;
-                grid-template-columns: 278px minmax(0, 1fr);
+                grid-template-columns: 232px minmax(0, 1fr);
             }
 
             .admin-sidebar {
@@ -66,7 +66,7 @@
                 position: sticky;
                 top: 0;
                 height: 100vh;
-                padding: 24px 18px;
+                padding: 22px 14px;
                 overflow-y: auto;
                 backdrop-filter: none;
                 border-right: 1px solid #d1d5db;
@@ -106,7 +106,7 @@
                 align-items: center;
                 gap: 12px;
                 min-height: 44px;
-                padding: 10px 12px;
+                padding: 10px;
                 border-radius: 8px;
                 color: rgba(17, 24, 39, .78);
                 text-decoration: none;
@@ -558,7 +558,7 @@
                 .admin-sidebar {
                     position: fixed;
                     inset: 0 auto 0 0;
-                    width: min(86vw, 320px);
+                    width: min(82vw, 286px);
                     height: 100vh;
                     border-radius: 0;
                     z-index: 1040;
@@ -666,8 +666,8 @@
 
             @media (max-width: 575.98px) {
                 .admin-sidebar {
-                    width: min(92vw, 310px);
-                    padding: 18px 14px;
+                    width: min(88vw, 280px);
+                    padding: 18px 12px;
                 }
 
                 .brand-tile {

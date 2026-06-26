@@ -38,6 +38,14 @@ class UpdateUserRequest extends FormRequest
                         ->where('department_id', $this->input('department_id'))
                         ->when($this->filled('section_id'), fn ($query) => $query->where('section_id', $this->input('section_id')))),
             ],
+            'position_id' => [
+                'nullable',
+                Rule::exists('positions', 'id')
+                    ->where(fn ($query) => $query
+                        ->where('department_id', $this->input('department_id'))
+                        ->when($this->filled('section_id'), fn ($query) => $query->where('section_id', $this->input('section_id')))
+                        ->when($this->filled('unit_id'), fn ($query) => $query->where('unit_id', $this->input('unit_id')))),
+            ],
             'requested_role' => ['required', Rule::in($assignableRoles)],
             'is_active' => ['nullable', 'boolean'],
         ];

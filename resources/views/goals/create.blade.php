@@ -63,33 +63,35 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Departments</label>
-                <select class="form-select" name="department_ids[]" multiple required size="5">
+                <select class="form-select" name="department_ids[]" multiple required size="5" data-department-select>
                     @foreach ($departments as $department)
                         <option value="{{ $department->id }}" @selected(in_array($department->id, old('department_ids', [])))>{{ $department->name }}</option>
                     @endforeach
                 </select>
                 <small class="text-muted">Hold Ctrl to select more than one.</small>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4" data-section-scope>
                 <label class="form-label fw-semibold">Sections</label>
-                <select class="form-select mb-2" name="section_ids[]" multiple size="5">
+                <select class="form-select mb-2" name="section_ids[]" multiple size="5" data-section-select>
                     @foreach ($sections as $section)
-                        <option value="{{ $section->id }}" @selected(in_array($section->id, old('section_ids', [])))>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
+                        <option value="{{ $section->id }}" data-department-id="{{ $section->department_id }}" @selected(in_array($section->id, old('section_ids', [])))>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
                     @endforeach
                 </select>
                 <small class="text-muted d-block mb-2">Select sections for section-wide goals.</small>
+            </div>
 
+            <div class="col-md-4" data-unit-scope>
                 <label class="form-label fw-semibold">Lower Units</label>
-                <select class="form-select" name="unit_ids[]" multiple size="5">
+                <select class="form-select" name="unit_ids[]" multiple size="5" data-unit-select>
                     @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" @selected(in_array($unit->id, old('unit_ids', [])))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</option>
+                        <option value="{{ $unit->id }}" data-department-id="{{ $unit->department_id }}" data-section-id="{{ $unit->section_id }}" @selected(in_array($unit->id, old('unit_ids', [])))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</option>
                     @endforeach
                 </select>
-                <small class="text-muted">Leave sections and units empty for department-wide assignment.</small>
+                <small class="text-muted">Select units for unit or individual goals.</small>
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Goal Level</label>
-                <select class="form-select" name="level" required>
+                <select class="form-select" name="level" required data-level-select>
                     <option value="department" @selected(old('level') === 'department')>Department</option>
                     <option value="section" @selected(old('level') === 'section')>Section</option>
                     <option value="unit" @selected(old('level') === 'unit')>Unit</option>
@@ -238,6 +240,52 @@
     <script>
         const objectivesList = document.querySelector('[data-objectives-list]');
         const addObjectiveButton = document.querySelector('[data-add-objective]');
+        const levelSelect = document.querySelector('[data-level-select]');
+        const departmentSelect = document.querySelector('[data-department-select]');
+        const sectionScope = document.querySelector('[data-section-scope]');
+        const unitScope = document.querySelector('[data-unit-scope]');
+        const sectionSelect = document.querySelector('[data-section-select]');
+        const unitSelect = document.querySelector('[data-unit-select]');
+
+        function selectedDepartmentIds() {
+            return Array.from(departmentSelect?.selectedOptions || []).map((option) => String(option.value));
+        }
+
+        function syncGoalScopeFields() {
+            const level = levelSelect?.value || 'department';
+            const departmentIds = selectedDepartmentIds();
+            const showSections = level === 'section';
+            const showUnits = level === 'unit' || level === 'individual';
+
+            sectionScope?.classList.toggle('d-none', ! showSections);
+            unitScope?.classList.toggle('d-none', ! showUnits);
+
+            if (sectionSelect) {
+                sectionSelect.disabled = ! showSections;
+                Array.from(sectionSelect.options).forEach((option) => {
+                    const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(option.dataset.departmentId));
+                    option.hidden = ! matchesDepartment;
+                    option.disabled = ! showSections || ! matchesDepartment;
+
+                    if (option.selected && option.disabled) {
+                        option.selected = false;
+                    }
+                });
+            }
+
+            if (unitSelect) {
+                unitSelect.disabled = ! showUnits;
+                Array.from(unitSelect.options).forEach((option) => {
+                    const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(option.dataset.departmentId));
+                    option.hidden = ! matchesDepartment;
+                    option.disabled = ! showUnits || ! matchesDepartment;
+
+                    if (option.selected && option.disabled) {
+                        option.selected = false;
+                    }
+                });
+            }
+        }
 
         function renumberObjectives() {
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row, index) => {
@@ -461,6 +509,10 @@
                     : 'Choose valid start and due dates to preview planned reporting weeks.';
             });
         }
+
+        levelSelect?.addEventListener('change', syncGoalScopeFields);
+        departmentSelect?.addEventListener('change', syncGoalScopeFields);
+        syncGoalScopeFields();
 
         document.getElementById('add-step').addEventListener('click', function () {
 

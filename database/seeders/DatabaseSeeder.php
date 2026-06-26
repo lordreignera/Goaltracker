@@ -187,7 +187,7 @@ class DatabaseSeeder extends Seeder
                 ]);
 
                 foreach ($units as $unitIndex => $unitName) {
-                    $section->units()->updateOrCreate(['name' => $unitName], [
+                    $unit = $section->units()->updateOrCreate(['name' => $unitName], [
                         'department_id' => $department->id,
                         'code' => $this->unitCode($departmentIndex, $unitIndex + 1),
                         'description' => "Operational unit under {$sectionName}.",
@@ -198,6 +198,7 @@ class DatabaseSeeder extends Seeder
                         'section_id' => $section->id,
                         'title' => $unitName,
                     ], [
+                        'unit_id' => $unit->id,
                         'code' => $this->positionCode($departmentIndex, $unitIndex + 1),
                         'description' => "Organogram position under {$sectionName}.",
                     ]);
