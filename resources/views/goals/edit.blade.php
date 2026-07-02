@@ -64,6 +64,8 @@
         <a class="btn btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Back to Goal</a>
     </div>
 
+    <x-validation-errors class="alert alert-danger mb-3" />
+
     <form method="post" action="{{ route('goals.update', $goal) }}" class="goal-panel p-4">
         @csrf
         @method('PUT')
@@ -157,7 +159,7 @@
                     $steps = old('key_action_steps', $goal->key_action_steps ?? []);
 
                     if (is_string($steps)) {
-                        $steps = array_filter(array_map('trim', explode("\n", (string) $steps)));
+                        $steps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n|,/', $steps) ?: []));
                     }
                 @endphp
 

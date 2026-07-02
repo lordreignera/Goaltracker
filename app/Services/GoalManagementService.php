@@ -104,7 +104,17 @@ class GoalManagementService
 
     private function prepareGoalData(array $data): array
     {
-        $data['key_action_steps'] = collect($data['key_action_steps'] ?? [])
+        $steps = $data['key_action_steps'] ?? [];
+
+        if (is_string($steps)) {
+            $steps = preg_split('/\r\n|\r|\n|,/', $steps) ?: [];
+        }
+
+        if (! is_array($steps)) {
+            $steps = [];
+        }
+
+        $data['key_action_steps'] = collect($steps)
             ->map(fn ($step) => trim((string) $step))
             ->filter()
             ->values()

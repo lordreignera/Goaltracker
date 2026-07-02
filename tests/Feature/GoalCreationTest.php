@@ -106,6 +106,12 @@ class GoalCreationTest extends TestCase
         $this->assertNotNull($goal);
         $this->assertSame(2, $goal->objectives()->count());
         $this->assertSame(100, (int) $goal->objectives()->sum('weight'));
+        $this->assertSame([
+            'Plan work',
+            'execute objectives',
+            'report weekly',
+            'and review evidence.',
+        ], $goal->key_action_steps);
         $this->assertTrue($goal->assignedDepartments()->whereKey($department->id)->exists());
         $this->assertTrue($goal->assignedUnits()->whereKey($unit->id)->exists());
     }

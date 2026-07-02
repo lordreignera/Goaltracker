@@ -46,6 +46,8 @@
         <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Back to Goals</a>
     </div>
 
+    <x-validation-errors class="alert alert-danger mb-3" />
+
     <form method="post" action="{{ route('goals.store') }}" class="goal-panel p-4">
         @csrf
 
@@ -135,17 +137,41 @@
             <div class="col-12">
                 <label class="form-label fw-semibold">Key Action Steps</label>
 
+                @php
+                    $steps = old('key_action_steps', []);
+
+                    if (is_string($steps)) {
+                        $steps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n|,/', $steps) ?: []));
+                    }
+                @endphp
+
                 <div id="action-steps-container">
-                    <div class="input-group mb-2">
-                        <input type="text"
-                            name="key_action_steps[]"
-                            class="form-control"
-                            placeholder="Enter action step">
-                        <button type="button"
-                                class="btn btn-danger remove-step">
-                            Remove
-                        </button>
-                    </div>
+                    @if (! empty($steps) && is_array($steps))
+                        @foreach ($steps as $step)
+                            <div class="input-group mb-2">
+                                <input type="text"
+                                    name="key_action_steps[]"
+                                    class="form-control"
+                                    placeholder="Enter action step"
+                                    value="{{ $step }}">
+                                <button type="button"
+                                        class="btn btn-danger remove-step">
+                                    Remove
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="input-group mb-2">
+                            <input type="text"
+                                name="key_action_steps[]"
+                                class="form-control"
+                                placeholder="Enter action step">
+                            <button type="button"
+                                    class="btn btn-danger remove-step">
+                                Remove
+                            </button>
+                        </div>
+                    @endif
                 </div>
 
                 <button type="button"
