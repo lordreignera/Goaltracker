@@ -106,12 +106,6 @@ class GoalCreationTest extends TestCase
         $this->assertNotNull($goal);
         $this->assertSame(2, $goal->objectives()->count());
         $this->assertSame(100, (int) $goal->objectives()->sum('weight'));
-        $this->assertSame([
-            'Plan work',
-            'execute objectives',
-            'report weekly',
-            'and review evidence.',
-        ], $goal->key_action_steps);
         $this->assertTrue($goal->assignedDepartments()->whereKey($department->id)->exists());
         $this->assertTrue($goal->assignedUnits()->whereKey($unit->id)->exists());
     }
@@ -242,11 +236,7 @@ class GoalCreationTest extends TestCase
     {
         return $overrides + [
             'specific' => 'Improve service delivery for assigned teams.',
-            'measurable' => 'Success is measured by completed approved objective reports.',
-            'achievable' => 'The work is realistic within the quarter and staffing plan.',
-            'relevant' => 'The goal supports department accountability and mission delivery.',
-            'time_bound' => 'The goal will be completed before the end of the quarter.',
-            'key_action_steps' => 'Plan work, execute objectives, report weekly, and review evidence.',
+            'relevant' => 'The goal is realistic within the quarter and supports department accountability.',
             'primary_metric' => 'Approved objective reporting coverage',
             'deadline' => '2026-03-31',
         ];
@@ -256,10 +246,10 @@ class GoalCreationTest extends TestCase
     {
         return $overrides + [
             'title' => 'Objective',
-            'specific_output' => 'Complete a clearly defined objective output.',
-            'success_measure' => 'Supervisor verifies the output with submitted evidence.',
+            'specific_output' => 'Complete a clearly defined objective output with submitted evidence.',
             'weight' => 100,
             'planned_weeks' => 1,
+            'reporting_frequency' => 'weekly',
             'starts_at' => '2026-01-01',
             'due_at' => '2026-01-07',
         ];

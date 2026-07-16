@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class SupervisorReview extends Model
 {
-    protected $fillable = ['weekly_update_id', 'supervisor_id', 'decision', 'comments'];
+    protected $fillable = ['weekly_update_id', 'supervisor_id', 'decision', 'verified_percentage', 'comments'];
+
+    protected $casts = [
+        'verified_percentage' => 'integer',
+    ];
 
     public function weeklyUpdate()
     {

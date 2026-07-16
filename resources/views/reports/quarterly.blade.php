@@ -52,7 +52,10 @@
             </select>
             <button class="btn btn-maroon">View</button>
         </form>
-        <a class="btn btn-outline-secondary" href="{{ route('reports.quarterly.pdf', ['quarter_id' => $selectedQuarter->id]) }}">Download PDF</a>
+        <div class="d-flex flex-column flex-sm-row gap-2">
+            <a class="btn btn-outline-secondary" href="{{ route('reports.quarterly.csv', ['quarter_id' => $selectedQuarter->id]) }}">Download Table CSV</a>
+            <a class="btn btn-outline-secondary" href="{{ route('reports.quarterly.pdf', ['quarter_id' => $selectedQuarter->id]) }}">Download PDF</a>
+        </div>
     </div>
 
     @include('reports.partials.quarterly-content', ['isPdf' => false])

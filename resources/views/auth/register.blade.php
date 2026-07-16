@@ -51,13 +51,13 @@
 
     <style>
         :root {
-            --arm-maroon: #c43b3f;
-            --arm-maroon-dark: #a12d31;
-            --arm-field: #eaf1fb;
+            --arm-maroon: #2563eb;
+            --arm-maroon-dark: #172554;
+            --arm-field: #f8fafc;
         }
 
         body {
-            background: linear-gradient(180deg, var(--arm-maroon) 0 10px, transparent 10px), #f5f5f4;
+            background: #f8fafc;
         }
 
         .register-page {
@@ -78,7 +78,7 @@
         }
 
         .brand-panel {
-            background: linear-gradient(150deg, rgba(196, 59, 63, .96), rgba(196, 59, 63, .9));
+            background: var(--arm-maroon-dark);
             color: #fff;
             padding: 34px 42px;
         }
@@ -120,14 +120,14 @@
         .form-control:focus,
         .form-select:focus {
             border-color: var(--arm-maroon);
-            box-shadow: 0 0 0 .18rem rgba(196, 59, 63, .12);
+            box-shadow: 0 0 0 .18rem rgba(37, 99, 235, .12);
             background-color: var(--arm-field);
         }
 
         .btn-maroon {
             min-height: 56px;
             border-radius: 9px;
-            background: linear-gradient(90deg, var(--arm-maroon-dark), var(--arm-maroon));
+            background: var(--arm-maroon);
             color: #fff;
             border: 0;
             font-weight: 800;
@@ -135,7 +135,7 @@
 
         .btn-maroon:hover {
             color: #fff;
-            background: linear-gradient(90deg, #8a1f23, #b11e22);
+            background: #1d4ed8;
         }
 
         .text-maroon {

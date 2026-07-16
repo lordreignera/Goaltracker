@@ -3,48 +3,19 @@
         <h1 class="page-title">{{ $goal->title }}</h1>
     </x-slot>
 
-    @php
-        $keyActionSteps = $goal->key_action_steps;
-
-        if (is_string($keyActionSteps)) {
-            $keyActionSteps = json_decode($keyActionSteps, true) ?: [];
-        }
-
-        $keyActionSteps = collect($keyActionSteps ?? [])
-            ->filter(fn ($step) => filled($step))
-            ->values();
-    @endphp
-
     <style>
         .goal-summary-actions {
-            min-width: 180px;
+            min-width: 220px;
         }
 
-        .key-action-list {
-            margin-top: .5rem;
-            margin-bottom: 0;
-            padding-left: 1.25rem;
+        .goal-action-stack {
+            display: grid;
+            gap: 8px;
+            justify-items: end;
         }
 
-        .report-list-row {
-            display: flex;
-            gap: .5rem;
-            align-items: start;
-        }
-
-        .report-list-row textarea {
-            min-height: 58px;
-        }
-
-        .weekly-report-form {
+        .daily-report-form {
             background: #fbfcfd;
-        }
-
-        .report-section {
-            border: 1px solid #e7ebf0;
-            border-radius: 12px;
-            padding: 14px;
-            background: #fff;
         }
 
         @media (max-width: 767.98px) {
@@ -58,22 +29,17 @@
                 text-align: left !important;
             }
 
+            .goal-action-stack {
+                justify-items: stretch;
+            }
+
             .review-form {
                 align-items: stretch;
-            }
-
-            .report-list-row {
-                flex-direction: column;
-            }
-
-            .report-list-row button {
-                width: 100%;
             }
         }
     </style>
 
-    <div class="row g-4">
-        <div class="col-xl-8">
+    <div class="d-grid gap-4">
             <div class="bg-white border rounded-3 p-4 mb-4">
                 <div class="goal-summary d-flex justify-content-between gap-3">
                     <div class="flex-grow-1">
@@ -86,7 +52,7 @@
 
                         <div class="row g-3 mt-2">
                             <div class="col-md-6">
-                                <strong>Metric:</strong> {{ $goal->primary_metric ?? 'Not set' }}
+                                <strong>Success Measure / Metric:</strong> {{ $goal->primary_metric ?? 'Not set' }}
                             </div>
 
                             <div class="col-md-6">
@@ -98,32 +64,8 @@
                             </div>
 
                             <div class="col-12">
-                                <strong>Measurable:</strong> {{ $goal->measurable ?? 'Not provided' }}
+                                <strong>Why This Is Achievable and Matters:</strong> {{ $goal->relevant ?? 'Not provided' }}
                             </div>
-
-                            <div class="col-md-6">
-                                <strong>Achievable:</strong> {{ $goal->achievable ?? 'Not provided' }}
-                            </div>
-
-                            <div class="col-md-6">
-                                <strong>Relevant:</strong> {{ $goal->relevant ?? 'Not provided' }}
-                            </div>
-
-                            <div class="col-12">
-                                <strong>Time-Bound:</strong> {{ $goal->time_bound ?? 'Not provided' }}
-                            </div>
-
-                            @if ($keyActionSteps->isNotEmpty())
-                                <div class="col-12">
-                                    <strong>Key Action Steps:</strong>
-
-                                    <ul class="key-action-list">
-                                        @foreach ($keyActionSteps as $step)
-                                            <li>{{ $step }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
                         </div>
                     </div>
 
@@ -132,18 +74,20 @@
                         <small class="text-muted d-block mb-2">Completed approved objective weight</small>
 
                         <div class="progress">
-                            <div class="progress-bar bg-success" style="width: {{ $goal->progress() }}%"></div>
+                            <div class="progress-bar" style="width: {{ $goal->progress() }}%"></div>
                         </div>
 
                         @if ($canUpdateGoal)
-                            <a class="btn btn-sm btn-outline-secondary mt-3" href="{{ route('goals.edit', $goal) }}">
-                                Edit Goal
-                            </a>
+                            <div class="goal-action-stack mt-3">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('goals.edit', $goal) }}">
+                                    Edit Goal & Objectives
+                                </a>
 
-                            <form method="post" action="{{ route('goals.submit', $goal) }}" class="mt-3">
-                                @csrf
-                                <button class="btn btn-sm btn-outline-success">Submit Goal</button>
-                            </form>
+                                <form method="post" action="{{ route('goals.submit', $goal) }}">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-success w-100">Submit Goal</button>
+                                </form>
+                            </div>
                         @endif
                     </div>
                 </div>
@@ -153,14 +97,12 @@
                 @php
                     $objectiveIsApprovedComplete = $objective->isApprovedComplete();
                     $objectiveStatusLabel = $objectiveIsApprovedComplete ? 'completed' : $objective->status;
-                    $approvedWeeks = $objective->approvedReportingWeeksCount();
                     $totalWeeks = $objective->totalReportingWeeks();
-                    $weeklyProgress = round($objective->weeklyProgressPercent(), 1);
+                    $achievementProgress = $objective->progressPercent();
                     $objectiveContribution = round($objective->progressContribution(), 1);
                     [$firstReportDate, $lastReportDate] = $objective->reportingDateRange();
-                    $quarterStart = $firstReportDate?->toDateString();
+                    $minReportDate = $firstReportDate?->toDateString();
                     $maxReportDate = $lastReportDate?->toDateString();
-                    $weeklyDateOptions = $objective->reportingWeekOptions();
                 @endphp
 
                 <div class="bg-white border rounded-3 p-4 mb-3">
@@ -171,11 +113,11 @@
                             <div class="text-muted small">
                                 {{ $objective->planned_weeks }} planned week{{ $objective->planned_weeks === 1 ? '' : 's' }}
                                 / {{ $objective->starts_at?->format('M d, Y') }} - {{ $objective->due_at?->format('M d, Y') }}
+                                / {{ ucfirst($objective->reporting_frequency) }} reporting
                             </div>
 
                             <div class="mt-2">
-                                <div><strong>Specific Output:</strong> {{ $objective->specific_output }}</div>
-                                <div><strong>Success Measure:</strong> {{ $objective->success_measure }}</div>
+                                <div><strong>Deliverable / Evidence:</strong> {{ $objective->specific_output }}</div>
                             </div>
                         </div>
 
@@ -186,267 +128,205 @@
 
                     <div class="mb-3">
                         <div class="d-flex justify-content-between small text-muted mb-1">
-                            <span>{{ $approvedWeeks }} of {{ $totalWeeks }} planned weekly reports approved</span>
-                            <span>{{ $weeklyProgress }}%</span>
+                            <span>{{ $achievementProgress }}% latest supervisor-verified achievement across {{ $totalWeeks }} planned week{{ $totalWeeks === 1 ? '' : 's' }}</span>
+                            <span>{{ $achievementProgress }}%</span>
                         </div>
 
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" style="width: {{ $weeklyProgress }}%"></div>
+                            <div class="progress-bar" style="width: {{ $achievementProgress }}%"></div>
                         </div>
                     </div>
 
-                    <form method="post" action="{{ route('objectives.weekly-updates.store', $objective) }}" class="weekly-report-form border rounded-3 p-3 p-md-4 mb-3">
+                    <form method="post" action="{{ route('objectives.weekly-updates.store', $objective) }}" class="daily-report-form border rounded-3 p-3 p-md-4 mb-3" enctype="multipart/form-data">
                         @csrf
 
                         @if ($errors->any())
                             <div class="alert alert-danger py-2 small">
-                                Please check the report fields. Dates must stay within the quarter and objective timeline.
+                                Please check the report fields. Dates must stay within the sub-goal timeline, and progress updates need an achievement percentage.
                             </div>
                         @endif
 
                         <div class="row g-2">
-                            <div class="col-md-3">
-                                <label class="form-label small fw-semibold">Week</label>
-                                <select class="form-select" name="week_number" data-week-select required>
-                                    <option value="">Select week</option>
-                                    @foreach ($weeklyDateOptions as $option)
-                                        <option value="{{ $option['week'] }}" data-week-date="{{ $option['date'] }}">
-                                            {{ $option['label'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
                             <div class="col-md-4">
-                                <label class="form-label small fw-semibold">Week starting</label>
-                                <input class="form-control" type="date" name="week_starting" min="{{ $quarterStart }}" max="{{ $maxReportDate }}" readonly required>
+                                <label class="form-label small fw-semibold">Report Date</label>
+                                <input class="form-control" type="date" name="report_date" min="{{ $minReportDate }}" max="{{ $maxReportDate }}" required>
                                 <small class="text-muted">
-                                    {{ count($weeklyDateOptions) }} planned reporting week{{ count($weeklyDateOptions) === 1 ? '' : 's' }} for this objective.
+                                    {{ $firstReportDate?->format('M d, Y') }} to {{ $lastReportDate?->format('M d, Y') }}
                                 </small>
                             </div>
 
-                            <div class="col-12">
-                                <textarea class="form-control" name="progress_summary" placeholder="Progress summary" required></textarea>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Progress Score</label>
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="is_progress_update" value="1" id="progress-update-{{ $objective->id }}">
+                                    <label class="form-check-label small" for="progress-update-{{ $objective->id }}">This report updates progress</label>
+                                </div>
+                                <input class="form-control" type="number" name="achievement_percentage" min="0" max="100" placeholder="Achievement %" data-progress-score disabled>
+                                <small class="text-muted">Required only when updating progress.</small>
                             </div>
 
-                            @foreach ([
-                                'achievements' => 'Achievements',
-                                'challenges' => 'Challenges',
-                                'next_actions' => 'Recommendations / Next Actions',
-                            ] as $field => $label)
-                                <div class="col-12">
-                                    <div class="report-section h-100">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <label class="form-label small fw-semibold mb-0">{{ $label }}</label>
-                                            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-report-item="{{ $field }}">Add</button>
-                                        </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold">Evidence Document</label>
+                                <input class="form-control" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
+                                <small class="text-muted">Optional PDF, Word, Excel, or image file. Max 10MB.</small>
+                            </div>
 
-                                        <div class="d-grid gap-2" data-report-list="{{ $field }}">
-                                            <div class="report-list-row">
-                                                <textarea class="form-control" name="{{ $field }}[]" placeholder="Add one item"></textarea>
-                                                <button class="btn btn-outline-danger" type="button" data-remove-report-item>&times;</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold">Achievement</label>
+                                <textarea class="form-control" name="achievement_summary" rows="3" placeholder="What was achieved on this report date?" required></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Challenges</label>
+                                <textarea class="form-control" name="challenges" rows="3" placeholder="What blocked or slowed progress?"></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Action Point / Next Step</label>
+                                <textarea class="form-control" name="action_points" rows="3" placeholder="What should happen next, by whom, or what support is needed?"></textarea>
+                            </div>
                         </div>
 
-                        <button class="btn btn-sm btn-primary mt-3">Submit Weekly Update</button>
+                        <button class="btn btn-sm btn-primary mt-3">Submit Report</button>
                     </form>
 
-                    @foreach ($objective->weeklyUpdates as $update)
-                        @php
-                            $canEditUpdate = $update->user_id === auth()->id() && $update->status !== 'approved';
-                            $achievementItems = preg_split('/\r\n|\r|\n/', (string) $update->achievements, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-                            $challengeItems = preg_split('/\r\n|\r|\n/', (string) $update->challenges, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-                            $nextActionItems = preg_split('/\r\n|\r|\n/', (string) $update->next_actions, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-                        @endphp
-
-                        <div class="border-top py-3">
-                            <div class="d-flex justify-content-between gap-2">
-                                <strong>
-                                    Week {{ $update->week_number }}
-                                    @if($update->week_starting)
-                                        / {{ $update->week_starting->format('M d, Y') }}
-                                    @endif
-                                </strong>
-
-                                <span class="badge text-bg-light border">
-                                    {{ str_replace('_', ' ', $update->status) }}
-                                </span>
-                            </div>
-
-                            <p class="mb-2">{{ $update->progress_summary }}</p>
-
-                            <div class="row small text-muted">
-                                @foreach ([
-                                    'Achievements' => $achievementItems,
-                                    'Challenges' => $challengeItems,
-                                    'Recommendations' => $nextActionItems,
-                                ] as $label => $items)
-                                    <div class="col-md-4">
-                                        <strong>{{ $label }}:</strong>
-
-                                        @forelse ($items as $item)
-                                            <div>&bull; {{ $item }}</div>
-                                        @empty
-                                            <div>None provided</div>
-                                        @endforelse
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            @if ($canEditUpdate)
-                                <details class="mt-3">
-                                    <summary class="btn btn-sm btn-outline-secondary">Edit Submission</summary>
-
-                                    <form method="post" action="{{ route('weekly-updates.update', $update) }}" class="border rounded-3 p-3 mt-3">
-                                        @csrf
-                                        @method('PUT')
-
-                                        <div class="row g-2">
-                                            <div class="col-md-3">
-                                                <label class="form-label small fw-semibold">Week</label>
-                                                <select class="form-select" name="week_number" data-week-select required>
-                                                    @foreach ($weeklyDateOptions as $option)
-                                                        <option value="{{ $option['week'] }}" data-week-date="{{ $option['date'] }}" @selected(old('week_number', $update->week_number) == $option['week'])>
-                                                            {{ $option['label'] }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label class="form-label small fw-semibold">Week starting</label>
-                                                <input class="form-control" type="date" name="week_starting" min="{{ $quarterStart }}" max="{{ $maxReportDate }}" value="{{ old('week_starting', $update->week_starting?->toDateString()) }}" readonly required>
-                                            </div>
-
-                                            <div class="col-12">
-                                                <label class="form-label small fw-semibold">Progress summary</label>
-                                                <textarea class="form-control" name="progress_summary" required>{{ old('progress_summary', $update->progress_summary) }}</textarea>
-                                            </div>
-
-                                            @foreach ([
-                                                'achievements' => ['label' => 'Achievements', 'items' => $achievementItems],
-                                                'challenges' => ['label' => 'Challenges', 'items' => $challengeItems],
-                                                'next_actions' => ['label' => 'Recommendations / Next Actions', 'items' => $nextActionItems],
-                                            ] as $field => $data)
-                                                <div class="col-12">
-                                                    <div class="report-section h-100">
-                                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                                            <label class="form-label small fw-semibold mb-0">{{ $data['label'] }}</label>
-                                                            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-report-item="{{ $field }}">Add</button>
-                                                        </div>
-
-                                                        <div class="d-grid gap-2" data-report-list="{{ $field }}">
-                                                            @foreach (($data['items'] ?: ['']) as $item)
-                                                                <div class="report-list-row">
-                                                                    <textarea class="form-control" name="{{ $field }}[]" placeholder="Add one item">{{ $item }}</textarea>
-                                                                    <button class="btn btn-outline-danger" type="button" data-remove-report-item>&times;</button>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Report Date</th>
+                                    <th>Reporting Period</th>
+                                    <th>Progress Update</th>
+                                    <th>Staff Claim</th>
+                                    <th>Supervisor Verified</th>
+                                    <th>Achievement</th>
+                                    <th>Challenges</th>
+                                    <th>Action Point</th>
+                                    <th>Evidence</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($objective->weeklyUpdates as $update)
+                                    @php($canEditUpdate = $update->user_id === auth()->id() && $update->status !== 'approved')
+                                    @php($verifiedPercentage = $update->verifiedAchievementPercent())
+                                    <tr>
+                                        <td>{{ $update->report_date?->format('M d, Y') }}</td>
+                                        <td>{{ $update->report_period_start?->format('M d, Y') }} - {{ $update->report_period_end?->format('M d, Y') }}</td>
+                                        <td>{{ $update->is_progress_update ? 'Yes' : 'No' }}</td>
+                                        <td>{{ $update->achievement_percentage !== null ? $update->achievement_percentage.'%' : 'Not a score update' }}</td>
+                                        <td>{{ $verifiedPercentage !== null ? $verifiedPercentage.'%' : 'Not verified' }}</td>
+                                        <td>{{ $update->achievement_summary }}</td>
+                                        <td>{{ $update->challenges ?: 'No challenges recorded' }}</td>
+                                        <td>{{ $update->action_points ?: 'No action point recorded' }}</td>
+                                        <td>
+                                            @if ($update->hasEvidence())
+                                                <a href="{{ route('weekly-updates.evidence', $update) }}">{{ $update->evidence_original_name ?? 'Download evidence' }}</a>
+                                            @else
+                                                <span class="text-muted">No evidence</span>
+                                            @endif
+                                        </td>
+                                        <td><span class="badge text-bg-light border">{{ str_replace('_', ' ', $update->status) }}</span></td>
+                                        <td>
+                                            @if ($canEditUpdate)
+                                                <details>
+                                                    <summary class="btn btn-sm btn-outline-secondary">Edit</summary>
+                                                    <form method="post" action="{{ route('weekly-updates.update', $update) }}" class="border rounded-3 p-3 mt-2" enctype="multipart/form-data">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <div class="row g-2">
+                                                            <div class="col-md-4">
+                                                                <label class="form-label small fw-semibold">Report Date</label>
+                                                                <input class="form-control form-control-sm" type="date" name="report_date" min="{{ $minReportDate }}" max="{{ $maxReportDate }}" value="{{ old('report_date', $update->report_date?->toDateString()) }}" required>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label class="form-label small fw-semibold">Progress Score</label>
+                                                                <div class="form-check mb-1">
+                                                                    <input class="form-check-input" type="checkbox" name="is_progress_update" value="1" id="edit-progress-update-{{ $update->id }}" @checked(old('is_progress_update', $update->is_progress_update))>
+                                                                    <label class="form-check-label small" for="edit-progress-update-{{ $update->id }}">Updates progress</label>
                                                                 </div>
-                                                            @endforeach
+                                                                <input class="form-control form-control-sm" type="number" name="achievement_percentage" min="0" max="100" value="{{ old('achievement_percentage', $update->achievement_percentage) }}" placeholder="Achievement %" data-progress-score @disabled(! old('is_progress_update', $update->is_progress_update))>
+                                                            </div>
+                                                            <div class="col-md-5">
+                                                                <label class="form-label small fw-semibold">Replace Evidence Document</label>
+                                                                <input class="form-control form-control-sm" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
+                                                                @if ($update->hasEvidence())
+                                                                    <small class="text-muted">Current: {{ $update->evidence_original_name ?? 'Evidence uploaded' }}</small>
+                                                                @endif
+                                                            </div>
+                                                            <div class="col-12">
+                                                                <label class="form-label small fw-semibold">Achievement</label>
+                                                                <textarea class="form-control form-control-sm" name="achievement_summary" rows="2" required>{{ old('achievement_summary', $update->achievement_summary) }}</textarea>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Challenges</label>
+                                                                <textarea class="form-control form-control-sm" name="challenges" rows="2">{{ old('challenges', $update->challenges) }}</textarea>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <label class="form-label small fw-semibold">Action Point / Next Step</label>
+                                                                <textarea class="form-control form-control-sm" name="action_points" rows="2">{{ old('action_points', $update->action_points) }}</textarea>
+                                                            </div>
                                                         </div>
+                                                        <button class="btn btn-sm btn-primary mt-2">Save Changes</button>
+                                                    </form>
+                                                </details>
+                                            @endif
+
+                                            @if ($canReviewGoal)
+                                                <form method="post" action="{{ route('weekly-updates.reviews.store', $update) }}" class="review-form row g-2 mt-2">
+                                                    @csrf
+                                                    <div class="col-md-4 col-lg-3">
+                                                        <select class="form-select form-select-sm" name="decision" required>
+                                                            <option value="approved">Approve</option>
+                                                            <option value="rejected">Reject</option>
+                                                            <option value="revision_requested">Request revision</option>
+                                                        </select>
                                                     </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-
-                                        <button class="btn btn-sm btn-primary mt-3">Save Changes</button>
-                                    </form>
-                                </details>
-                            @endif
-
-                            @if ($canReviewGoal)
-                                <form method="post" action="{{ route('weekly-updates.reviews.store', $update) }}" class="review-form row g-2 mt-2">
-                                    @csrf
-
-                                    <div class="col-md-3">
-                                        <select class="form-select form-select-sm" name="decision" required>
-                                            <option value="approved">Approve as completed</option>
-                                            <option value="rejected">Reject</option>
-                                            <option value="revision_requested">Request revision</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-7">
-                                        <input class="form-control form-control-sm" name="comments" placeholder="Supervisor comments">
-                                    </div>
-
-                                    <div class="col-md-2">
-                                        <button class="btn btn-sm btn-outline-success w-100">Review</button>
-                                    </div>
-                                </form>
-                            @endif
-                        </div>
-                    @endforeach
+                                                    <div class="col-md-4 col-lg-3">
+                                                        <input class="form-control form-control-sm" type="number" name="verified_percentage" min="0" max="100" value="{{ $update->achievement_percentage }}" placeholder="{{ $update->is_progress_update ? 'Verified %' : 'No score needed' }}" @disabled(! $update->is_progress_update)>
+                                                    </div>
+                                                    <div class="col-md-4 col-lg-2">
+                                                        <button class="btn btn-sm btn-outline-success w-100">Review</button>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <textarea class="form-control form-control-sm" name="comments" rows="3" placeholder="Supervisor comments, verification notes, or revision guidance"></textarea>
+                                                    </div>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="11" class="text-muted">No reports yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             @endforeach
-        </div>
-
-        @if ($canUpdateGoal)
-            <div class="col-xl-4">
-                <div class="bg-white border rounded-3 p-4">
-                    <h2 class="h5 fw-bold">Edit Objectives</h2>
-                    <p class="text-muted small">
-                        To add, remove, or change objective weights, edit the main goal. The objective weights must still total 100%.
-                    </p>
-                    <a class="btn btn-outline-secondary w-100" href="{{ route('goals.edit', $goal) }}">
-                        Edit Goal & Objectives
-                    </a>
-                </div>
-            </div>
-        @endif
     </div>
 
     <script>
-        document.addEventListener('click', (event) => {
-            const addButton = event.target.closest('[data-add-report-item]');
-
-            if (addButton) {
-                const field = addButton.dataset.addReportItem;
-                const list = addButton.closest('.report-section').querySelector(`[data-report-list="${field}"]`);
-
-                const row = document.createElement('div');
-                row.className = 'report-list-row';
-                row.innerHTML = `
-                    <textarea class="form-control" name="${field}[]" placeholder="Add one item"></textarea>
-                    <button class="btn btn-outline-danger" type="button" data-remove-report-item>&times;</button>
-                `;
-
-                list.appendChild(row);
-                row.querySelector('textarea').focus();
-                return;
-            }
-
-            const removeButton = event.target.closest('[data-remove-report-item]');
-
-            if (!removeButton) {
-                return;
-            }
-
-            const list = removeButton.closest('[data-report-list]');
-
-            if (list.querySelectorAll('.report-list-row').length === 1) {
-                removeButton.closest('.report-list-row').querySelector('textarea').value = '';
-                return;
-            }
-
-            removeButton.closest('.report-list-row').remove();
-        });
-
         document.addEventListener('change', (event) => {
-            const weekSelect = event.target.closest('[data-week-select]');
+            const checkbox = event.target.closest('[name="is_progress_update"]');
 
-            if (!weekSelect) {
+            if (! checkbox) {
                 return;
             }
 
-            const dateInput = weekSelect.closest('form').querySelector('[name="week_starting"]');
-            const selectedOption = weekSelect.selectedOptions[0];
+            const form = checkbox.closest('form');
+            const scoreInput = form?.querySelector('[data-progress-score]');
 
-            if (dateInput) {
-                dateInput.value = selectedOption?.dataset.weekDate || '';
+            if (! scoreInput) {
+                return;
+            }
+
+            scoreInput.disabled = ! checkbox.checked;
+
+            if (! checkbox.checked) {
+                scoreInput.value = '';
             }
         });
     </script>

@@ -90,11 +90,11 @@ class UserManagementTest extends TestCase
         $superAdmin = $this->createSuperAdmin();
         $staffRole = Role::firstOrCreate(['name' => 'Staff']);
 
-        Permission::firstOrCreate(['name' => 'submit weekly updates']);
+        Permission::firstOrCreate(['name' => 'submit daily reports']);
         Permission::firstOrCreate(['name' => 'view reports']);
         Permission::firstOrCreate(['name' => 'manage goals']);
 
-        $staffRole->syncPermissions(['submit weekly updates']);
+        $staffRole->syncPermissions(['submit daily reports']);
 
         $usersResponse = $this->actingAs($superAdmin)->get(route('users.management.index'));
 
@@ -105,14 +105,14 @@ class UserManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Role Management');
-        $response->assertSee('Submit Weekly Updates');
+        $response->assertSee('Submit Reports');
         $response->assertSee('Manage Goals');
 
         $this->actingAs($superAdmin)->put(route('roles.management.permissions.update', $staffRole), [
-            'permissions' => ['submit weekly updates', 'view reports'],
+            'permissions' => ['submit daily reports', 'view reports'],
         ])->assertRedirect();
 
-        $this->assertTrue($staffRole->fresh()->hasPermissionTo('submit weekly updates'));
+        $this->assertTrue($staffRole->fresh()->hasPermissionTo('submit daily reports'));
         $this->assertTrue($staffRole->fresh()->hasPermissionTo('view reports'));
         $this->assertFalse($staffRole->fresh()->hasPermissionTo('manage goals'));
     }

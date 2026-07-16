@@ -13,8 +13,6 @@ class GoalManagementService
 {
     public function createGoal(User $user, array $data): Goal
     {
-        $data = $this->prepareGoalData($data);
-
         $this->validateObjectiveWeights($data['objectives']);
 
         [$departmentIds, $sectionIds, $unitIds] = $this->assignmentIds($data);
@@ -25,11 +23,7 @@ class GoalManagementService
             'owner_id' => $user->id,
             'title' => $data['title'],
             'specific' => $data['specific'] ?? null,
-            'measurable' => $data['measurable'] ?? null,
-            'achievable' => $data['achievable'] ?? null,
             'relevant' => $data['relevant'] ?? null,
-            'time_bound' => $data['time_bound'] ?? null,
-            'key_action_steps' => $data['key_action_steps'],
             'primary_metric' => $data['primary_metric'] ?? null,
             'deadline' => $data['deadline'] ?? null,
             'level' => $data['level'],
@@ -51,8 +45,6 @@ class GoalManagementService
 
     public function updateGoal(Goal $goal, array $data): Goal
     {
-        $data = $this->prepareGoalData($data);
-
         $this->validateObjectiveWeights($data['objectives']);
 
         [$departmentIds, $sectionIds, $unitIds] = $this->assignmentIds($data);
@@ -68,11 +60,7 @@ class GoalManagementService
                 'quarter_id' => $data['quarter_id'],
                 'title' => $data['title'],
                 'specific' => $data['specific'] ?? null,
-                'measurable' => $data['measurable'] ?? null,
-                'achievable' => $data['achievable'] ?? null,
                 'relevant' => $data['relevant'] ?? null,
-                'time_bound' => $data['time_bound'] ?? null,
-                'key_action_steps' => $data['key_action_steps'],
                 'primary_metric' => $data['primary_metric'] ?? null,
                 'deadline' => $data['deadline'] ?? null,
                 'level' => $data['level'],
@@ -100,27 +88,6 @@ class GoalManagementService
         });
 
         return $goal->refresh();
-    }
-
-    private function prepareGoalData(array $data): array
-    {
-        $steps = $data['key_action_steps'] ?? [];
-
-        if (is_string($steps)) {
-            $steps = preg_split('/\r\n|\r|\n|,/', $steps) ?: [];
-        }
-
-        if (! is_array($steps)) {
-            $steps = [];
-        }
-
-        $data['key_action_steps'] = collect($steps)
-            ->map(fn ($step) => trim((string) $step))
-            ->filter()
-            ->values()
-            ->all();
-
-        return $data;
     }
 
     private function validateObjectiveWeights(array $objectives): void

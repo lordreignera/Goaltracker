@@ -7,6 +7,8 @@ use App\Http\Requests\Goals\StoreWeeklyUpdateRequest;
 use App\Http\Requests\Goals\UpdateWeeklyUpdateRequest;
 use App\Models\GoalObjective;
 use App\Models\WeeklyUpdate;
+use App\Services\GoalAccessService;
+use Illuminate\Support\Facades\Storage;
 
 class WeeklyUpdateController extends Controller
 {
@@ -14,17 +16,38 @@ class WeeklyUpdateController extends Controller
     {
         $objective->weeklyUpdates()->create($request->preparedUpdateData() + ['user_id' => $request->user()->id]);
 
-        return back()->with('status', 'Weekly update submitted.');
+        return back()->with('status', 'Daily report submitted.');
     }
 
     public function update(UpdateWeeklyUpdateRequest $request, WeeklyUpdate $weeklyUpdate)
     {
-        $weeklyUpdate->update($request->preparedUpdateData() + ['status' => 'submitted']);
+        $data = $request->preparedUpdateData() + ['status' => 'submitted'];
+        $oldEvidencePath = $weeklyUpdate->evidence_path;
+
+        $weeklyUpdate->update($data);
+
+        if ($oldEvidencePath && isset($data['evidence_path'])) {
+            Storage::disk('public')->delete($oldEvidencePath);
+        }
 
         if (in_array($weeklyUpdate->objective->status, ['rejected', 'revision_requested'], true)) {
             $weeklyUpdate->objective->update(['status' => 'pending']);
         }
 
-        return back()->with('status', 'Weekly update resubmitted.');
+        return back()->with('status', 'Daily report resubmitted.');
+    }
+
+    public function evidence(WeeklyUpdate $weeklyUpdate, GoalAccessService $access)
+    {
+        abort_unless(
+            $weeklyUpdate->hasEvidence()
+                && $access->canViewGoal(request()->user(), $weeklyUpdate->objective->goal),
+            404
+        );
+
+        return Storage::disk('public')->download(
+            $weeklyUpdate->evidence_path,
+            $weeklyUpdate->evidence_original_name
+        );
     }
 }

@@ -28,7 +28,6 @@ class GoalController extends Controller
                 $query->where(function ($query) use ($search) {
                     $query->where('title', 'like', '%' . $search . '%')
                         ->orWhere('specific', 'like', '%' . $search . '%')
-                        ->orWhere('measurable', 'like', '%' . $search . '%')
                         ->orWhere('primary_metric', 'like', '%' . $search . '%');
                 });
             })
@@ -69,9 +68,7 @@ class GoalController extends Controller
 
     public function store(StoreGoalRequest $request, GoalManagementService $goals)
     {
-        $data = $this->prepareGoalData($request->validated());
-
-        $goal = $goals->createGoal($request->user(), $data);
+        $goal = $goals->createGoal($request->user(), $request->validated());
 
         return redirect()
             ->route('goals.show', $goal)
@@ -114,9 +111,7 @@ class GoalController extends Controller
 
     public function update(UpdateGoalRequest $request, Goal $goal, GoalManagementService $goals)
     {
-        $data = $this->prepareGoalData($request->validated());
-
-        $goals->updateGoal($goal, $data);
+        $goals->updateGoal($goal, $request->validated());
 
         return redirect()
             ->route('goals.show', $goal)
@@ -141,28 +136,6 @@ class GoalController extends Controller
         ]);
 
         return back()->with('status', 'Goal submitted for review.');
-    }
-
-    private function prepareGoalData(array $data): array
-    {
-        $raw = $data['key_action_steps'] ?? [];
-
-        if (is_string($raw)) {
-            $parts = preg_split('/\r\n|\r|\n|,/', $raw);
-            $raw = $parts ?: [];
-        }
-
-        if (! is_array($raw)) {
-            $raw = [];
-        }
-
-        $data['key_action_steps'] = array_values(array_filter(array_map(function ($step) {
-            return trim((string) $step);
-        }, $raw), function ($step) {
-            return $step !== '';
-        }));
-
-        return $data;
     }
 
     private function organizationOptions($user): array

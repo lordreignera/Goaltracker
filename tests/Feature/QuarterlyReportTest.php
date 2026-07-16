@@ -26,6 +26,8 @@ class QuarterlyReportTest extends TestCase
         $response->assertSee('Quarterly Performance Report');
         $response->assertSee('Improve ICT Service Delivery');
         $response->assertSee('Installed computers');
+        $response->assertSee('Procurement delay remains');
+        $response->assertSee('Procurement follow-up');
     }
 
     public function test_user_can_download_quarterly_report_pdf(): void
@@ -38,6 +40,23 @@ class QuarterlyReportTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_user_can_download_quarterly_report_csv_table(): void
+    {
+        [$user, $quarter] = $this->reportingData();
+
+        $response = $this->actingAs($user)->get(route('reports.quarterly.csv', [
+            'quarter_id' => $quarter->id,
+        ]));
+
+        $response->assertOk();
+        $response->assertDownload('q1-2026-daily-report-table.csv');
+
+        $content = $response->streamedContent();
+
+        $this->assertStringContainsString('Achievement', $content);
+        $this->assertStringContainsString('Procurement delay remains', $content);
     }
 
     private function reportingData(): array
@@ -69,23 +88,27 @@ class QuarterlyReportTest extends TestCase
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade staff computers',
-            'specific_output' => 'Replace outdated machines.',
-            'success_measure' => 'All assigned computers are functional and signed off.',
+            'specific_output' => 'Replace outdated machines and confirm they are functional.',
             'weight' => 100,
             'planned_weeks' => 2,
             'starts_at' => '2026-01-01',
             'due_at' => '2026-01-14',
         ]);
 
-        $objective->weeklyUpdates()->create([
+        $update = $objective->weeklyUpdates()->create([
             'user_id' => $user->id,
-            'week_number' => 1,
-            'week_starting' => '2026-01-01',
-            'progress_summary' => 'Completed Kampala office setup.',
-            'achievements' => 'Installed computers',
-            'challenges' => 'Procurement delay',
-            'next_actions' => 'Finish staff onboarding',
+            'report_date' => '2026-01-01',
+            'achievement_percentage' => 45,
+            'achievement_summary' => 'Installed computers',
+            'challenges' => 'Procurement delay remains.',
+            'action_points' => 'Procurement follow-up.',
             'status' => 'approved',
+        ]);
+        $update->reviews()->create([
+            'supervisor_id' => $user->id,
+            'decision' => 'approved',
+            'verified_percentage' => 40,
+            'comments' => 'Verified installed computers.',
         ]);
 
         return [$user, $quarter];

@@ -14,11 +14,7 @@ class Goal extends Model
         'owner_id',
         'title',
         'specific',
-        'measurable',
-        'achievable',
         'relevant',
-        'time_bound',
-        'key_action_steps',
         'primary_metric',
         'deadline',
         'level',
@@ -32,7 +28,6 @@ class Goal extends Model
         'deadline' => 'date',
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
-        'key_action_steps' => 'array',
     ];
 
     public function quarter()

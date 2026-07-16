@@ -17,21 +17,19 @@ class UpdateWeeklyUpdateRequest extends FormRequest
             && $weeklyUpdate instanceof WeeklyUpdate
             && $weeklyUpdate->user_id === $this->user()->id
             && $weeklyUpdate->status !== 'approved'
-            && app(GoalAccessService::class)->canViewGoal($this->user(), $weeklyUpdate->objective->goal);
+            && app(GoalAccessService::class)->canSubmitDailyReport($this->user(), $weeklyUpdate->objective->goal);
     }
 
     public function rules(): array
     {
         return [
-            'week_number' => ['required', 'integer', 'min:1', 'max:13'],
-            'week_starting' => ['required', 'date'],
-            'progress_summary' => ['required', 'string'],
-            'achievements' => ['nullable', 'array'],
-            'achievements.*' => ['nullable', 'string', 'max:1000'],
-            'challenges' => ['nullable', 'array'],
-            'challenges.*' => ['nullable', 'string', 'max:1000'],
-            'next_actions' => ['nullable', 'array'],
-            'next_actions.*' => ['nullable', 'string', 'max:1000'],
+            'report_date' => ['required', 'date'],
+            'is_progress_update' => ['nullable', 'boolean'],
+            'achievement_percentage' => ['required_if:is_progress_update,1', 'nullable', 'integer', 'min:0', 'max:100'],
+            'achievement_summary' => ['required', 'string', 'max:3000'],
+            'challenges' => ['nullable', 'string', 'max:3000'],
+            'action_points' => ['nullable', 'string', 'max:3000'],
+            'evidence_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg', 'max:10240'],
         ];
     }
 
@@ -41,54 +39,40 @@ class UpdateWeeklyUpdateRequest extends FormRequest
             function (Validator $validator) {
                 $weeklyUpdate = $this->route('weeklyUpdate');
 
-                if (! $weeklyUpdate instanceof WeeklyUpdate || ! $this->filled('week_starting')) {
+                if (! $weeklyUpdate instanceof WeeklyUpdate || ! $this->filled('report_date')) {
                     return;
                 }
 
                 $objective = $weeklyUpdate->objective;
                 $goal = $objective->goal()->with('quarter')->first();
                 $quarter = $goal?->quarter;
-                $weekStarting = $this->date('week_starting');
+                $reportDate = $this->date('report_date');
 
-                if (! $quarter || ! $weekStarting) {
+                if (! $quarter || ! $reportDate) {
                     return;
                 }
 
-                $weekNumber = (int) $this->input('week_number');
                 [$firstAllowedDate, $lastAllowedDate] = $objective->reportingDateRange();
-                $expectedWeekStarting = $firstAllowedDate->copy()->addDays(($weekNumber - 1) * 7);
 
-                if ($expectedWeekStarting->gt($lastAllowedDate)) {
+                if ($reportDate->lt($firstAllowedDate) || $reportDate->gt($lastAllowedDate)) {
                     $validator->errors()->add(
-                        'week_number',
-                        'Selected week is outside the objective reporting period.'
+                        'report_date',
+                        "Report date must be between {$firstAllowedDate->toFormattedDateString()} and {$lastAllowedDate->toFormattedDateString()}."
                     );
                 }
 
-                if (! $weekStarting->isSameDay($expectedWeekStarting)) {
-                    $validator->errors()->add(
-                        'week_starting',
-                        "Week {$weekNumber} must start on {$expectedWeekStarting->toFormattedDateString()}."
-                    );
-                }
-
-                if ($weekStarting->lt($firstAllowedDate) || $weekStarting->gt($lastAllowedDate)) {
-                    $validator->errors()->add(
-                        'week_starting',
-                        "Weekly report date must be between {$firstAllowedDate->toFormattedDateString()} and {$lastAllowedDate->toFormattedDateString()}."
-                    );
-                }
+                [$periodStart] = $objective->reportingPeriodFor($reportDate);
 
                 $alreadySubmitted = $objective->weeklyUpdates()
                     ->whereKeyNot($weeklyUpdate->id)
                     ->where('user_id', $this->user()->id)
-                    ->whereDate('week_starting', $weekStarting->toDateString())
+                    ->whereDate('report_period_start', $periodStart->toDateString())
                     ->exists();
 
                 if ($alreadySubmitted) {
                     $validator->errors()->add(
-                        'week_starting',
-                        'You already have another weekly report for this objective on this date.'
+                        'report_date',
+                        'You already have another report for this sub-goal reporting period.'
                     );
                 }
             },
@@ -97,14 +81,24 @@ class UpdateWeeklyUpdateRequest extends FormRequest
 
     public function preparedUpdateData(): array
     {
-        $data = $this->validated();
+        $data = $this->safe()->except('evidence_file');
+        $weeklyUpdate = $this->route('weeklyUpdate');
+        $reportDate = $this->date('report_date');
+        [$periodStart, $periodEnd] = $weeklyUpdate->objective->reportingPeriodFor($reportDate);
 
-        foreach (['achievements', 'challenges', 'next_actions'] as $field) {
-            $data[$field] = collect($data[$field] ?? [])
-                ->map(fn ($item) => trim((string) $item))
-                ->filter()
-                ->values()
-                ->implode("\n");
+        $data['is_progress_update'] = $this->boolean('is_progress_update');
+        $data['report_period_start'] = $periodStart->toDateString();
+        $data['report_period_end'] = $periodEnd->toDateString();
+
+        if (! $data['is_progress_update']) {
+            $data['achievement_percentage'] = null;
+        }
+
+        if ($this->hasFile('evidence_file')) {
+            $file = $this->file('evidence_file');
+
+            $data['evidence_path'] = $file->store('weekly-update-evidence', 'public');
+            $data['evidence_original_name'] = $file->getClientOriginalName();
         }
 
         $data['submitted_at'] = now();

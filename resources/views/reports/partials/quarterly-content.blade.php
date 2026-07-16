@@ -22,7 +22,7 @@
     @foreach ([
         ['Goals Planned', $summary['goals_planned']],
         ['Goals Achieved', $summary['goals_achieved']],
-        ['Approved Weekly Reports', $summary['approved_weekly_reports']],
+        ['Approved Reports', $summary['approved_daily_reports']],
         ['Pending Reviews', $summary['pending_reviews']],
     ] as [$label, $value])
         <div class="col-md-3">
@@ -54,7 +54,7 @@
             <div class="d-flex justify-content-between gap-2 mb-1">
                 <div>
                     <div class="fw-semibold">{{ $row['title'] }}</div>
-                    <div class="text-muted small">{{ $row['department'] }} / {{ $row['section'] }} / {{ $row['unit'] }} / {{ $row['approved_weeks'] }} of {{ $row['planned_weeks'] }} planned reports approved</div>
+                    <div class="text-muted small">{{ $row['department'] }} / {{ $row['section'] }} / {{ $row['unit'] }} / {{ $row['achievement'] }}% average sub-goal achievement</div>
                 </div>
                 <div class="fw-bold">{{ $row['progress'] }}%</div>
             </div>
@@ -66,51 +66,55 @@
 </div>
 
 <div class="report-card mb-4">
-    <h3 class="h5 fw-bold mb-3">Detailed Weekly Reports</h3>
+    <h3 class="h5 fw-bold mb-3">Reporting Table</h3>
     <div class="{{ ($isPdf ?? false) ? '' : 'table-responsive' }}">
         <table class="table table-sm align-middle">
             <thead>
                 <tr>
-                    <th>Goal / Objective</th>
-                    <th>Week</th>
+                    <th>Goal</th>
+                    <th>Sub-goal</th>
+                    <th>Timeline</th>
+                    <th>Frequency</th>
+                    <th>Reporting Period</th>
+                    <th>Report Date</th>
+                    <th>Progress Update</th>
+                    <th>Staff Claim</th>
+                    <th>Supervisor Verified</th>
+                    <th>Achievement</th>
+                    <th>Challenges</th>
+                    <th>Action Point</th>
+                    <th>Evidence</th>
                     <th>Staff</th>
                     <th>Status</th>
-                    <th>Report Details</th>
                     <th>Supervisor Feedback</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse ($weeklyRows as $row)
+                @forelse ($reportRows as $row)
                     <tr>
+                        <td><strong>{{ $row['goal'] }}</strong></td>
                         <td>
-                            <strong>{{ $row['goal'] }}</strong>
-                            <div class="text-muted small">{{ $row['objective'] }}</div>
-                            <div class="small"><strong>Output:</strong> {{ $row['objective_specific_output'] }}</div>
-                            <div class="small"><strong>Measure:</strong> {{ $row['objective_success_measure'] }}</div>
-                            <div class="text-muted small">{{ $row['objective_planned_weeks'] }} planned week{{ $row['objective_planned_weeks'] === 1 ? '' : 's' }}</div>
+                            <strong>{{ $row['objective'] }}</strong>
+                            <div class="small"><strong>Deliverable / Evidence:</strong> {{ $row['objective_specific_output'] }}</div>
                         </td>
-                        <td>
-                            Week {{ $row['week_number'] }}
-                            <div class="text-muted small">{{ $row['week_starting']?->format('M d, Y') }}</div>
-                        </td>
+                        <td>{{ $row['timeline'] }}</td>
+                        <td>{{ ucfirst($row['reporting_frequency']) }}</td>
+                        <td>{{ $row['report_period'] }}</td>
+                        <td>{{ $row['report_date']?->format('M d, Y') }}</td>
+                        <td>{{ $row['is_progress_update'] ? 'Yes' : 'No' }}</td>
+                        <td>{{ $row['achievement_percentage'] !== null ? $row['achievement_percentage'].'%' : 'Not a score update' }}</td>
+                        <td>{{ $row['verified_percentage'] !== null ? $row['verified_percentage'].'%' : 'Not verified' }}</td>
+                        <td>{{ $row['achievement_summary'] }}</td>
+                        <td>{{ $row['challenges'] ?: 'No challenges recorded' }}</td>
+                        <td>{{ $row['action_points'] ?: 'No action point recorded' }}</td>
+                        <td>{{ $row['evidence_name'] ?: 'No evidence' }}</td>
                         <td>{{ $row['staff'] }}</td>
                         <td><span class="badge text-bg-light border">{{ str_replace('_', ' ', $row['status']) }}</span></td>
-                        <td>
-                            <div><strong>Summary:</strong> {{ $row['summary'] }}</div>
-                            @foreach (['Achievements' => $row['achievements'], 'Challenges' => $row['challenges'], 'Recommendations' => $row['recommendations']] as $label => $items)
-                                <div class="mt-1"><strong>{{ $label }}:</strong></div>
-                                @forelse ($items as $item)
-                                    <div class="small">&bull; {{ $item }}</div>
-                                @empty
-                                    <div class="small text-muted">None provided</div>
-                                @endforelse
-                            @endforeach
-                        </td>
                         <td>{{ $row['review_comments'] ?: 'No feedback yet' }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-muted">No weekly reports have been submitted for this quarter.</td>
+                        <td colspan="16" class="text-muted">No reports have been submitted for this quarter.</td>
                     </tr>
                 @endforelse
             </tbody>

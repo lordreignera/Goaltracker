@@ -31,7 +31,7 @@
         }
 
         .progress-bar {
-            background: linear-gradient(90deg, var(--arm-maroon-dark), var(--arm-maroon));
+            background: var(--sg-blue);
         }
     </style>
 
@@ -129,7 +129,7 @@
                     </td>
                     <td>
                         <div class="progress"><div class="progress-bar" style="width: {{ $goal->progress() }}%"></div></div>
-                        <small class="text-muted">{{ $goal->progress() }}% from approved weekly reports</small>
+                        <small class="text-muted">{{ $goal->progress() }}% from approved progress updates</small>
                     </td>
                     <td class="text-end">
                         <a class="btn btn-sm btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Open</a>

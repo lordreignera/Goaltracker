@@ -26,21 +26,21 @@ class QuarterlyReportService
 
         $goalRows = $goals->map(fn (Goal $goal) => $this->goalRow($goal));
         $departmentRows = $this->departmentRows($goals);
-        $weeklyRows = $this->weeklyRows($goals);
+        $reportRows = $this->reportRows($goals);
 
         return [
             'quarter' => $quarter,
             'goals' => $goals,
             'goalRows' => $goalRows,
             'departmentRows' => $departmentRows,
-            'weeklyRows' => $weeklyRows,
+            'reportRows' => $reportRows,
             'summary' => [
                 'goals_planned' => $goals->count(),
                 'goals_achieved' => $goalRows->where('progress', '>=', 100)->count(),
                 'average_progress' => round($goalRows->avg('progress') ?? 0, 1),
-                'approved_weekly_reports' => $weeklyRows->where('status', 'approved')->count(),
-                'submitted_weekly_reports' => $weeklyRows->count(),
-                'pending_reviews' => $weeklyRows->where('status', 'submitted')->count(),
+                'approved_daily_reports' => $reportRows->where('status', 'approved')->count(),
+                'submitted_daily_reports' => $reportRows->count(),
+                'pending_reviews' => $reportRows->where('status', 'submitted')->count(),
             ],
         ];
     }
@@ -54,8 +54,7 @@ class QuarterlyReportService
             'unit' => $goal->assignedUnits->pluck('name')->unique()->join(', ') ?: 'All units',
             'progress' => $goal->progress(),
             'objectives_count' => $goal->objectives->count(),
-            'approved_weeks' => $goal->objectives->sum(fn ($objective) => $objective->approvedReportingWeeksCount()),
-            'planned_weeks' => $goal->objectives->sum(fn ($objective) => $objective->totalReportingWeeks()),
+            'achievement' => round($goal->objectives->avg(fn ($objective) => $objective->progressPercent()) ?? 0, 1),
         ];
     }
 
@@ -82,7 +81,7 @@ class QuarterlyReportService
             ->values();
     }
 
-    private function weeklyRows(Collection $goals): Collection
+    private function reportRows(Collection $goals): Collection
     {
         return $goals->flatMap(function (Goal $goal) {
             return $goal->objectives->flatMap(function ($objective) use ($goal) {
@@ -91,15 +90,20 @@ class QuarterlyReportService
                         'goal' => $goal->title,
                         'objective' => $objective->title,
                         'objective_specific_output' => $objective->specific_output,
-                        'objective_success_measure' => $objective->success_measure,
                         'objective_planned_weeks' => $objective->planned_weeks,
-                        'week_number' => $update->week_number,
-                        'week_starting' => $update->week_starting,
+                        'reporting_frequency' => $objective->reporting_frequency,
+                        'timeline' => $objective->starts_at?->format('M d, Y').' - '.$objective->due_at?->format('M d, Y'),
+                        'report_date' => $update->report_date,
+                        'report_period' => $update->report_period_start?->format('M d, Y').' - '.$update->report_period_end?->format('M d, Y'),
                         'staff' => $update->user?->name,
-                        'summary' => $update->progress_summary,
-                        'achievements' => $this->lines($update->achievements),
-                        'challenges' => $this->lines($update->challenges),
-                        'recommendations' => $this->lines($update->next_actions),
+                        'is_progress_update' => $update->is_progress_update,
+                        'achievement_percentage' => $update->achievement_percentage,
+                        'verified_percentage' => $update->verifiedAchievementPercent(),
+                        'achievement_summary' => $update->achievement_summary,
+                        'challenges' => $update->challenges,
+                        'action_points' => $update->action_points,
+                        'evidence_name' => $update->evidence_original_name,
+                        'has_evidence' => $update->hasEvidence(),
                         'status' => $update->status,
                         'review_comments' => $update->reviews->pluck('comments')->filter()->join("\n"),
                     ];
@@ -108,16 +112,7 @@ class QuarterlyReportService
         })->sortBy([
             ['goal', 'asc'],
             ['objective', 'asc'],
-            ['week_number', 'asc'],
+            ['report_date', 'asc'],
         ])->values();
-    }
-
-    private function lines(?string $value): array
-    {
-        return collect(preg_split('/\r\n|\r|\n/', (string) $value, -1, PREG_SPLIT_NO_EMPTY))
-            ->map(fn ($line) => trim($line))
-            ->filter()
-            ->values()
-            ->all();
     }
 }

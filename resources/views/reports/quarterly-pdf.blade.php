@@ -17,7 +17,7 @@
         .chart-row { width: 100%; margin-bottom: 8px; }
         .chart-label { display: inline-block; width: 28%; vertical-align: middle; }
         .chart-track { display: inline-block; width: 58%; height: 10px; background: #f0f2f5; vertical-align: middle; }
-        .chart-fill { height: 10px; background: #c43b3f; }
+        .chart-fill { height: 10px; background: #2563eb; }
         .chart-value { display: inline-block; width: 10%; text-align: right; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #d9dee7; padding: 6px; vertical-align: top; }

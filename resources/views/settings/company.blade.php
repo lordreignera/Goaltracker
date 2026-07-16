@@ -55,7 +55,7 @@
                 @if ($settings->logoUrl())
                     <img class="settings-logo" src="{{ $settings->logoUrl() }}" alt="{{ $settings->company_name }} logo">
                 @else
-                    <div class="brand-tile">{{ $settings->brand_mark }}</div>
+                    <div class="brand-mark">{{ $settings->brand_mark }}</div>
                 @endif
                 <div>
                     <div class="fw-bold">{{ $settings->company_short_name }}</div>

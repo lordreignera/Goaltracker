@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 
 class GoalObjective extends Model
@@ -11,9 +11,9 @@ class GoalObjective extends Model
         'goal_id',
         'title',
         'specific_output',
-        'success_measure',
         'weight',
         'planned_weeks',
+        'reporting_frequency',
         'status',
         'starts_at',
         'due_at',
@@ -42,7 +42,7 @@ class GoalObjective extends Model
 
     public function isApprovedComplete(): bool
     {
-        return $this->approvedReportingWeeksCount() >= $this->totalReportingWeeks();
+        return $this->approvedAchievementPercent() >= 100;
     }
 
     public function totalReportingWeeks(): int
@@ -64,49 +64,36 @@ class GoalObjective extends Model
         return min($this->planned_weeks ?: 13, (int) floor($firstReportingDate->diffInDays($lastReportingDate) / 7) + 1);
     }
 
-    public function approvedReportingWeeksCount(): int
+    public function approvedAchievementPercent(): int
     {
-        $this->loadMissing('goal.quarter');
-
-        $quarter = $this->goal?->quarter;
-
-        if (! $quarter?->starts_at || ! $quarter?->ends_at) {
-            return 0;
-        }
-
-        [$firstReportingDate, $lastReportingDate] = $this->reportingDateRange();
-
         if ($this->relationLoaded('weeklyUpdates')) {
-            return $this->weeklyUpdates
+            $latestApproved = $this->weeklyUpdates
                 ->where('status', 'approved')
-                ->filter(fn (WeeklyUpdate $update) => $update->week_starting
-                    && $update->week_starting->betweenIncluded($firstReportingDate, $lastReportingDate))
-                ->pluck('week_starting')
-                ->map(fn (Carbon $date) => $date->toDateString())
-                ->unique()
-                ->count();
+                ->filter(fn (WeeklyUpdate $update) => $update->verifiedAchievementPercent() !== null)
+                ->sortByDesc('report_period_start')
+                ->first();
+
+            return (int) ($latestApproved?->verifiedAchievementPercent() ?? 0);
         }
 
-        return $this->approvedWeeklyUpdates()
-            ->whereBetween('week_starting', [$firstReportingDate, $lastReportingDate])
-            ->distinct('week_starting')
-            ->count('week_starting');
+        $latestApproved = $this->approvedWeeklyUpdates()
+            ->with('latestApprovedReview')
+            ->whereHas('latestApprovedReview', fn ($query) => $query->whereNotNull('verified_percentage'))
+            ->orderByDesc('report_period_start')
+            ->get()
+            ->first();
+
+        return (int) ($latestApproved?->verifiedAchievementPercent() ?? 0);
     }
 
-    public function weeklyProgressPercent(): float
+    public function progressPercent(): int
     {
-        $totalWeeks = $this->totalReportingWeeks();
-
-        if ($totalWeeks < 1) {
-            return 0;
-        }
-
-        return min(100, ($this->approvedReportingWeeksCount() / $totalWeeks) * 100);
+        return min(100, $this->approvedAchievementPercent());
     }
 
     public function progressContribution(): float
     {
-        return ($this->weight * $this->weeklyProgressPercent()) / 100;
+        return ($this->weight * $this->progressPercent()) / 100;
     }
 
     public function reportingDateRange(): array
@@ -128,22 +115,30 @@ class GoalObjective extends Model
         return [$firstReportingDate, $lastReportingDate];
     }
 
-    public function reportingWeekOptions(): array
+    public function reportingPeriodFor(CarbonInterface $reportDate): array
     {
         [$firstReportingDate, $lastReportingDate] = $this->reportingDateRange();
-        $options = [];
-        $cursor = $firstReportingDate->copy();
+        $reportDate = $reportDate->copy()->startOfDay();
 
-        for ($week = 1; $week <= 13 && $cursor->lte($lastReportingDate); $week++) {
-            $options[] = [
-                'week' => $week,
-                'date' => $cursor->toDateString(),
-                'label' => 'Week '.$week.' - '.$cursor->format('M d, Y'),
-            ];
-
-            $cursor->addDays(7);
+        if ($this->reporting_frequency === 'daily') {
+            return [$reportDate, $reportDate];
         }
 
-        return $options;
+        if ($this->reporting_frequency === 'monthly') {
+            return [
+                $reportDate->copy()->startOfMonth()->max($firstReportingDate),
+                $reportDate->copy()->endOfMonth()->min($lastReportingDate),
+            ];
+        }
+
+        $daysFromStart = max(0, (int) $firstReportingDate->diffInDays($reportDate, false));
+        $weekOffset = intdiv($daysFromStart, 7);
+        $periodStart = $firstReportingDate->copy()->addDays($weekOffset * 7);
+
+        return [
+            $periodStart,
+            $periodStart->copy()->addDays(6)->min($lastReportingDate),
+        ];
     }
+
 }

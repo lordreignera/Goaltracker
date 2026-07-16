@@ -4,22 +4,19 @@
 
     <style>
         :root {
-            --arm-maroon: #c81936;
-            --arm-maroon-dark: #a80005;
-            --arm-maroon-soft: #d63d5b;
-            --arm-gold: #f3b23a;
-            --arm-ink: #0f2237;
-            --arm-muted: #5f6f82;
-            --arm-field: #eaf2ff;
-            --arm-line: #d9e1ec;
-            --arm-page: #f4f6fb;
+            --arm-maroon: #2563eb;
+            --arm-maroon-dark: #172554;
+            --arm-maroon-soft: #dbeafe;
+            --arm-gold: #dbeafe;
+            --arm-ink: #0f172a;
+            --arm-muted: #64748b;
+            --arm-field: #f8fafc;
+            --arm-line: #e2e8f0;
+            --arm-page: #f8fafc;
         }
 
         body {
-            background:
-                linear-gradient(90deg, rgba(200, 25, 54, .1), transparent 34%),
-                radial-gradient(circle at 11% 18%, rgba(200, 25, 54, .08), transparent 24%),
-                var(--arm-page);
+            background: var(--arm-page);
         }
 
         .login-page {
@@ -39,7 +36,7 @@
         }
 
         .brand-panel {
-            background: linear-gradient(145deg, var(--arm-maroon-dark), var(--arm-maroon));
+            background: var(--arm-maroon-dark);
             color: #fff;
             padding: 26px 30px;
             position: relative;
@@ -162,8 +159,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            border: 1px solid #ecd3d5;
-            background: #fff6f6;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
             color: var(--arm-maroon);
             border-radius: 999px;
             padding: 7px 12px;
@@ -185,7 +182,7 @@
 
         .form-control:focus {
             border-color: var(--arm-maroon);
-            box-shadow: 0 0 0 .18rem rgba(196, 59, 63, .12);
+            box-shadow: 0 0 0 .18rem rgba(37, 99, 235, .12);
             background: var(--arm-field);
         }
 
@@ -218,17 +215,17 @@
         .btn-maroon {
             height: 46px;
             border-radius: 11px;
-            background: linear-gradient(90deg, var(--arm-maroon-dark), var(--arm-maroon));
+            background: var(--arm-maroon);
             border: 0;
             color: #fff;
             font-weight: 800;
-            box-shadow: 0 10px 20px rgba(196, 59, 63, .14);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, .14);
         }
 
         .btn-maroon:hover,
         .btn-maroon:focus {
             color: #fff;
-            background: linear-gradient(90deg, #8a1f23, #b11e22);
+            background: #1d4ed8;
         }
 
         .divider {
@@ -379,7 +376,7 @@
                         </div>
                         <div>
                             <div class="metric-tile p-3">
-                                <div class="metric-value word">Weekly</div>
+                                <div class="metric-value word">Daily</div>
                                 <div class="metric-label mt-3">Reviews</div>
                             </div>
                         </div>

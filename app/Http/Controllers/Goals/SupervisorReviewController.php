@@ -16,14 +16,27 @@ class SupervisorReviewController extends Controller
 
         $data = $request->validate([
             'decision' => ['required', 'in:approved,rejected,revision_requested'],
+            'verified_percentage' => [
+                $weeklyUpdate->is_progress_update ? 'required_if:decision,approved' : 'nullable',
+                'nullable',
+                'integer',
+                'min:0',
+                'max:100',
+            ],
             'comments' => ['nullable', 'string'],
         ]);
+
+        if ($data['decision'] !== 'approved' || ! $weeklyUpdate->is_progress_update) {
+            $data['verified_percentage'] = null;
+        }
 
         $weeklyUpdate->reviews()->create($data + ['supervisor_id' => $request->user()->id]);
         $weeklyUpdate->update(['status' => $data['decision']]);
 
-        if ($data['decision'] === 'approved') {
-            $weeklyUpdate->objective->update(['status' => 'completed']);
+        if ($data['decision'] === 'approved' && $weeklyUpdate->is_progress_update) {
+            $weeklyUpdate->objective->update([
+                'status' => $data['verified_percentage'] >= 100 ? 'completed' : 'approved',
+            ]);
         }
 
         if ($data['decision'] === 'rejected') {

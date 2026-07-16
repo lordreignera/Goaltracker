@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\Goals\GoalController;
 use App\Http\Controllers\Goals\ObjectiveController;
 use App\Http\Controllers\Goals\SupervisorReviewController;
@@ -19,6 +20,8 @@ Route::redirect('/', '/login')->name('home');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/help/user-guide', [HelpController::class, 'index'])->name('help.user-guide');
+    Route::get('/help/user-guide/pdf', [HelpController::class, 'pdf'])->name('help.user-guide.pdf');
     Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('sections', SectionController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('units', UnitController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -41,7 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::post('goals/{goal}/objectives', [ObjectiveController::class, 'store'])->name('goals.objectives.store');
     Route::post('objectives/{objective}/weekly-updates', [WeeklyUpdateController::class, 'store'])->name('objectives.weekly-updates.store');
     Route::put('weekly-updates/{weeklyUpdate}', [WeeklyUpdateController::class, 'update'])->name('weekly-updates.update');
+    Route::get('weekly-updates/{weeklyUpdate}/evidence', [WeeklyUpdateController::class, 'evidence'])->name('weekly-updates.evidence');
     Route::post('weekly-updates/{weeklyUpdate}/reviews', [SupervisorReviewController::class, 'store'])->name('weekly-updates.reviews.store');
     Route::get('reports/quarterly', [QuarterlyReportController::class, 'index'])->name('reports.quarterly.index');
     Route::get('reports/quarterly/pdf', [QuarterlyReportController::class, 'pdf'])->name('reports.quarterly.pdf');
+    Route::get('reports/quarterly/csv', [QuarterlyReportController::class, 'csv'])->name('reports.quarterly.csv');
 });

@@ -36,6 +36,17 @@ class GoalAccessService
             && $this->belongsToUserDepartmentOrUnit($user, $goal);
     }
 
+    public function canSubmitDailyReport(User $user, Goal $goal): bool
+    {
+        if (! $this->canViewGoal($user, $goal)) {
+            return false;
+        }
+
+        return $user->isAdmin()
+            || $user->canManageGoals()
+            || $user->can('submit daily reports');
+    }
+
     public function scopeVisibleGoals(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {

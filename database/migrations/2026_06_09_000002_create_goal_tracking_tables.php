@@ -24,11 +24,7 @@ return new class extends Migration
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('title');
             $table->text('specific')->nullable();
-            $table->text('measurable')->nullable();
-            $table->text('achievable')->nullable();
             $table->text('relevant')->nullable();
-            $table->text('time_bound')->nullable();
-            $table->text('key_action_steps')->nullable();
             $table->string('primary_metric')->nullable();
             $table->date('deadline')->nullable();
             $table->enum('level', ['department', 'section', 'unit', 'individual'])->default('department');
@@ -57,9 +53,9 @@ return new class extends Migration
             $table->foreignId('goal_id')->constrained()->cascadeOnDelete();
             $table->string('title');
             $table->text('specific_output');
-            $table->text('success_measure');
             $table->unsignedTinyInteger('weight');
             $table->unsignedTinyInteger('planned_weeks');
+            $table->enum('reporting_frequency', ['daily', 'weekly', 'monthly'])->default('weekly');
             $table->enum('status', ['pending', 'approved', 'rejected', 'revision_requested', 'completed'])->default('pending');
             $table->date('starts_at');
             $table->date('due_at');
@@ -70,17 +66,21 @@ return new class extends Migration
             $table->id();
             $table->foreignId('goal_objective_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->unsignedTinyInteger('week_number');
-            $table->date('week_starting')->nullable();
-            $table->text('progress_summary');
-            $table->text('achievements')->nullable();
+            $table->date('report_date');
+            $table->date('report_period_start');
+            $table->date('report_period_end');
+            $table->boolean('is_progress_update')->default(false);
+            $table->unsignedTinyInteger('achievement_percentage')->nullable();
+            $table->text('achievement_summary');
             $table->text('challenges')->nullable();
-            $table->text('next_actions')->nullable();
+            $table->text('action_points')->nullable();
+            $table->string('evidence_path')->nullable();
+            $table->string('evidence_original_name')->nullable();
             $table->enum('status', ['submitted', 'approved', 'rejected', 'revision_requested'])->default('submitted');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['goal_objective_id', 'user_id', 'week_starting']);
+            $table->unique(['goal_objective_id', 'user_id', 'report_period_start'], 'weekly_updates_period_unique');
         });
 
         Schema::create('supervisor_reviews', function (Blueprint $table) {
@@ -88,6 +88,7 @@ return new class extends Migration
             $table->foreignId('weekly_update_id')->constrained()->cascadeOnDelete();
             $table->foreignId('supervisor_id')->constrained('users')->cascadeOnDelete();
             $table->enum('decision', ['approved', 'rejected', 'revision_requested']);
+            $table->unsignedTinyInteger('verified_percentage')->nullable();
             $table->text('comments')->nullable();
             $table->timestamps();
         });

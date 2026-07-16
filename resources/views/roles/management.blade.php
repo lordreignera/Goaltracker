@@ -38,6 +38,12 @@
         }
     </style>
 
+    @php
+        $permissionLabel = fn (string $permission) => $permission === 'submit daily reports'
+            ? 'Submit Reports'
+            : Str::headline($permission);
+    @endphp
+
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
@@ -94,7 +100,7 @@
                         </td>
                         <td>
                             @forelse ($rolePermissionNames->take(4) as $permission)
-                                <span class="badge text-bg-light border me-1 mb-1">{{ Str::headline($permission) }}</span>
+                                <span class="badge text-bg-light border me-1 mb-1">{{ $permissionLabel($permission) }}</span>
                             @empty
                                 <span class="text-muted">No permissions assigned</span>
                             @endforelse
@@ -141,7 +147,7 @@
                             @foreach ($permissions as $permission)
                                 <label class="permission-option form-check mb-0">
                                     <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}" @checked(in_array($permission->name, old('permissions', []), true))>
-                                    <span class="form-check-label fw-semibold">{{ Str::headline($permission->name) }}</span>
+                                    <span class="form-check-label fw-semibold">{{ $permissionLabel($permission->name) }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -181,7 +187,7 @@
                             @foreach ($permissions as $permission)
                                 <label class="permission-option form-check mb-0">
                                     <input class="form-check-input" type="checkbox" name="permissions[]" value="{{ $permission->name }}" @checked($rolePermissionNames->contains($permission->name)) @disabled($isLockedRole || ! auth()->user()->isSuperAdmin())>
-                                    <span class="form-check-label fw-semibold">{{ Str::headline($permission->name) }}</span>
+                                    <span class="form-check-label fw-semibold">{{ $permissionLabel($permission->name) }}</span>
                                 </label>
                             @endforeach
                         </div>

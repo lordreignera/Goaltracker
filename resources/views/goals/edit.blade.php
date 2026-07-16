@@ -36,6 +36,43 @@
             font-size: .82rem;
             margin-top: .35rem;
         }
+
+        .checkbox-dropdown {
+            position: relative;
+        }
+
+        .checkbox-dropdown-toggle {
+            min-height: 42px;
+            background-color: #fff;
+        }
+
+        .checkbox-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            z-index: 20;
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid #d9dee7;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 14px 34px rgba(20, 24, 31, .12);
+            padding: 8px;
+        }
+
+        .checkbox-dropdown-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-dropdown-option:hover {
+            background: #f4f6fb;
+        }
     </style>
 
     @php
@@ -47,9 +84,9 @@
                 'id' => $objective->id,
                 'title' => $objective->title,
                 'specific_output' => $objective->specific_output,
-                'success_measure' => $objective->success_measure,
                 'weight' => $objective->weight,
                 'planned_weeks' => $objective->planned_weeks,
+                'reporting_frequency' => $objective->reporting_frequency ?? 'weekly',
                 'starts_at' => $objective->starts_at?->toDateString() ?? $goal->quarter->starts_at?->toDateString(),
                 'due_at' => $objective->due_at?->toDateString(),
             ];
@@ -83,12 +120,28 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Departments</label>
-                <select class="form-select" name="department_ids[]" multiple required size="5" data-department-select>
-                    @foreach ($departments as $department)
-                        <option value="{{ $department->id }}" @selected(in_array($department->id, $selectedDepartments))>{{ $department->name }}</option>
-                    @endforeach
-                </select>
-                <small class="text-muted">Hold Ctrl to select more than one.</small>
+                <div class="checkbox-dropdown" data-department-dropdown>
+                    <button class="form-select text-start checkbox-dropdown-toggle" type="button" data-department-toggle aria-expanded="false">
+                        <span data-department-summary>Select departments</span>
+                    </button>
+
+                    <div class="checkbox-dropdown-menu d-none" data-department-menu>
+                        @foreach ($departments as $department)
+                            <label class="checkbox-dropdown-option">
+                                <input
+                                    class="form-check-input mt-0"
+                                    type="checkbox"
+                                    name="department_ids[]"
+                                    value="{{ $department->id }}"
+                                    data-department-checkbox
+                                    data-department-name="{{ $department->name }}"
+                                    @checked(in_array($department->id, $selectedDepartments))>
+                                <span>{{ $department->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+                <small class="text-muted">Choose one or more departments.</small>
             </div>
             <div class="col-md-4" data-section-scope>
                 <label class="form-label fw-semibold">Sections</label>
@@ -123,7 +176,7 @@
                 <input class="form-control" name="title" value="{{ old('title', $goal->title) }}" required>
             </div>
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Primary Metric of Success</label>
+                <label class="form-label fw-semibold">Success Measure / Metric</label>
                 <input class="form-control" name="primary_metric" value="{{ old('primary_metric', $goal->primary_metric) }}" required>
             </div>
             <div class="col-md-6">
@@ -137,70 +190,8 @@
                 <div class="field-hint">Use this to define the main goal direction, not every activity.</div>
             </div>
             <div class="col-12">
-                <label class="form-label fw-semibold">Main Success Measure</label>
-                <textarea class="form-control" name="measurable" rows="2" required>{{ old('measurable', $goal->measurable) }}</textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">Why This Is Achievable</label>
-                <textarea class="form-control" name="achievable" rows="3" required>{{ old('achievable', $goal->achievable) }}</textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">Why This Matters</label>
+                <label class="form-label fw-semibold">Why This Is Achievable and Matters</label>
                 <textarea class="form-control" name="relevant" rows="3" required>{{ old('relevant', $goal->relevant) }}</textarea>
-            </div>
-            <div class="col-12">
-                <label class="form-label fw-semibold">Main Timeline</label>
-                <textarea class="form-control" name="time_bound" rows="2" required>{{ old('time_bound', $goal->time_bound) }}</textarea>
-            </div>
-            <div class="col-12">
-                <label class="form-label fw-semibold">Key Action Steps</label>
-
-                @php
-                    $steps = old('key_action_steps', $goal->key_action_steps ?? []);
-
-                    if (is_string($steps)) {
-                        $steps = array_filter(array_map('trim', preg_split('/\r\n|\r|\n|,/', $steps) ?: []));
-                    }
-                @endphp
-
-                <div id="action-steps-container">
-                    @if (! empty($steps) && is_array($steps))
-                        @foreach ($steps as $step)
-                            <div class="input-group mb-2">
-                                <input type="text"
-                                       name="key_action_steps[]"
-                                       class="form-control"
-                                       placeholder="Enter action step"
-                                       value="{{ $step }}">
-                                <button type="button"
-                                        class="btn btn-danger remove-step">
-                                    Remove
-                                </button>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="input-group mb-2">
-                            <input type="text"
-                                   name="key_action_steps[]"
-                                   class="form-control"
-                                   placeholder="Enter action step">
-                            <button type="button"
-                                    class="btn btn-danger remove-step">
-                                Remove
-                            </button>
-                        </div>
-                    @endif
-                </div>
-
-                <button type="button"
-                        id="add-step"
-                        class="btn btn-sm btn-primary mt-2">
-                    + Add Action Step
-                </button>
-
-                <small class="text-muted d-block mt-2">
-                    Add as many action steps as needed.
-                </small>
             </div>
         </div>
 
@@ -243,6 +234,14 @@
                             <small class="text-muted">Planned duration</small>
                         </div>
                         <div class="col-md-2">
+                            <select class="form-select" name="objectives[{{ $index }}][reporting_frequency]" required>
+                                <option value="daily" @selected(($objective['reporting_frequency'] ?? 'weekly') === 'daily')>Daily</option>
+                                <option value="weekly" @selected(($objective['reporting_frequency'] ?? 'weekly') === 'weekly')>Weekly</option>
+                                <option value="monthly" @selected(($objective['reporting_frequency'] ?? 'weekly') === 'monthly')>Monthly</option>
+                            </select>
+                            <small class="text-muted">Report cadence</small>
+                        </div>
+                        <div class="col-md-2">
                             <input class="form-control" type="date" name="objectives[{{ $index }}][starts_at]" value="{{ $objective['starts_at'] ?? '' }}" required>
                             <small class="text-muted" data-objective-date-help>Start date</small>
                         </div>
@@ -250,13 +249,9 @@
                             <input class="form-control" type="date" name="objectives[{{ $index }}][due_at]" value="{{ $objective['due_at'] ?? '' }}" readonly required>
                             <small class="text-muted" data-objective-date-help>Auto end date</small>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Objective Deliverable</label>
-                            <textarea class="form-control" name="objectives[{{ $index }}][specific_output]" rows="3" placeholder="What concrete deliverable will this objective produce?" required>{{ $objective['specific_output'] ?? '' }}</textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-semibold">Objective Evidence</label>
-                            <textarea class="form-control" name="objectives[{{ $index }}][success_measure]" rows="3" placeholder="What evidence will prove this objective is complete?" required>{{ $objective['success_measure'] ?? '' }}</textarea>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Objective Deliverable / Evidence</label>
+                            <textarea class="form-control" name="objectives[{{ $index }}][specific_output]" rows="3" placeholder="What will this objective deliver, and what evidence will show it is complete?" required>{{ $objective['specific_output'] ?? '' }}</textarea>
                         </div>
                         <div class="col-12">
                             <div class="small fw-semibold text-muted" data-planned-weeks-preview>Choose start and due dates to preview planned reporting weeks.</div>
@@ -266,7 +261,7 @@
             @endforeach
         </div>
 
-        <div class="small text-muted mb-4">Weights must total exactly 100% before saving.</div>
+        <div class="small text-muted mb-4">Weights must total exactly 100% before saving. Official progress comes from supervisor-approved progress updates.</div>
 
         <div class="d-flex flex-column flex-sm-row gap-2">
             <button class="btn btn-maroon">Save Changes</button>
@@ -278,15 +273,70 @@
         const objectivesList = document.querySelector('[data-objectives-list]');
         const addObjectiveButton = document.querySelector('[data-add-objective]');
         const levelSelect = document.querySelector('[data-level-select]');
-        const departmentSelect = document.querySelector('[data-department-select]');
+        const departmentDropdown = document.querySelector('[data-department-dropdown]');
+        const departmentToggle = document.querySelector('[data-department-toggle]');
+        const departmentMenu = document.querySelector('[data-department-menu]');
+        const departmentSummary = document.querySelector('[data-department-summary]');
+        const departmentCheckboxes = Array.from(document.querySelectorAll('[data-department-checkbox]'));
         const sectionScope = document.querySelector('[data-section-scope]');
         const unitScope = document.querySelector('[data-unit-scope]');
         const sectionSelect = document.querySelector('[data-section-select]');
         const unitSelect = document.querySelector('[data-unit-select]');
 
         function selectedDepartmentIds() {
-            return Array.from(departmentSelect?.selectedOptions || []).map((option) => String(option.value));
+            return departmentCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => String(checkbox.value));
         }
+
+        function syncDepartmentSummary() {
+            if (! departmentSummary) {
+                return;
+            }
+
+            const selected = departmentCheckboxes
+                .filter((checkbox) => checkbox.checked)
+                .map((checkbox) => checkbox.dataset.departmentName);
+
+            if (selected.length === 0) {
+                departmentSummary.textContent = 'Select departments';
+            } else if (selected.length <= 2) {
+                departmentSummary.textContent = selected.join(', ');
+            } else {
+                departmentSummary.textContent = `${selected.length} departments selected`;
+            }
+        }
+
+        function closeDepartmentDropdown() {
+            departmentMenu?.classList.add('d-none');
+            departmentToggle?.setAttribute('aria-expanded', 'false');
+        }
+
+        departmentToggle?.addEventListener('click', () => {
+            const isOpen = ! departmentMenu?.classList.contains('d-none');
+
+            departmentMenu?.classList.toggle('d-none', isOpen);
+            departmentToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (! departmentDropdown?.contains(event.target)) {
+                closeDepartmentDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeDepartmentDropdown();
+            }
+        });
+
+        departmentCheckboxes.forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                syncDepartmentSummary();
+                syncGoalScopeFields();
+            });
+        });
+
+        syncDepartmentSummary();
 
         function syncGoalScopeFields() {
             const level = levelSelect?.value || 'department';
@@ -359,6 +409,14 @@
                         <small class="text-muted">Planned duration</small>
                     </div>
                     <div class="col-md-2">
+                        <select class="form-select" name="objectives[${index}][reporting_frequency]" required>
+                            <option value="daily">Daily</option>
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                        <small class="text-muted">Report cadence</small>
+                    </div>
+                    <div class="col-md-2">
                         <input class="form-control" type="date" name="objectives[${index}][starts_at]" required>
                         <small class="text-muted" data-objective-date-help>Start date</small>
                     </div>
@@ -366,13 +424,9 @@
                         <input class="form-control" type="date" name="objectives[${index}][due_at]" readonly required>
                         <small class="text-muted" data-objective-date-help>Auto end date</small>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Objective Deliverable</label>
-                        <textarea class="form-control" name="objectives[${index}][specific_output]" rows="3" placeholder="What concrete deliverable will this objective produce?" required></textarea>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold">Objective Evidence</label>
-                        <textarea class="form-control" name="objectives[${index}][success_measure]" rows="3" placeholder="What evidence will prove this objective is complete?" required></textarea>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Objective Deliverable / Evidence</label>
+                        <textarea class="form-control" name="objectives[${index}][specific_output]" rows="3" placeholder="What will this objective deliver, and what evidence will show it is complete?" required></textarea>
                     </div>
                     <div class="col-12">
                         <div class="small fw-semibold text-muted" data-planned-weeks-preview>Choose start and due dates to preview planned reporting weeks.</div>
@@ -563,31 +617,7 @@
         hydratePlannedWeekSelections();
         updatePlannedWeekPreviews();
         levelSelect?.addEventListener('change', syncGoalScopeFields);
-        departmentSelect?.addEventListener('change', syncGoalScopeFields);
         syncGoalScopeFields();
 
-        // Action steps add/remove handlers (matches create view behavior)
-        document.getElementById('add-step')?.addEventListener('click', function () {
-            const html = `
-                <div class="input-group mb-2">
-                    <input type="text"
-                           name="key_action_steps[]"
-                           class="form-control"
-                           placeholder="Enter action step">
-                    <button type="button"
-                            class="btn btn-danger remove-step">
-                        Remove
-                    </button>
-                </div>
-            `;
-
-            document.getElementById('action-steps-container')?.insertAdjacentHTML('beforeend', html);
-        });
-
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('remove-step')) {
-                e.target.closest('.input-group')?.remove();
-            }
-        });
     </script>
 </x-app-layout>

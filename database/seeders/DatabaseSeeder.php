@@ -229,7 +229,7 @@ class DatabaseSeeder extends Seeder
             'manage quarters',
             'manage goals',
             'review goals',
-            'submit weekly updates',
+            'submit daily reports',
             'view reports',
             'export reports',
             'view organization dashboard',
@@ -258,7 +258,7 @@ class DatabaseSeeder extends Seeder
             'view reports',
         ]);
         $staffRole->syncPermissions([
-            'submit weekly updates',
+            'submit daily reports',
             'view reports',
         ]);
 
