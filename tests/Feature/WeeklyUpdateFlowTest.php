@@ -199,17 +199,17 @@ class WeeklyUpdateFlowTest extends TestCase
             'achievement_summary' => 'Completed first training session.',
             'challenges' => 'Two leaders were absent.',
             'action_points' => 'Schedule catch-up training.',
-            'evidence_file' => UploadedFile::fake()->create('training-register.pdf', 120, 'application/pdf'),
-        ])->assertRedirect();
+            'evidence_file' => UploadedFile::fake()->image('training-register.jpg', 120, 80),
+        ])->assertRedirect()->assertSessionHasNoErrors();
 
         $update = $objective->weeklyUpdates()->firstOrFail();
 
         Storage::disk('public')->assertExists($update->evidence_path);
-        $this->assertSame('training-register.pdf', $update->evidence_original_name);
+        $this->assertSame('training-register.jpg', $update->evidence_original_name);
 
         $this->actingAs($staff)->get(route('weekly-updates.evidence', $update))
             ->assertOk()
-            ->assertDownload('training-register.pdf');
+            ->assertDownload('training-register.jpg');
     }
 
     public function test_approved_daily_report_cannot_be_edited_by_staff(): void
@@ -355,6 +355,7 @@ class WeeklyUpdateFlowTest extends TestCase
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade computers',
+            'key_activities' => 'Procure, configure, and install replacement computers.',
             'specific_output' => 'Upgrade staff computers and confirm they are functional.',
             'weight' => 100,
             'planned_weeks' => 3,

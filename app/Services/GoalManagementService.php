@@ -19,13 +19,10 @@ class GoalManagementService
 
         $goal = new Goal([
             'quarter_id' => $data['quarter_id'],
+            'goal_pillar_id' => $data['goal_pillar_id'],
             'created_by' => $user->id,
             'owner_id' => $user->id,
             'title' => $data['title'],
-            'specific' => $data['specific'] ?? null,
-            'relevant' => $data['relevant'] ?? null,
-            'primary_metric' => $data['primary_metric'] ?? null,
-            'deadline' => $data['deadline'] ?? null,
             'level' => $data['level'],
             'status' => 'draft',
         ]);
@@ -35,7 +32,7 @@ class GoalManagementService
 
             $this->syncAssignments($goal, $departmentIds->all(), $sectionIds->all(), $unitIds->all());
 
-            foreach ($data['objectives'] as $objective) {
+            foreach ($this->normalizedObjectives($data['objectives']) as $objective) {
                 $goal->objectives()->create($objective + ['status' => 'pending']);
             }
         });
@@ -58,11 +55,8 @@ class GoalManagementService
         DB::transaction(function () use ($goal, $data, $departmentIds, $sectionIds, $unitIds, $keptObjectiveIds) {
             $goal->update([
                 'quarter_id' => $data['quarter_id'],
+                'goal_pillar_id' => $data['goal_pillar_id'],
                 'title' => $data['title'],
-                'specific' => $data['specific'] ?? null,
-                'relevant' => $data['relevant'] ?? null,
-                'primary_metric' => $data['primary_metric'] ?? null,
-                'deadline' => $data['deadline'] ?? null,
                 'level' => $data['level'],
             ]);
 
@@ -72,7 +66,7 @@ class GoalManagementService
                 ->whereNotIn('id', $keptObjectiveIds)
                 ->delete();
 
-            foreach ($data['objectives'] as $objectiveData) {
+            foreach ($this->normalizedObjectives($data['objectives']) as $objectiveData) {
                 $objectiveId = $objectiveData['id'] ?? null;
                 $payload = collect($objectiveData)->except('id')->all();
 
@@ -100,6 +94,20 @@ class GoalManagementService
                 'objectives' => "Objective weights must equal 100%. Current total is {$objectiveTotal}%.",
             ]);
         }
+    }
+
+    private function normalizedObjectives(array $objectives): array
+    {
+        return collect($objectives)
+            ->map(function (array $objective) {
+                $objective['key_activities'] = collect($objective['key_activities'] ?? [])
+                    ->map(fn ($activity) => trim((string) $activity))
+                    ->filter()
+                    ->implode(PHP_EOL);
+
+                return $objective;
+            })
+            ->all();
     }
 
     private function assignmentIds(array $data): array

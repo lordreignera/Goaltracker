@@ -42,9 +42,12 @@ class QuarterlyReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
-                'Goal',
-                'Sub-goal',
+                'Goal Pillar',
+                'Goal Set',
+                'Strategic Goal / Objective',
+                'Key Activities',
                 'Timeline',
+                'Key Result Areas / Deliverables',
                 'Reporting Frequency',
                 'Reporting Period',
                 'Report Date',
@@ -62,9 +65,12 @@ class QuarterlyReportController extends Controller
 
             foreach ($data['reportRows'] as $row) {
                 fputcsv($handle, [
+                    $row['pillar'],
                     $row['goal'],
                     $row['objective'],
+                    $row['objective_key_activities'],
                     $row['timeline'],
+                    $row['objective_specific_output'],
                     ucfirst($row['reporting_frequency']),
                     $row['report_period'],
                     $row['report_date']?->format('Y-m-d'),

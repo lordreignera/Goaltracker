@@ -17,16 +17,23 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('goal_pillars', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->text('annual_goal')->nullable();
+            $table->text('description')->nullable();
+            $table->unsignedSmallInteger('sort_order')->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
         Schema::create('goals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('quarter_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('goal_pillar_id')->nullable()->constrained('goal_pillars')->nullOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('title');
-            $table->text('specific')->nullable();
-            $table->text('relevant')->nullable();
-            $table->string('primary_metric')->nullable();
-            $table->date('deadline')->nullable();
             $table->enum('level', ['department', 'section', 'unit', 'individual'])->default('department');
             $table->enum('status', ['draft', 'submitted', 'approved', 'in_progress', 'completed', 'archived'])->default('draft');
             $table->timestamp('submitted_at')->nullable();
@@ -52,6 +59,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('goal_id')->constrained()->cascadeOnDelete();
             $table->string('title');
+            $table->text('key_activities');
             $table->text('specific_output');
             $table->unsignedTinyInteger('weight');
             $table->unsignedTinyInteger('planned_weeks');
@@ -118,6 +126,7 @@ return new class extends Migration
         Schema::dropIfExists('goal_objectives');
         Schema::dropIfExists('goal_assignments');
         Schema::dropIfExists('goals');
+        Schema::dropIfExists('goal_pillars');
         Schema::dropIfExists('quarters');
     }
 };

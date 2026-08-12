@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Goals;
 
 use App\Services\GoalAccessService;
+use App\Models\GoalPillar;
 use App\Models\Quarter;
 use App\Models\Section;
 use App\Models\Unit;
@@ -23,6 +24,7 @@ class UpdateGoalRequest extends FormRequest
     {
         return [
             'quarter_id' => ['required', 'exists:quarters,id'],
+            'goal_pillar_id' => ['required', 'exists:goal_pillars,id'],
             'department_ids' => ['required', 'array', 'min:1'],
             'department_ids.*' => ['integer', 'exists:departments,id'],
             'section_ids' => ['nullable', 'array'],
@@ -30,14 +32,12 @@ class UpdateGoalRequest extends FormRequest
             'unit_ids' => ['nullable', 'array'],
             'unit_ids.*' => ['integer', 'exists:units,id'],
             'title' => ['required', 'string', 'max:255'],
-            'specific' => ['required', 'string'],
-            'relevant' => ['required', 'string'],
-            'primary_metric' => ['required', 'string', 'max:255'],
-            'deadline' => ['required', 'date'],
             'level' => ['required', 'in:department,section,unit,individual'],
             'objectives' => ['required', 'array', 'min:1'],
             'objectives.*.id' => ['nullable', 'integer', 'exists:goal_objectives,id'],
             'objectives.*.title' => ['required', 'string', 'max:255'],
+            'objectives.*.key_activities' => ['required', 'array', 'min:1'],
+            'objectives.*.key_activities.*' => ['required', 'string', 'max:500'],
             'objectives.*.specific_output' => ['required', 'string'],
             'objectives.*.weight' => ['required', 'integer', 'min:1', 'max:100'],
             'objectives.*.planned_weeks' => ['required', 'integer', 'min:1', 'max:13'],
@@ -153,6 +153,19 @@ class UpdateGoalRequest extends FormRequest
                 }
             },
             function (Validator $validator) {
+                if (! $this->filled('goal_pillar_id')) {
+                    return;
+                }
+
+                $isActive = GoalPillar::whereKey($this->input('goal_pillar_id'))
+                    ->where('is_active', true)
+                    ->exists();
+
+                if (! $isActive) {
+                    $validator->errors()->add('goal_pillar_id', 'Select an active goal pillar.');
+                }
+            },
+            function (Validator $validator) {
                 $goal = $this->route('goal');
                 $objectiveIds = collect($this->input('objectives', []))
                     ->pluck('id')
@@ -178,15 +191,6 @@ class UpdateGoalRequest extends FormRequest
 
                 if (! $quarter) {
                     return;
-                }
-
-                $deadline = $this->date('deadline');
-
-                if ($deadline && ($deadline->lt($quarter->starts_at) || $deadline->gt($quarter->ends_at))) {
-                    $validator->errors()->add(
-                        'deadline',
-                        "Goal deadline must be between {$quarter->starts_at->toFormattedDateString()} and {$quarter->ends_at->toFormattedDateString()}."
-                    );
                 }
 
                 foreach ($this->input('objectives', []) as $index => $objective) {

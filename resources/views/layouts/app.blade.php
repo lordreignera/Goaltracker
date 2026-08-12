@@ -844,6 +844,7 @@
             $hour = now()->format('H');
             $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
             $canManageDepartments = $currentUser->isAdmin() || $currentUser->can('manage departments');
+            $canManageGoalPillars = $currentUser->isAdmin() || $currentUser->can('manage goal pillars');
             $canManageSections = $currentUser->isAdmin() || $currentUser->can('manage sections');
             $canManageUnits = $currentUser->isAdmin() || $currentUser->can('manage units');
             $canManageUsers = $currentUser->isAdmin() || $currentUser->can('manage users');
@@ -926,9 +927,14 @@
                     </a>
                 </nav>
 
-                @if ($canManageAdministration || $canManageUsers)
+                @if ($canManageAdministration || $canManageUsers || $canManageGoalPillars)
                     <div class="sidebar-section">Organization</div>
                     <nav class="sidebar-nav" aria-label="Organization navigation">
+                        @if ($canManageGoalPillars)
+                            <a class="sidebar-link {{ request()->routeIs('goal-pillars.*') ? 'active' : '' }}" href="{{ route('goal-pillars.index') }}">
+                                {!! $icon('target') !!}<span>Goal Pillars</span>
+                            </a>
+                        @endif
                         @if ($canManageDepartments)
                             <a class="sidebar-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
                                 {!! $icon('building') !!}<span>Departments</span>

@@ -186,7 +186,7 @@
                         <span class="guide-step-number">2</span>
                         <div>
                             <div class="fw-bold">Enter the main goal details</div>
-                            <div class="text-muted small">Add the goal title, scope, success measure / metric, reason it matters, and deadline.</div>
+                            <div class="text-muted small">Select the pillar, quarter, organization scope, strategic goal, key activities, and deliverables.</div>
                         </div>
                     </div>
                     <div class="guide-step">

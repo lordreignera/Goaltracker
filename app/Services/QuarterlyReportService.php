@@ -15,6 +15,7 @@ class QuarterlyReportService
             ->visibleTo($user)
             ->where('quarter_id', $quarter->id)
             ->with([
+                'pillar',
                 'assignedDepartments',
                 'assignedSections',
                 'assignedUnits',
@@ -49,6 +50,7 @@ class QuarterlyReportService
     {
         return [
             'title' => $goal->title,
+            'pillar' => $goal->pillar?->name ?? 'Unassigned',
             'department' => $goal->assignedDepartments->pluck('name')->unique()->join(', '),
             'section' => $goal->assignedSections->pluck('name')->unique()->join(', ') ?: 'Department-wide',
             'unit' => $goal->assignedUnits->pluck('name')->unique()->join(', ') ?: 'All units',
@@ -88,7 +90,9 @@ class QuarterlyReportService
                 return $objective->weeklyUpdates->map(function ($update) use ($goal, $objective) {
                     return [
                         'goal' => $goal->title,
+                        'pillar' => $goal->pillar?->name ?? 'Unassigned',
                         'objective' => $objective->title,
+                        'objective_key_activities' => $objective->key_activities,
                         'objective_specific_output' => $objective->specific_output,
                         'objective_planned_weeks' => $objective->planned_weeks,
                         'reporting_frequency' => $objective->reporting_frequency,
@@ -110,6 +114,7 @@ class QuarterlyReportService
                 });
             });
         })->sortBy([
+            ['pillar', 'asc'],
             ['goal', 'asc'],
             ['objective', 'asc'],
             ['report_date', 'asc'],

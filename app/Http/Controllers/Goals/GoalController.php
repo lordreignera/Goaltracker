@@ -7,6 +7,7 @@ use App\Http\Requests\Goals\StoreGoalRequest;
 use App\Http\Requests\Goals\UpdateGoalRequest;
 use App\Models\Department;
 use App\Models\Goal;
+use App\Models\GoalPillar;
 use App\Models\Quarter;
 use App\Models\Section;
 use App\Models\Unit;
@@ -21,17 +22,21 @@ class GoalController extends Controller
         $user = $request->user();
 
         $goals = Goal::visibleTo($user)
-            ->with(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives'])
+            ->with(['pillar', 'quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
 
                 $query->where(function ($query) use ($search) {
                     $query->where('title', 'like', '%' . $search . '%')
-                        ->orWhere('specific', 'like', '%' . $search . '%')
-                        ->orWhere('primary_metric', 'like', '%' . $search . '%');
+                        ->orWhereHas('objectives', function ($query) use ($search) {
+                            $query->where('title', 'like', '%' . $search . '%')
+                                ->orWhere('key_activities', 'like', '%' . $search . '%')
+                                ->orWhere('specific_output', 'like', '%' . $search . '%');
+                        });
                 });
             })
             ->when($request->filled('quarter_id'), fn ($query) => $query->where('quarter_id', $request->quarter_id))
+            ->when($request->filled('goal_pillar_id'), fn ($query) => $query->where('goal_pillar_id', $request->goal_pillar_id))
             ->when($request->filled('department_id'), fn ($query) => $query->whereHas('assignedDepartments', fn ($query) => $query->whereKey($request->department_id)))
             ->when($request->filled('section_id'), fn ($query) => $query->whereHas('assignedSections', fn ($query) => $query->whereKey($request->section_id)))
             ->when($request->filled('unit_id'), fn ($query) => $query->whereHas('assignedUnits', fn ($query) => $query->whereKey($request->unit_id)))
@@ -45,6 +50,7 @@ class GoalController extends Controller
         return view('goals.index', [
             'goals' => $goals,
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
+            'goalPillars' => GoalPillar::orderBy('sort_order')->orderBy('name')->get(),
             'departments' => $departments,
             'sections' => $sections,
             'units' => $units,
@@ -60,6 +66,7 @@ class GoalController extends Controller
 
         return view('goals.create', [
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
+            'goalPillars' => GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'departments' => $departments,
             'sections' => $sections,
             'units' => $units,
@@ -72,7 +79,7 @@ class GoalController extends Controller
 
         return redirect()
             ->route('goals.show', $goal)
-            ->with('status', 'Goal and objectives created.');
+            ->with('status', 'Goal set and strategic goals/objectives created.');
     }
 
     public function show(Request $request, Goal $goal)
@@ -84,6 +91,7 @@ class GoalController extends Controller
         return view('goals.show', [
             'goal' => $goal->load([
                 'quarter',
+                'pillar',
                 'assignedDepartments',
                 'assignedSections',
                 'assignedUnits',
@@ -103,6 +111,7 @@ class GoalController extends Controller
         return view('goals.edit', [
             'goal' => $goal->load(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives']),
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
+            'goalPillars' => GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'departments' => $departments,
             'sections' => $sections,
             'units' => $units,
@@ -115,7 +124,7 @@ class GoalController extends Controller
 
         return redirect()
             ->route('goals.show', $goal)
-            ->with('status', 'Goal and objectives updated.');
+            ->with('status', 'Goal set and strategic goals/objectives updated.');
     }
 
     public function submit(Request $request, Goal $goal)

@@ -32,7 +32,7 @@
     <h2>Create a Goal</h2>
     <ul>
         <li>Open Create Goal and choose the quarter, department, and goal level.</li>
-        <li>Enter the goal title, scope, success measure / metric, reason it matters, and deadline.</li>
+        <li>Select the pillar, quarter, organization scope, strategic goal, key activities, and deliverables.</li>
         <li>Add sub-goals with deliverable / evidence, weight, start date, and timeline.</li>
         <li>All sub-goal weights must total 100%.</li>
     </ul>

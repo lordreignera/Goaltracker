@@ -31,6 +31,13 @@
             padding: 14px;
         }
 
+        .key-activity-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: start;
+        }
+
         .field-hint {
             color: #6b7280;
             font-size: .82rem;
@@ -83,6 +90,7 @@
             return [
                 'id' => $objective->id,
                 'title' => $objective->title,
+                'key_activities' => $objective->keyActivitiesList() ?: [''],
                 'specific_output' => $objective->specific_output,
                 'weight' => $objective->weight,
                 'planned_weeks' => $objective->planned_weeks,
@@ -95,8 +103,8 @@
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
-            <h2 class="h5 fw-bold mb-1">Edit Main Goal & Objectives</h2>
-            <div class="text-muted small">Keep the main SMART goal broad, then use objectives for the concrete deliverables.</div>
+            <h2 class="h5 fw-bold mb-1">Edit Goal Set</h2>
+            <div class="text-muted small">Keep the goal set context clear, then manage the strategic goals/objectives, key activities, and deliverables.</div>
         </div>
         <a class="btn btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Back to Goal</a>
     </div>
@@ -117,6 +125,18 @@
                         </option>
                     @endforeach
                 </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Goal Pillar</label>
+                <select class="form-select" name="goal_pillar_id" required>
+                    <option value="">Select goal pillar</option>
+                    @foreach ($goalPillars as $goalPillar)
+                        <option value="{{ $goalPillar->id }}" @selected(old('goal_pillar_id', $goal->goal_pillar_id) == $goalPillar->id)>
+                            {{ $goalPillar->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <small class="text-muted">Align this goal set to the annual pillar.</small>
             </div>
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Departments</label>
@@ -171,27 +191,10 @@
                     <option value="individual" @selected(old('level', $goal->level) === 'individual')>Individual</option>
                 </select>
             </div>
-            <div class="col-md-8">
-                <label class="form-label fw-semibold">Main Goal Title</label>
-                <input class="form-control" name="title" value="{{ old('title', $goal->title) }}" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">Success Measure / Metric</label>
-                <input class="form-control" name="primary_metric" value="{{ old('primary_metric', $goal->primary_metric) }}" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">Deadline</label>
-                <input class="form-control" type="date" name="deadline" value="{{ old('deadline', $goal->deadline?->toDateString()) }}" required data-goal-deadline>
-                <small class="text-muted" data-goal-deadline-help>Select a quarter first.</small>
-            </div>
             <div class="col-12">
-                <label class="form-label fw-semibold">Main Goal Scope</label>
-                <textarea class="form-control" name="specific" rows="2" required>{{ old('specific', $goal->specific) }}</textarea>
-                <div class="field-hint">Use this to define the main goal direction, not every activity.</div>
-            </div>
-            <div class="col-12">
-                <label class="form-label fw-semibold">Why This Is Achievable and Matters</label>
-                <textarea class="form-control" name="relevant" rows="3" required>{{ old('relevant', $goal->relevant) }}</textarea>
+                <label class="form-label fw-semibold">Goal Set Name</label>
+                <textarea class="form-control" name="title" rows="2" required>{{ old('title', $goal->title) }}</textarea>
+                <div class="field-hint">Use this to name the quarterly goal set. Manage the actual strategic goals/objectives below.</div>
             </div>
         </div>
 
@@ -199,10 +202,10 @@
 
         <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
             <div>
-                <label class="form-label fw-semibold mb-0">Objectives / Sub-Goals</label>
-                <div class="field-hint mb-0">Use objectives to specify the actual deliverables that make the main goal happen.</div>
+                <label class="form-label fw-semibold mb-0">Strategic Goals / Objectives, Key Activities & Deliverables</label>
+                <div class="field-hint mb-0">Set each scored strategic goal/objective, list its activities, and define the key result areas/deliverables.</div>
             </div>
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-objective>Add Objective</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-objective>Add Strategic Goal / Objective</button>
         </div>
 
         @error('objectives')
@@ -211,15 +214,22 @@
 
         <div class="d-grid gap-3 mb-3" data-objectives-list>
             @foreach ($oldObjectives as $index => $objective)
+                @php
+                    $keyActivities = $objective['key_activities'] ?? [''];
+                    $keyActivities = is_array($keyActivities)
+                        ? $keyActivities
+                        : preg_split('/\r\n|\r|\n/', (string) $keyActivities);
+                    $keyActivities = collect($keyActivities)->map(fn ($activity) => trim((string) $activity))->filter()->values()->all() ?: [''];
+                @endphp
                 <div class="objective-row" data-objective-row>
                     <input type="hidden" name="objectives[{{ $index }}][id]" value="{{ $objective['id'] ?? '' }}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong class="small">Objective {{ $index + 1 }}</strong>
+                        <strong class="small">Strategic Goal / Objective {{ $index + 1 }}</strong>
                         <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-4">
-                            <input class="form-control" name="objectives[{{ $index }}][title]" value="{{ $objective['title'] ?? '' }}" placeholder="Objective title" required>
+                            <input class="form-control" name="objectives[{{ $index }}][title]" value="{{ $objective['title'] ?? '' }}" placeholder="Strategic goal / objective" required>
                         </div>
                         <div class="col-md-2">
                             <input class="form-control" type="number" min="1" max="100" name="objectives[{{ $index }}][weight]" value="{{ $objective['weight'] ?? '' }}" placeholder="Weight %" required>
@@ -250,8 +260,22 @@
                             <small class="text-muted" data-objective-date-help>Auto end date</small>
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Objective Deliverable / Evidence</label>
-                            <textarea class="form-control" name="objectives[{{ $index }}][specific_output]" rows="3" placeholder="What will this objective deliver, and what evidence will show it is complete?" required>{{ $objective['specific_output'] ?? '' }}</textarea>
+                            <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                                <label class="form-label small fw-semibold mb-0">Key Activities</label>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-add-key-activity>Add Activity</button>
+                            </div>
+                            <div class="d-grid gap-2" data-key-activities-list>
+                                @foreach ($keyActivities as $activityIndex => $activity)
+                                    <div class="key-activity-row" data-key-activity-row>
+                                        <input class="form-control" name="objectives[{{ $index }}][key_activities][{{ $activityIndex }}]" value="{{ $activity }}" placeholder="Key activity {{ $activityIndex + 1 }}" required>
+                                        <button class="btn btn-outline-danger" type="button" data-remove-key-activity>Remove</button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Key Result Areas / Deliverables</label>
+                            <textarea class="form-control" name="objectives[{{ $index }}][specific_output]" rows="3" placeholder="What result, deliverable, or evidence should be produced?" required>{{ $objective['specific_output'] ?? '' }}</textarea>
                         </div>
                         <div class="col-12">
                             <div class="small fw-semibold text-muted" data-planned-weeks-preview>Choose start and due dates to preview planned reporting weeks.</div>
@@ -376,10 +400,24 @@
 
         function renumberObjectives() {
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row, index) => {
-                row.querySelector('strong').textContent = `Objective ${index + 1}`;
+                row.querySelector('strong').textContent = `Strategic Goal / Objective ${index + 1}`;
                 row.querySelectorAll('input, textarea, select').forEach((field) => {
                     field.name = field.name.replace(/objectives\[\d+\]/, `objectives[${index}]`);
                 });
+                renumberKeyActivities(row);
+            });
+        }
+
+        function renumberKeyActivities(row) {
+            const objectiveIndex = Array.from(objectivesList.querySelectorAll('[data-objective-row]')).indexOf(row);
+
+            row.querySelectorAll('[data-key-activity-row]').forEach((activityRow, activityIndex) => {
+                const input = activityRow.querySelector('input');
+
+                if (input) {
+                    input.name = `objectives[${objectiveIndex}][key_activities][${activityIndex}]`;
+                    input.placeholder = `Key activity ${activityIndex + 1}`;
+                }
             });
         }
 
@@ -391,12 +429,12 @@
             wrapper.innerHTML = `
                 <input type="hidden" name="objectives[${index}][id]" value="">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong class="small">Objective ${index + 1}</strong>
+                    <strong class="small">Strategic Goal / Objective ${index + 1}</strong>
                     <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
                 </div>
                 <div class="row g-2">
                     <div class="col-md-4">
-                        <input class="form-control" name="objectives[${index}][title]" placeholder="Objective title" required>
+                        <input class="form-control" name="objectives[${index}][title]" placeholder="Strategic goal / objective" required>
                     </div>
                     <div class="col-md-2">
                         <input class="form-control" type="number" min="1" max="100" name="objectives[${index}][weight]" placeholder="Weight %" required>
@@ -425,8 +463,20 @@
                         <small class="text-muted" data-objective-date-help>Auto end date</small>
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">Objective Deliverable / Evidence</label>
-                        <textarea class="form-control" name="objectives[${index}][specific_output]" rows="3" placeholder="What will this objective deliver, and what evidence will show it is complete?" required></textarea>
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <label class="form-label small fw-semibold mb-0">Key Activities</label>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-key-activity>Add Activity</button>
+                        </div>
+                        <div class="d-grid gap-2" data-key-activities-list>
+                            <div class="key-activity-row" data-key-activity-row>
+                                <input class="form-control" name="objectives[${index}][key_activities][0]" placeholder="Key activity 1" required>
+                                <button class="btn btn-outline-danger" type="button" data-remove-key-activity>Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold">Key Result Areas / Deliverables</label>
+                        <textarea class="form-control" name="objectives[${index}][specific_output]" rows="3" placeholder="What result, deliverable, or evidence should be produced?" required></textarea>
                     </div>
                     <div class="col-12">
                         <div class="small fw-semibold text-muted" data-planned-weeks-preview>Choose start and due dates to preview planned reporting weeks.</div>
@@ -439,6 +489,42 @@
         });
 
         objectivesList?.addEventListener('click', (event) => {
+            if (event.target.matches('[data-add-key-activity]')) {
+                const row = event.target.closest('[data-objective-row]');
+                const list = row?.querySelector('[data-key-activities-list]');
+
+                if (! row || ! list) {
+                    return;
+                }
+
+                const objectiveIndex = Array.from(objectivesList.querySelectorAll('[data-objective-row]')).indexOf(row);
+                const activityIndex = list.querySelectorAll('[data-key-activity-row]').length;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'key-activity-row';
+                wrapper.dataset.keyActivityRow = '';
+                wrapper.innerHTML = `
+                    <input class="form-control" name="objectives[${objectiveIndex}][key_activities][${activityIndex}]" placeholder="Key activity ${activityIndex + 1}" required>
+                    <button class="btn btn-outline-danger" type="button" data-remove-key-activity>Remove</button>
+                `;
+                list.appendChild(wrapper);
+
+                return;
+            }
+
+            if (event.target.matches('[data-remove-key-activity]')) {
+                const row = event.target.closest('[data-objective-row]');
+                const list = row?.querySelector('[data-key-activities-list]');
+
+                if (! row || ! list || list.querySelectorAll('[data-key-activity-row]').length === 1) {
+                    return;
+                }
+
+                event.target.closest('[data-key-activity-row]').remove();
+                renumberKeyActivities(row);
+
+                return;
+            }
+
             if (! event.target.matches('[data-remove-objective]')) {
                 return;
             }
@@ -456,19 +542,6 @@
             const selectedQuarter = document.querySelector('[name="quarter_id"]')?.selectedOptions[0];
             const start = selectedQuarter?.dataset.start || '';
             const end = selectedQuarter?.dataset.end || '';
-            const goalDeadline = document.querySelector('[data-goal-deadline]');
-            const goalDeadlineHelp = document.querySelector('[data-goal-deadline-help]');
-
-            if (goalDeadline) {
-                goalDeadline.min = start;
-                goalDeadline.max = end;
-            }
-
-            if (goalDeadlineHelp) {
-                goalDeadlineHelp.textContent = start && end
-                    ? `Deadline must be between ${start} and ${end}.`
-                    : 'Select a quarter first.';
-            }
 
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row) => {
                 const dateInputs = row.querySelectorAll('input[type="date"]');

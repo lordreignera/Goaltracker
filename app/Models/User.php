@@ -183,6 +183,7 @@ class User extends Authenticatable
         return $this->isAdmin()
             || $this->hasAnyPermission([
                 'manage departments',
+                'manage goal pillars',
                 'manage sections',
                 'manage units',
                 'manage users',

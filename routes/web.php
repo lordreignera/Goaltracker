@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\CompanySettingController;
+use App\Http\Controllers\Admin\GoalPillarController;
 use App\Http\Controllers\Admin\QuarterController;
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\SectionController;
@@ -23,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/help/user-guide', [HelpController::class, 'index'])->name('help.user-guide');
     Route::get('/help/user-guide/pdf', [HelpController::class, 'pdf'])->name('help.user-guide.pdf');
     Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('goal-pillars', GoalPillarController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('sections', SectionController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('units', UnitController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('quarters', QuarterController::class)->only(['index', 'store', 'update', 'destroy']);

@@ -10,6 +10,7 @@ class GoalObjective extends Model
     protected $fillable = [
         'goal_id',
         'title',
+        'key_activities',
         'specific_output',
         'weight',
         'planned_weeks',
@@ -38,6 +39,15 @@ class GoalObjective extends Model
     public function approvedWeeklyUpdates()
     {
         return $this->weeklyUpdates()->where('status', 'approved');
+    }
+
+    public function keyActivitiesList(): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', (string) $this->key_activities))
+            ->map(fn ($activity) => trim($activity))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function isApprovedComplete(): bool

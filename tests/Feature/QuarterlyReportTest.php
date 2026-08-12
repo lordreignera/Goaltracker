@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Department;
 use App\Models\Goal;
+use App\Models\GoalPillar;
 use App\Models\Quarter;
 use App\Models\Unit;
 use App\Models\User;
@@ -25,6 +26,7 @@ class QuarterlyReportTest extends TestCase
         $response->assertOk();
         $response->assertSee('Quarterly Performance Report');
         $response->assertSee('Improve ICT Service Delivery');
+        $response->assertSee('Operational Excellence');
         $response->assertSee('Installed computers');
         $response->assertSee('Procurement delay remains');
         $response->assertSee('Procurement follow-up');
@@ -56,6 +58,8 @@ class QuarterlyReportTest extends TestCase
         $content = $response->streamedContent();
 
         $this->assertStringContainsString('Achievement', $content);
+        $this->assertStringContainsString('Goal Pillar', $content);
+        $this->assertStringContainsString('Operational Excellence', $content);
         $this->assertStringContainsString('Procurement delay remains', $content);
     }
 
@@ -63,6 +67,12 @@ class QuarterlyReportTest extends TestCase
     {
         $department = Department::create(['name' => 'ICT Department']);
         $unit = Unit::create(['department_id' => $department->id, 'name' => 'Software Development Unit']);
+        $pillar = GoalPillar::create([
+            'name' => 'Operational Excellence',
+            'annual_goal' => 'Both teams operate with clear systems, shared accountability, and healthy internal cultures by year-end.',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
         $quarter = Quarter::create([
             'name' => 'Q1 2026',
             'starts_at' => '2026-01-01',
@@ -80,6 +90,7 @@ class QuarterlyReportTest extends TestCase
 
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
+            'goal_pillar_id' => $pillar->id,
             'owner_id' => $user->id,
             'title' => 'Improve ICT Service Delivery',
             'level' => 'unit',
@@ -88,6 +99,7 @@ class QuarterlyReportTest extends TestCase
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade staff computers',
+            'key_activities' => 'Procure, configure, and install replacement computers.',
             'specific_output' => 'Replace outdated machines and confirm they are functional.',
             'weight' => 100,
             'planned_weeks' => 2,

@@ -45,27 +45,14 @@
                     <div class="flex-grow-1">
                         <div class="text-muted">
                             {{ $goal->quarter->name }} /
+                            {{ $goal->pillar?->name ?? 'Unassigned pillar' }} /
                             {{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }} /
                             {{ $goal->assignedSections->isNotEmpty() ? $goal->assignedSections->pluck('name')->unique()->join(', ') : 'Department-wide' }} /
                             {{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->unique()->join(', ') : 'All units' }}
                         </div>
 
-                        <div class="row g-3 mt-2">
-                            <div class="col-md-6">
-                                <strong>Success Measure / Metric:</strong> {{ $goal->primary_metric ?? 'Not set' }}
-                            </div>
-
-                            <div class="col-md-6">
-                                <strong>Deadline:</strong> {{ $goal->deadline?->format('M d, Y') ?? 'Not set' }}
-                            </div>
-
-                            <div class="col-12">
-                                <strong>Specific:</strong> {{ $goal->specific ?? 'Not provided' }}
-                            </div>
-
-                            <div class="col-12">
-                                <strong>Why This Is Achievable and Matters:</strong> {{ $goal->relevant ?? 'Not provided' }}
-                            </div>
+                        <div class="mt-3">
+                            <strong>Goal Set:</strong> {{ $goal->title }}
                         </div>
                     </div>
 
@@ -80,7 +67,7 @@
                         @if ($canUpdateGoal)
                             <div class="goal-action-stack mt-3">
                                 <a class="btn btn-sm btn-outline-secondary" href="{{ route('goals.edit', $goal) }}">
-                                    Edit Goal & Objectives
+                                    Edit Goal Set
                                 </a>
 
                                 <form method="post" action="{{ route('goals.submit', $goal) }}">
@@ -117,7 +104,15 @@
                             </div>
 
                             <div class="mt-2">
-                                <div><strong>Deliverable / Evidence:</strong> {{ $objective->specific_output }}</div>
+                                <div>
+                                    <strong>Key Activities:</strong>
+                                    <ul class="mb-0 mt-1">
+                                        @foreach ($objective->keyActivitiesList() as $activity)
+                                            <li>{{ $activity }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                                <div class="mt-1"><strong>Key Result Areas / Deliverables:</strong> {{ $objective->specific_output }}</div>
                             </div>
                         </div>
 
@@ -142,7 +137,7 @@
 
                         @if ($errors->any())
                             <div class="alert alert-danger py-2 small">
-                                Please check the report fields. Dates must stay within the sub-goal timeline, and progress updates need an achievement percentage.
+                                Please check the report fields. Dates must stay within the strategic goal/objective timeline, and progress updates need an achievement percentage.
                             </div>
                         @endif
 

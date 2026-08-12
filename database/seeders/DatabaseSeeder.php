@@ -4,11 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\Department;
 use App\Models\CompanySetting;
+use App\Models\GoalPillar;
 use App\Models\Quarter;
 use App\Models\User;
 use App\Models\Position;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -209,20 +211,84 @@ class DatabaseSeeder extends Seeder
         }
 
         $quarters = [
-            ['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31'],
-            ['name' => 'Q2 2026', 'starts_at' => '2026-04-01', 'ends_at' => '2026-06-30'],
-            ['name' => 'Q3 2026', 'starts_at' => '2026-07-01', 'ends_at' => '2026-09-30'],
-            ['name' => 'Q4 2026', 'starts_at' => '2026-10-01', 'ends_at' => '2026-12-31'],
+            ['name' => 'Q1 2026/2027', 'starts_at' => '2026-07-01', 'ends_at' => '2026-09-30'],
+            ['name' => 'Q2 2026/2027', 'starts_at' => '2026-10-01', 'ends_at' => '2026-12-31'],
+            ['name' => 'Q3 2026/2027', 'starts_at' => '2027-01-01', 'ends_at' => '2027-03-31'],
+            ['name' => 'Q4 2026/2027', 'starts_at' => '2027-04-01', 'ends_at' => '2027-06-30'],
         ];
 
         foreach ($quarters as $quarter) {
-            Quarter::updateOrCreate(['name' => $quarter['name']], $quarter + [
-                'is_active' => now()->betweenIncluded($quarter['starts_at'], $quarter['ends_at']),
+            $existingQuarter = Quarter::where('name', $quarter['name'])->first()
+                ?? Quarter::whereDate('starts_at', $quarter['starts_at'])
+                    ->whereDate('ends_at', $quarter['ends_at'])
+                    ->first();
+
+            if ($existingQuarter) {
+                $existingQuarter->update($quarter + [
+                    'is_active' => now()->betweenIncluded($quarter['starts_at'], $quarter['ends_at']),
+                ]);
+            } else {
+                $existingQuarter = Quarter::create($quarter + [
+                    'is_active' => now()->betweenIncluded($quarter['starts_at'], $quarter['ends_at']),
+                ]);
+            }
+
+            Quarter::whereKeyNot($existingQuarter->id)
+                ->whereDate('starts_at', $quarter['starts_at'])
+                ->whereDate('ends_at', $quarter['ends_at'])
+                ->get()
+                ->each(function (Quarter $duplicateQuarter) use ($existingQuarter) {
+                    DB::table('goals')
+                        ->where('quarter_id', $duplicateQuarter->id)
+                        ->update(['quarter_id' => $existingQuarter->id]);
+
+                    DB::table('quarterly_reflections')
+                        ->where('quarter_id', $duplicateQuarter->id)
+                        ->update(['quarter_id' => $existingQuarter->id]);
+
+                    $duplicateQuarter->delete();
+                });
+        }
+
+        Quarter::whereNotIn('name', collect($quarters)->pluck('name')->all())
+            ->whereDoesntHave('goals')
+            ->delete();
+
+        Quarter::whereNotIn('name', collect($quarters)->pluck('name')->all())
+            ->update(['is_active' => false]);
+
+        $goalPillars = [
+            [
+                'name' => 'Operational Excellence',
+                'annual_goal' => 'Both teams operate with clear systems, shared accountability, and healthy internal cultures by year-end.',
+                'sort_order' => 1,
+            ],
+            [
+                'name' => 'Church-First Identity',
+                'annual_goal' => "Define, communicate, and operationalize ARM's identity as a church-first organization internally and externally.",
+                'sort_order' => 2,
+            ],
+            [
+                'name' => 'Financial Health & Sustainability',
+                'annual_goal' => 'Close the program funding gap, diversify income, and build mutual trust through transparent, program-level financial reporting.',
+                'sort_order' => 3,
+            ],
+            [
+                'name' => 'US-Uganda Alignment Framework',
+                'annual_goal' => 'How the two teams stay connected, accountable, and moving in the same direction.',
+                'sort_order' => 4,
+            ],
+        ];
+
+        foreach ($goalPillars as $goalPillar) {
+            GoalPillar::updateOrCreate(['name' => $goalPillar['name']], $goalPillar + [
+                'is_active' => true,
             ]);
         }
 
         $permissions = [
             'manage departments',
+            'manage goal pillars',
             'manage sections',
             'manage units',
             'manage users',

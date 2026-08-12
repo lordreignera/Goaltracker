@@ -106,6 +106,6 @@ class StaffAccessControlTest extends TestCase
         $response->assertSee('Own Unit Goal');
         $response->assertDontSee('Other Unit Goal');
         $response->assertDontSee('Other Department Goal');
-        $response->assertDontSee('Create Main Goal');
+        $response->assertDontSee('Create Goal Set');
     }
 }

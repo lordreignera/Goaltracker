@@ -61,6 +61,15 @@
                 </select>
             </div>
             <div class="col-lg-2">
+                <label class="form-label small fw-semibold">Goal Pillar</label>
+                <select class="form-select" name="goal_pillar_id">
+                    <option value="">All</option>
+                    @foreach ($goalPillars as $goalPillar)
+                        <option value="{{ $goalPillar->id }}" @selected(request('goal_pillar_id') == $goalPillar->id)>{{ $goalPillar->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-lg-2">
                 <label class="form-label small fw-semibold">Status</label>
                 <select class="form-select" name="status">
                     <option value="">All</option>
@@ -97,7 +106,8 @@
         <table class="table align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Main Goal</th>
+                    <th>Goal Set</th>
+                    <th>Goal Pillar</th>
                     <th>Quarter</th>
                     <th>Scope</th>
                     <th>Objectives</th>
@@ -110,9 +120,8 @@
                 <tr>
                     <td>
                         <strong>{{ $goal->title }}</strong>
-                        <br>
-                        <small class="text-muted">{{ $goal->primary_metric }}</small>
                     </td>
+                    <td>{{ $goal->pillar?->name ?? 'Unassigned' }}</td>
                     <td>{{ $goal->quarter->name }}</td>
                     <td>
                         <div>{{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }}</div>
@@ -136,7 +145,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="p-4 text-muted">No visible goals match your filters.</td></tr>
+                <tr><td colspan="7" class="p-4 text-muted">No visible goals match your filters.</td></tr>
             @endforelse
             </tbody>
         </table>

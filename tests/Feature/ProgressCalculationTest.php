@@ -70,6 +70,7 @@ class ProgressCalculationTest extends TestCase
     {
         $objective = $goal->objectives()->create([
             'title' => $title,
+            'key_activities' => $title.' activities',
             'specific_output' => $title.' deliverable',
             'weight' => $weight,
             'planned_weeks' => 4,

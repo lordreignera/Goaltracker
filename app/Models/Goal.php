@@ -10,13 +10,10 @@ class Goal extends Model
 {
     protected $fillable = [
         'quarter_id',
+        'goal_pillar_id',
         'created_by',
         'owner_id',
         'title',
-        'specific',
-        'relevant',
-        'primary_metric',
-        'deadline',
         'level',
         'status',
         'submitted_at',
@@ -25,7 +22,6 @@ class Goal extends Model
     ];
 
     protected $casts = [
-        'deadline' => 'date',
         'submitted_at' => 'datetime',
         'approved_at' => 'datetime',
     ];
@@ -33,6 +29,11 @@ class Goal extends Model
     public function quarter()
     {
         return $this->belongsTo(Quarter::class);
+    }
+
+    public function pillar()
+    {
+        return $this->belongsTo(GoalPillar::class, 'goal_pillar_id');
     }
 
     public function creator()

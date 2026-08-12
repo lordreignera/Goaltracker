@@ -5,6 +5,8 @@ namespace App\Http\Requests\Goals;
 use App\Models\GoalObjective;
 use App\Services\GoalAccessService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
 
 class StoreWeeklyUpdateRequest extends FormRequest
@@ -92,8 +94,15 @@ class StoreWeeklyUpdateRequest extends FormRequest
 
         if ($this->hasFile('evidence_file')) {
             $file = $this->file('evidence_file');
+            $path = Storage::disk('public')->putFile('weekly-update-evidence', $file);
 
-            $data['evidence_path'] = $file->store('weekly-update-evidence', 'public');
+            if (! is_string($path)) {
+                throw ValidationException::withMessages([
+                    'evidence_file' => 'The evidence file could not be saved. Please try uploading it again.',
+                ]);
+            }
+
+            $data['evidence_path'] = $path;
             $data['evidence_original_name'] = $file->getClientOriginalName();
         }
 
