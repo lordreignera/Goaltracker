@@ -3,11 +3,12 @@
         .dashboard-grid {
             display: grid;
             gap: 18px;
+            min-width: 0;
         }
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
             gap: 18px;
         }
 
@@ -22,6 +23,7 @@
         .summary-card {
             min-height: 150px;
             padding: 22px;
+            min-width: 0;
         }
 
         .summary-icon {
@@ -40,22 +42,25 @@
 
         .summary-value {
             color: var(--sg-text);
-            font-size: 2rem;
+            font-size: clamp(1.65rem, 5vw, 2rem);
             line-height: 1;
             font-weight: 800;
             margin-top: 12px;
+            overflow-wrap: anywhere;
         }
 
         .summary-title {
             color: var(--sg-text);
             font-weight: 800;
             font-size: .9rem;
+            overflow-wrap: anywhere;
         }
 
         .summary-support,
         .summary-compare {
             color: var(--sg-muted);
             font-size: .78rem;
+            overflow-wrap: anywhere;
         }
 
         .summary-compare strong {
@@ -83,20 +88,26 @@
         }
 
         .progress-ring {
-            width: 188px;
+            width: clamp(148px, 42vw, 188px);
             aspect-ratio: 1;
             border-radius: 50%;
             display: grid;
             place-items: center;
+            flex: 0 0 auto;
             background:
                 radial-gradient(circle at center, var(--sg-surface) 0 58%, transparent 59%),
                 conic-gradient(var(--sg-blue) calc(var(--value) * 1%), #e0e7ff 0);
         }
 
         .progress-ring-value {
-            font-size: 2.1rem;
+            font-size: clamp(1.65rem, 6vw, 2.1rem);
             font-weight: 800;
             color: var(--sg-navy);
+        }
+
+        .dashboard-progress-layout,
+        .goal-progress-header {
+            min-width: 0;
         }
 
         .bar-row {
@@ -105,6 +116,11 @@
             align-items: center;
             gap: 12px;
             font-size: .84rem;
+            min-width: 0;
+        }
+
+        .bar-row > * {
+            min-width: 0;
         }
 
         .bar-track {
@@ -112,6 +128,7 @@
             border-radius: 999px;
             background: #e2e8f0;
             overflow: hidden;
+            min-width: 0;
         }
 
         .bar-fill {
@@ -135,25 +152,54 @@
             height: 18px;
         }
 
-        @media (max-width: 1199.98px) {
-            .summary-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+        @media (max-width: 767.98px) {
+            .dashboard-card {
+                border-radius: 12px;
+            }
+
+            .goal-progress-header {
+                align-items: flex-start !important;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .goal-progress-header .btn {
+                width: 100%;
+            }
+
+            .bar-row {
+                grid-template-columns: 1fr auto;
+                gap: 8px 12px;
+            }
+
+            .bar-row .bar-track {
+                grid-column: 1 / -1;
+                order: 3;
             }
         }
 
         @media (max-width: 575.98px) {
             .summary-grid {
                 grid-template-columns: 1fr;
+                gap: 12px;
             }
 
             .summary-card {
                 min-height: 128px;
-                padding: 18px;
+                padding: 16px;
             }
 
-            .bar-row {
-                grid-template-columns: 1fr;
-                gap: 6px;
+            .dashboard-card.p-4 {
+                padding: 1rem !important;
+            }
+
+            .dashboard-progress-layout {
+                align-items: stretch !important;
+                gap: 18px !important;
+            }
+
+            .progress-ring {
+                justify-self: center;
             }
         }
     </style>
@@ -229,7 +275,7 @@
         <div class="row g-3">
             <div class="col-xl-8">
                 <section class="dashboard-card h-100 p-4">
-                    <div class="d-flex flex-column flex-md-row align-items-center gap-4">
+                    <div class="dashboard-progress-layout d-flex flex-column flex-md-row align-items-center gap-4">
                         <div class="progress-ring" style="--value: {{ $dashboardScore }}">
                             <div class="text-center">
                                 <div class="progress-ring-value">{{ $dashboardScore }}%</div>
@@ -238,7 +284,7 @@
                         </div>
 
                         <div class="flex-grow-1 w-100">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="goal-progress-header d-flex justify-content-between align-items-center mb-3">
                                 <div>
                                     <h2 class="h6 fw-bold mb-1">Goal Progress</h2>
                                     <div class="text-muted small">Latest supervisor-verified progress by visible goal.</div>
