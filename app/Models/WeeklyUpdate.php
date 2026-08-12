@@ -11,6 +11,7 @@ class WeeklyUpdate extends Model
         'goal_objective_id',
         'user_id',
         'report_date',
+        'reporting_frequency',
         'report_period_start',
         'report_period_end',
         'is_progress_update',
@@ -26,6 +27,7 @@ class WeeklyUpdate extends Model
 
     protected $casts = [
         'report_date' => 'date',
+        'reporting_frequency' => 'string',
         'report_period_start' => 'date',
         'report_period_end' => 'date',
         'is_progress_update' => 'boolean',
@@ -40,6 +42,10 @@ class WeeklyUpdate extends Model
                 $weeklyUpdate->is_progress_update = true;
             }
 
+            if (! $weeklyUpdate->reporting_frequency) {
+                $weeklyUpdate->reporting_frequency = 'weekly';
+            }
+
             if (! $weeklyUpdate->report_date || ($weeklyUpdate->report_period_start && $weeklyUpdate->report_period_end)) {
                 return;
             }
@@ -50,7 +56,10 @@ class WeeklyUpdate extends Model
                 return;
             }
 
-            [$periodStart, $periodEnd] = $objective->reportingPeriodFor(Carbon::parse($weeklyUpdate->report_date));
+            [$periodStart, $periodEnd] = $objective->reportingPeriodFor(
+                Carbon::parse($weeklyUpdate->report_date),
+                $weeklyUpdate->reporting_frequency ?: null
+            );
 
             $weeklyUpdate->report_period_start = $periodStart->toDateString();
             $weeklyUpdate->report_period_end = $periodEnd->toDateString();

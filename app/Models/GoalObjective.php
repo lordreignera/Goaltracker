@@ -24,6 +24,7 @@ class GoalObjective extends Model
         'starts_at' => 'date',
         'due_at' => 'date',
         'planned_weeks' => 'integer',
+        'reporting_frequency' => 'array',
     ];
 
     public function goal()
@@ -48,6 +49,21 @@ class GoalObjective extends Model
             ->filter()
             ->values()
             ->all();
+    }
+
+    public function reportingFrequencies(): array
+    {
+        $frequencies = $this->reporting_frequency;
+
+        if (is_string($frequencies)) {
+            $decoded = json_decode($frequencies, true);
+            $frequencies = json_last_error() === JSON_ERROR_NONE ? $decoded : [$frequencies];
+        }
+
+        return collect($frequencies ?: ['weekly'])
+            ->filter(fn ($frequency) => in_array($frequency, ['daily', 'weekly', 'monthly'], true))
+            ->values()
+            ->all() ?: ['weekly'];
     }
 
     public function isApprovedComplete(): bool
@@ -125,16 +141,17 @@ class GoalObjective extends Model
         return [$firstReportingDate, $lastReportingDate];
     }
 
-    public function reportingPeriodFor(CarbonInterface $reportDate): array
+    public function reportingPeriodFor(CarbonInterface $reportDate, ?string $frequency = null): array
     {
         [$firstReportingDate, $lastReportingDate] = $this->reportingDateRange();
         $reportDate = $reportDate->copy()->startOfDay();
+        $frequency = $frequency ?: $this->reportingFrequencies()[0];
 
-        if ($this->reporting_frequency === 'daily') {
+        if ($frequency === 'daily') {
             return [$reportDate, $reportDate];
         }
 
-        if ($this->reporting_frequency === 'monthly') {
+        if ($frequency === 'monthly') {
             return [
                 $reportDate->copy()->startOfMonth()->max($firstReportingDate),
                 $reportDate->copy()->endOfMonth()->min($lastReportingDate),

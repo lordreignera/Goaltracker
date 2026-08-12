@@ -95,7 +95,7 @@ class QuarterlyReportService
                         'objective_key_activities' => $objective->key_activities,
                         'objective_specific_output' => $objective->specific_output,
                         'objective_planned_weeks' => $objective->planned_weeks,
-                        'reporting_frequency' => $objective->reporting_frequency,
+                        'reporting_frequency' => $update->reporting_frequency ?? $objective->reportingFrequencies()[0],
                         'timeline' => $objective->starts_at?->format('M d, Y').' - '.$objective->due_at?->format('M d, Y'),
                         'report_date' => $update->report_date,
                         'report_period' => $update->report_period_start?->format('M d, Y').' - '.$update->report_period_end?->format('M d, Y'),

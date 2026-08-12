@@ -38,7 +38,8 @@ class StoreGoalRequest extends FormRequest
             'objectives.*.specific_output' => ['required', 'string'],
             'objectives.*.weight' => ['required', 'integer', 'min:1', 'max:100'],
             'objectives.*.planned_weeks' => ['required', 'integer', 'min:1', 'max:13'],
-            'objectives.*.reporting_frequency' => ['required', 'in:daily,weekly,monthly'],
+            'objectives.*.reporting_frequency' => ['required', 'array', 'min:1'],
+            'objectives.*.reporting_frequency.*' => ['required', 'in:daily,weekly,monthly'],
             'objectives.*.starts_at' => ['required', 'date'],
             'objectives.*.due_at' => ['required', 'date'],
         ];

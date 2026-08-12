@@ -911,12 +911,14 @@
                     <a class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                         {!! $icon('dashboard') !!}<span>Dashboard</span>
                     </a>
-                    <a class="sidebar-link {{ request()->routeIs('goals.index') || request()->routeIs('goals.show') || request()->routeIs('goals.edit') ? 'active' : '' }}" href="{{ route('goals.index') }}">
-                        {!! $icon('target') !!}<span>Goals</span>
-                    </a>
+                    @if ($canManageGoalPillars)
+                        <a class="sidebar-link {{ request()->routeIs('goal-pillars.*') ? 'active' : '' }}" href="{{ route('goal-pillars.index') }}">
+                            {!! $icon('target') !!}<span>Goal Pillars</span>
+                        </a>
+                    @endif
                     @if ($currentUser->canManageGoals())
                         <a class="sidebar-link {{ request()->routeIs('goals.create') ? 'active' : '' }}" href="{{ route('goals.create') }}">
-                            {!! $icon('plus') !!}<span>Create Goal</span>
+                            {!! $icon('plus') !!}<span>Strategic Goals per Pillar</span>
                         </a>
                     @endif
                     <a class="sidebar-link {{ request()->routeIs('goals.*') && ! request()->routeIs('goals.create') ? 'active' : '' }}" href="{{ route('goals.index') }}">
@@ -930,11 +932,6 @@
                 @if ($canManageAdministration || $canManageUsers || $canManageGoalPillars)
                     <div class="sidebar-section">Organization</div>
                     <nav class="sidebar-nav" aria-label="Organization navigation">
-                        @if ($canManageGoalPillars)
-                            <a class="sidebar-link {{ request()->routeIs('goal-pillars.*') ? 'active' : '' }}" href="{{ route('goal-pillars.index') }}">
-                                {!! $icon('target') !!}<span>Goal Pillars</span>
-                            </a>
-                        @endif
                         @if ($canManageDepartments)
                             <a class="sidebar-link {{ request()->routeIs('departments.*') ? 'active' : '' }}" href="{{ route('departments.index') }}">
                                 {!! $icon('building') !!}<span>Departments</span>

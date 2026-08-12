@@ -24,6 +24,7 @@ class WeeklyUpdateFlowTest extends TestCase
 
         $payload = [
             'report_date' => '2026-01-01',
+            'reporting_frequency' => 'daily',
             'achievement_percentage' => 25,
             'achievement_summary' => 'Installed first batch.',
             'challenges' => 'Procurement delay remains.',
@@ -39,22 +40,44 @@ class WeeklyUpdateFlowTest extends TestCase
         $this->assertSame(1, $objective->weeklyUpdates()->count());
     }
 
+    public function test_daily_and_weekly_reports_can_coexist_for_same_objective_and_date(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_date' => '2026-01-01',
+            'reporting_frequency' => 'daily',
+            'achievement_summary' => 'Daily implementation note.',
+        ])->assertRedirect();
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_date' => '2026-01-01',
+            'reporting_frequency' => 'weekly',
+            'achievement_summary' => 'Weekly summary note.',
+        ])->assertRedirect();
+
+        $this->assertSame(2, $objective->weeklyUpdates()->count());
+    }
+
     public function test_weekly_reporting_allows_only_one_report_per_week_period(): void
     {
         [$staff, $objective] = $this->staffAndObjective();
 
         $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
             'report_date' => '2026-01-01',
+            'reporting_frequency' => 'weekly',
             'achievement_summary' => 'First report in the first week.',
         ])->assertRedirect();
 
         $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
             'report_date' => '2026-01-02',
+            'reporting_frequency' => 'weekly',
             'achievement_summary' => 'Second report in the same week.',
         ])->assertSessionHasErrors('report_date');
 
         $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
             'report_date' => '2026-01-08',
+            'reporting_frequency' => 'weekly',
             'achievement_summary' => 'First report in the second week.',
         ])->assertRedirect();
 
@@ -359,6 +382,7 @@ class WeeklyUpdateFlowTest extends TestCase
             'specific_output' => 'Upgrade staff computers and confirm they are functional.',
             'weight' => 100,
             'planned_weeks' => 3,
+            'reporting_frequency' => ['daily', 'weekly'],
             'starts_at' => '2026-01-01',
             'due_at' => '2026-01-21',
         ]);

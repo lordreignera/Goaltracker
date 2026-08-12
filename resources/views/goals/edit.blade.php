@@ -94,7 +94,7 @@
                 'specific_output' => $objective->specific_output,
                 'weight' => $objective->weight,
                 'planned_weeks' => $objective->planned_weeks,
-                'reporting_frequency' => $objective->reporting_frequency ?? 'weekly',
+                'reporting_frequency' => $objective->reportingFrequencies(),
                 'starts_at' => $objective->starts_at?->toDateString() ?? $goal->quarter->starts_at?->toDateString(),
                 'due_at' => $objective->due_at?->toDateString(),
             ];
@@ -165,21 +165,56 @@
             </div>
             <div class="col-md-4" data-section-scope>
                 <label class="form-label fw-semibold">Sections</label>
-                <select class="form-select mb-2" name="section_ids[]" multiple size="5" data-section-select>
-                    @foreach ($sections as $section)
-                        <option value="{{ $section->id }}" data-department-id="{{ $section->department_id }}" @selected(in_array($section->id, $selectedSections))>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
-                    @endforeach
-                </select>
+                <div class="checkbox-dropdown" data-section-dropdown>
+                    <button class="form-select text-start checkbox-dropdown-toggle" type="button" data-section-toggle aria-expanded="false">
+                        <span data-section-summary>Select sections</span>
+                    </button>
+
+                    <div class="checkbox-dropdown-menu d-none" data-section-menu>
+                        @foreach ($sections as $section)
+                            <label class="checkbox-dropdown-option" data-section-option>
+                                <input
+                                    class="form-check-input mt-0"
+                                    type="checkbox"
+                                    name="section_ids[]"
+                                    value="{{ $section->id }}"
+                                    data-section-checkbox
+                                    data-section-name="{{ $section->department->name ?? 'Department' }} - {{ $section->name }}"
+                                    data-department-id="{{ $section->department_id }}"
+                                    @checked(in_array($section->id, $selectedSections))>
+                                <span>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
                 <small class="text-muted d-block mb-2">Select sections for section-wide goals.</small>
             </div>
 
             <div class="col-md-4" data-unit-scope>
                 <label class="form-label fw-semibold">Lower Units</label>
-                <select class="form-select" name="unit_ids[]" multiple size="5" data-unit-select>
-                    @foreach ($units as $unit)
-                        <option value="{{ $unit->id }}" data-department-id="{{ $unit->department_id }}" data-section-id="{{ $unit->section_id }}" @selected(in_array($unit->id, $selectedUnits))>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</option>
-                    @endforeach
-                </select>
+                <div class="checkbox-dropdown" data-unit-dropdown>
+                    <button class="form-select text-start checkbox-dropdown-toggle" type="button" data-unit-toggle aria-expanded="false">
+                        <span data-unit-summary>Select units</span>
+                    </button>
+
+                    <div class="checkbox-dropdown-menu d-none" data-unit-menu>
+                        @foreach ($units as $unit)
+                            <label class="checkbox-dropdown-option" data-unit-option>
+                                <input
+                                    class="form-check-input mt-0"
+                                    type="checkbox"
+                                    name="unit_ids[]"
+                                    value="{{ $unit->id }}"
+                                    data-unit-checkbox
+                                    data-unit-name="{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}"
+                                    data-department-id="{{ $unit->department_id }}"
+                                    data-section-id="{{ $unit->section_id }}"
+                                    @checked(in_array($unit->id, $selectedUnits))>
+                                <span>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
                 <small class="text-muted">Select units for unit or individual goals.</small>
             </div>
             <div class="col-md-4">
@@ -220,6 +255,8 @@
                         ? $keyActivities
                         : preg_split('/\r\n|\r|\n/', (string) $keyActivities);
                     $keyActivities = collect($keyActivities)->map(fn ($activity) => trim((string) $activity))->filter()->values()->all() ?: [''];
+                    $reportingFrequencies = $objective['reporting_frequency'] ?? ['weekly'];
+                    $reportingFrequencies = is_array($reportingFrequencies) ? $reportingFrequencies : [$reportingFrequencies];
                 @endphp
                 <div class="objective-row" data-objective-row>
                     <input type="hidden" name="objectives[{{ $index }}][id]" value="{{ $objective['id'] ?? '' }}">
@@ -244,12 +281,13 @@
                             <small class="text-muted">Planned duration</small>
                         </div>
                         <div class="col-md-2">
-                            <select class="form-select" name="objectives[{{ $index }}][reporting_frequency]" required>
-                                <option value="daily" @selected(($objective['reporting_frequency'] ?? 'weekly') === 'daily')>Daily</option>
-                                <option value="weekly" @selected(($objective['reporting_frequency'] ?? 'weekly') === 'weekly')>Weekly</option>
-                                <option value="monthly" @selected(($objective['reporting_frequency'] ?? 'weekly') === 'monthly')>Monthly</option>
-                            </select>
-                            <small class="text-muted">Report cadence</small>
+                            <label class="form-label small fw-semibold mb-1">Report Cadence</label>
+                            @foreach (['daily' => 'Daily', 'weekly' => 'Weekly', 'monthly' => 'Monthly'] as $value => $label)
+                                <label class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="objectives[{{ $index }}][reporting_frequency][]" value="{{ $value }}" @checked(in_array($value, $reportingFrequencies, true))>
+                                    <span class="form-check-label">{{ $label }}</span>
+                                </label>
+                            @endforeach
                         </div>
                         <div class="col-md-2">
                             <input class="form-control" type="date" name="objectives[{{ $index }}][starts_at]" value="{{ $objective['starts_at'] ?? '' }}" required>
@@ -304,28 +342,48 @@
         const departmentCheckboxes = Array.from(document.querySelectorAll('[data-department-checkbox]'));
         const sectionScope = document.querySelector('[data-section-scope]');
         const unitScope = document.querySelector('[data-unit-scope]');
-        const sectionSelect = document.querySelector('[data-section-select]');
-        const unitSelect = document.querySelector('[data-unit-select]');
+        const sectionDropdown = document.querySelector('[data-section-dropdown]');
+        const sectionToggle = document.querySelector('[data-section-toggle]');
+        const sectionMenu = document.querySelector('[data-section-menu]');
+        const sectionSummary = document.querySelector('[data-section-summary]');
+        const sectionCheckboxes = Array.from(document.querySelectorAll('[data-section-checkbox]'));
+        const unitDropdown = document.querySelector('[data-unit-dropdown]');
+        const unitToggle = document.querySelector('[data-unit-toggle]');
+        const unitMenu = document.querySelector('[data-unit-menu]');
+        const unitSummary = document.querySelector('[data-unit-summary]');
+        const unitCheckboxes = Array.from(document.querySelectorAll('[data-unit-checkbox]'));
 
         function selectedDepartmentIds() {
             return departmentCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => String(checkbox.value));
         }
 
         function syncDepartmentSummary() {
-            if (! departmentSummary) {
+            syncCheckboxSummary(departmentSummary, departmentCheckboxes, 'Select departments', 'departmentName', 'departments selected');
+        }
+
+        function syncSectionSummary() {
+            syncCheckboxSummary(sectionSummary, sectionCheckboxes, 'Select sections', 'sectionName', 'sections selected');
+        }
+
+        function syncUnitSummary() {
+            syncCheckboxSummary(unitSummary, unitCheckboxes, 'Select units', 'unitName', 'units selected');
+        }
+
+        function syncCheckboxSummary(summary, checkboxes, emptyText, nameKey, manyText) {
+            if (! summary) {
                 return;
             }
 
-            const selected = departmentCheckboxes
-                .filter((checkbox) => checkbox.checked)
-                .map((checkbox) => checkbox.dataset.departmentName);
+            const selected = checkboxes
+                .filter((checkbox) => checkbox.checked && ! checkbox.disabled)
+                .map((checkbox) => checkbox.dataset[nameKey]);
 
             if (selected.length === 0) {
-                departmentSummary.textContent = 'Select departments';
+                summary.textContent = emptyText;
             } else if (selected.length <= 2) {
-                departmentSummary.textContent = selected.join(', ');
+                summary.textContent = selected.join(', ');
             } else {
-                departmentSummary.textContent = `${selected.length} departments selected`;
+                summary.textContent = `${selected.length} ${manyText}`;
             }
         }
 
@@ -334,22 +392,48 @@
             departmentToggle?.setAttribute('aria-expanded', 'false');
         }
 
-        departmentToggle?.addEventListener('click', () => {
-            const isOpen = ! departmentMenu?.classList.contains('d-none');
+        function closeSectionDropdown() {
+            sectionMenu?.classList.add('d-none');
+            sectionToggle?.setAttribute('aria-expanded', 'false');
+        }
 
-            departmentMenu?.classList.toggle('d-none', isOpen);
-            departmentToggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-        });
+        function closeUnitDropdown() {
+            unitMenu?.classList.add('d-none');
+            unitToggle?.setAttribute('aria-expanded', 'false');
+        }
+
+        function bindCheckboxDropdown(toggle, menu) {
+            toggle?.addEventListener('click', () => {
+                const isOpen = ! menu?.classList.contains('d-none');
+
+                menu?.classList.toggle('d-none', isOpen);
+                toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+            });
+        }
+
+        bindCheckboxDropdown(departmentToggle, departmentMenu);
+        bindCheckboxDropdown(sectionToggle, sectionMenu);
+        bindCheckboxDropdown(unitToggle, unitMenu);
 
         document.addEventListener('click', (event) => {
             if (! departmentDropdown?.contains(event.target)) {
                 closeDepartmentDropdown();
+            }
+
+            if (! sectionDropdown?.contains(event.target)) {
+                closeSectionDropdown();
+            }
+
+            if (! unitDropdown?.contains(event.target)) {
+                closeUnitDropdown();
             }
         });
 
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 closeDepartmentDropdown();
+                closeSectionDropdown();
+                closeUnitDropdown();
             }
         });
 
@@ -360,7 +444,12 @@
             });
         });
 
+        sectionCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', syncSectionSummary));
+        unitCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', syncUnitSummary));
+
         syncDepartmentSummary();
+        syncSectionSummary();
+        syncUnitSummary();
 
         function syncGoalScopeFields() {
             const level = levelSelect?.value || 'department';
@@ -371,31 +460,37 @@
             sectionScope?.classList.toggle('d-none', ! showSections);
             unitScope?.classList.toggle('d-none', ! showUnits);
 
-            if (sectionSelect) {
-                sectionSelect.disabled = ! showSections;
-                Array.from(sectionSelect.options).forEach((option) => {
-                    const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(option.dataset.departmentId));
-                    option.hidden = ! matchesDepartment;
-                    option.disabled = ! showSections || ! matchesDepartment;
+            sectionToggle?.toggleAttribute('disabled', ! showSections);
+            unitToggle?.toggleAttribute('disabled', ! showUnits);
 
-                    if (option.selected && option.disabled) {
-                        option.selected = false;
-                    }
-                });
-            }
+            sectionCheckboxes.forEach((checkbox) => {
+                const option = checkbox.closest('[data-section-option]');
+                const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(checkbox.dataset.departmentId));
+                const disabled = ! showSections || ! matchesDepartment;
 
-            if (unitSelect) {
-                unitSelect.disabled = ! showUnits;
-                Array.from(unitSelect.options).forEach((option) => {
-                    const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(option.dataset.departmentId));
-                    option.hidden = ! matchesDepartment;
-                    option.disabled = ! showUnits || ! matchesDepartment;
+                option?.classList.toggle('d-none', ! matchesDepartment);
+                checkbox.disabled = disabled;
 
-                    if (option.selected && option.disabled) {
-                        option.selected = false;
-                    }
-                });
-            }
+                if (checkbox.checked && disabled) {
+                    checkbox.checked = false;
+                }
+            });
+
+            unitCheckboxes.forEach((checkbox) => {
+                const option = checkbox.closest('[data-unit-option]');
+                const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(checkbox.dataset.departmentId));
+                const disabled = ! showUnits || ! matchesDepartment;
+
+                option?.classList.toggle('d-none', ! matchesDepartment);
+                checkbox.disabled = disabled;
+
+                if (checkbox.checked && disabled) {
+                    checkbox.checked = false;
+                }
+            });
+
+            syncSectionSummary();
+            syncUnitSummary();
         }
 
         function renumberObjectives() {
@@ -447,12 +542,19 @@
                         <small class="text-muted">Planned duration</small>
                     </div>
                     <div class="col-md-2">
-                        <select class="form-select" name="objectives[${index}][reporting_frequency]" required>
-                            <option value="daily">Daily</option>
-                            <option value="weekly" selected>Weekly</option>
-                            <option value="monthly">Monthly</option>
-                        </select>
-                        <small class="text-muted">Report cadence</small>
+                        <label class="form-label small fw-semibold mb-1">Report Cadence</label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="objectives[${index}][reporting_frequency][]" value="daily">
+                            <span class="form-check-label">Daily</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="objectives[${index}][reporting_frequency][]" value="weekly" checked>
+                            <span class="form-check-label">Weekly</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="objectives[${index}][reporting_frequency][]" value="monthly">
+                            <span class="form-check-label">Monthly</span>
+                        </label>
                     </div>
                     <div class="col-md-2">
                         <input class="form-control" type="date" name="objectives[${index}][starts_at]" required>

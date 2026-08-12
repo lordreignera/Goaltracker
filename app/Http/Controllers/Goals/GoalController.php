@@ -63,10 +63,18 @@ class GoalController extends Controller
         abort_unless($request->user()->canManageGoals(), 403);
 
         [$departments, $sections, $units] = $this->organizationOptions($request->user());
+        $goalPillars = GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $goalsByPillar = Goal::visibleTo($request->user())
+            ->with(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives'])
+            ->whereNotNull('goal_pillar_id')
+            ->latest()
+            ->get()
+            ->groupBy('goal_pillar_id');
 
         return view('goals.create', [
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
-            'goalPillars' => GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'goalPillars' => $goalPillars,
+            'goalsByPillar' => $goalsByPillar,
             'departments' => $departments,
             'sections' => $sections,
             'units' => $units,

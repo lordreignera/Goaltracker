@@ -34,12 +34,14 @@ class GoalCreationTest extends TestCase
         $response = $this->actingAs($supervisor)->get(route('goals.index'));
 
         $response->assertOk();
-        $response->assertSee('Create Goal');
-        $response->assertDontSee('Create Goal Set');
+        $response->assertSee('Strategic Goals per Pillar');
+        $response->assertDontSee('Pillar Planning Table');
 
         $this->actingAs($supervisor)->get(route('goals.create'))
             ->assertOk()
-            ->assertSee('Create Goal Set')
+            ->assertSee('Strategic Goals per Pillar')
+            ->assertSee('Pillar Planning Table')
+            ->assertSee('Goal Pillars')
             ->assertSee('Key Activities')
             ->assertSee('Key Result Areas / Deliverables');
     }
@@ -273,7 +275,7 @@ class GoalCreationTest extends TestCase
             'specific_output' => 'Complete a clearly defined objective output with submitted evidence.',
             'weight' => 100,
             'planned_weeks' => 1,
-            'reporting_frequency' => 'weekly',
+            'reporting_frequency' => ['weekly'],
             'starts_at' => '2026-01-01',
             'due_at' => '2026-01-07',
         ];

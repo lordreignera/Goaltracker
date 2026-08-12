@@ -63,7 +63,7 @@ return new class extends Migration
             $table->text('specific_output');
             $table->unsignedTinyInteger('weight');
             $table->unsignedTinyInteger('planned_weeks');
-            $table->enum('reporting_frequency', ['daily', 'weekly', 'monthly'])->default('weekly');
+            $table->json('reporting_frequency');
             $table->enum('status', ['pending', 'approved', 'rejected', 'revision_requested', 'completed'])->default('pending');
             $table->date('starts_at');
             $table->date('due_at');
@@ -75,6 +75,7 @@ return new class extends Migration
             $table->foreignId('goal_objective_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->date('report_date');
+            $table->enum('reporting_frequency', ['daily', 'weekly', 'monthly'])->default('weekly');
             $table->date('report_period_start');
             $table->date('report_period_end');
             $table->boolean('is_progress_update')->default(false);
@@ -88,7 +89,7 @@ return new class extends Migration
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['goal_objective_id', 'user_id', 'report_period_start'], 'weekly_updates_period_unique');
+            $table->unique(['goal_objective_id', 'user_id', 'reporting_frequency', 'report_period_start'], 'weekly_updates_period_unique');
         });
 
         Schema::create('supervisor_reviews', function (Blueprint $table) {

@@ -11,6 +11,18 @@ use Illuminate\Validation\Validator;
 
 class UpdateWeeklyUpdateRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $weeklyUpdate = $this->route('weeklyUpdate');
+
+        if (! $this->filled('reporting_frequency') && $weeklyUpdate instanceof WeeklyUpdate) {
+            $this->merge([
+                'reporting_frequency' => $weeklyUpdate->reporting_frequency
+                    ?: $weeklyUpdate->objective->reportingFrequencies()[0],
+            ]);
+        }
+    }
+
     public function authorize(): bool
     {
         $weeklyUpdate = $this->route('weeklyUpdate');
@@ -26,6 +38,7 @@ class UpdateWeeklyUpdateRequest extends FormRequest
     {
         return [
             'report_date' => ['required', 'date'],
+            'reporting_frequency' => ['required', 'in:daily,weekly,monthly'],
             'is_progress_update' => ['nullable', 'boolean'],
             'achievement_percentage' => ['required_if:is_progress_update,1', 'nullable', 'integer', 'min:0', 'max:100'],
             'achievement_summary' => ['required', 'string', 'max:3000'],
@@ -49,9 +62,17 @@ class UpdateWeeklyUpdateRequest extends FormRequest
                 $goal = $objective->goal()->with('quarter')->first();
                 $quarter = $goal?->quarter;
                 $reportDate = $this->date('report_date');
+                $reportingFrequency = $this->input('reporting_frequency');
 
                 if (! $quarter || ! $reportDate) {
                     return;
+                }
+
+                if (! in_array($reportingFrequency, $objective->reportingFrequencies(), true)) {
+                    $validator->errors()->add(
+                        'reporting_frequency',
+                        'Select a reporting cadence allowed for this strategic goal/objective.'
+                    );
                 }
 
                 [$firstAllowedDate, $lastAllowedDate] = $objective->reportingDateRange();
@@ -63,11 +84,12 @@ class UpdateWeeklyUpdateRequest extends FormRequest
                     );
                 }
 
-                [$periodStart] = $objective->reportingPeriodFor($reportDate);
+                [$periodStart] = $objective->reportingPeriodFor($reportDate, $reportingFrequency);
 
                 $alreadySubmitted = $objective->weeklyUpdates()
                     ->whereKeyNot($weeklyUpdate->id)
                     ->where('user_id', $this->user()->id)
+                    ->where('reporting_frequency', $reportingFrequency)
                     ->whereDate('report_period_start', $periodStart->toDateString())
                     ->exists();
 
@@ -86,7 +108,7 @@ class UpdateWeeklyUpdateRequest extends FormRequest
         $data = $this->safe()->except('evidence_file');
         $weeklyUpdate = $this->route('weeklyUpdate');
         $reportDate = $this->date('report_date');
-        [$periodStart, $periodEnd] = $weeklyUpdate->objective->reportingPeriodFor($reportDate);
+        [$periodStart, $periodEnd] = $weeklyUpdate->objective->reportingPeriodFor($reportDate, $data['reporting_frequency']);
 
         $data['is_progress_update'] = $this->boolean('is_progress_update');
         $data['report_period_start'] = $periodStart->toDateString();

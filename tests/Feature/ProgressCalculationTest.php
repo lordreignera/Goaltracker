@@ -74,6 +74,7 @@ class ProgressCalculationTest extends TestCase
             'specific_output' => $title.' deliverable',
             'weight' => $weight,
             'planned_weeks' => 4,
+            'reporting_frequency' => ['weekly'],
             'starts_at' => '2026-07-01',
             'due_at' => '2026-07-28',
         ]);
@@ -81,6 +82,7 @@ class ProgressCalculationTest extends TestCase
         $update = $objective->weeklyUpdates()->create([
             'user_id' => $supervisor->id,
             'report_date' => '2026-07-15',
+            'reporting_frequency' => 'weekly',
             'achievement_percentage' => 100,
             'achievement_summary' => 'Staff claim for calculation test.',
             'status' => 'approved',

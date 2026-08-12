@@ -104,6 +104,11 @@ class GoalManagementService
                     ->map(fn ($activity) => trim((string) $activity))
                     ->filter()
                     ->implode(PHP_EOL);
+                $objective['reporting_frequency'] = collect($objective['reporting_frequency'] ?? [])
+                    ->filter(fn ($frequency) => in_array($frequency, ['daily', 'weekly', 'monthly'], true))
+                    ->unique()
+                    ->values()
+                    ->all();
 
                 return $objective;
             })

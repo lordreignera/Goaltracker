@@ -87,6 +87,7 @@
                     $totalWeeks = $objective->totalReportingWeeks();
                     $achievementProgress = $objective->progressPercent();
                     $objectiveContribution = round($objective->progressContribution(), 1);
+                    $reportingFrequencies = $objective->reportingFrequencies();
                     [$firstReportDate, $lastReportDate] = $objective->reportingDateRange();
                     $minReportDate = $firstReportDate?->toDateString();
                     $maxReportDate = $lastReportDate?->toDateString();
@@ -100,7 +101,7 @@
                             <div class="text-muted small">
                                 {{ $objective->planned_weeks }} planned week{{ $objective->planned_weeks === 1 ? '' : 's' }}
                                 / {{ $objective->starts_at?->format('M d, Y') }} - {{ $objective->due_at?->format('M d, Y') }}
-                                / {{ ucfirst($objective->reporting_frequency) }} reporting
+                                / {{ collect($reportingFrequencies)->map(fn ($frequency) => ucfirst($frequency))->join(', ') }} reporting
                             </div>
 
                             <div class="mt-2">
@@ -151,6 +152,16 @@
                             </div>
 
                             <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Report Cadence</label>
+                                <select class="form-select" name="reporting_frequency" required>
+                                    @foreach ($reportingFrequencies as $frequency)
+                                        <option value="{{ $frequency }}">{{ ucfirst($frequency) }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Choose what this report covers.</small>
+                            </div>
+
+                            <div class="col-md-3">
                                 <label class="form-label small fw-semibold">Progress Score</label>
                                 <div class="form-check mb-1">
                                     <input class="form-check-input" type="checkbox" name="is_progress_update" value="1" id="progress-update-{{ $objective->id }}">
@@ -190,6 +201,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Report Date</th>
+                                    <th>Cadence</th>
                                     <th>Reporting Period</th>
                                     <th>Progress Update</th>
                                     <th>Staff Claim</th>
@@ -208,6 +220,7 @@
                                     @php($verifiedPercentage = $update->verifiedAchievementPercent())
                                     <tr>
                                         <td>{{ $update->report_date?->format('M d, Y') }}</td>
+                                        <td>{{ ucfirst($update->reporting_frequency ?? 'weekly') }}</td>
                                         <td>{{ $update->report_period_start?->format('M d, Y') }} - {{ $update->report_period_end?->format('M d, Y') }}</td>
                                         <td>{{ $update->is_progress_update ? 'Yes' : 'No' }}</td>
                                         <td>{{ $update->achievement_percentage !== null ? $update->achievement_percentage.'%' : 'Not a score update' }}</td>
@@ -234,6 +247,14 @@
                                                             <div class="col-md-4">
                                                                 <label class="form-label small fw-semibold">Report Date</label>
                                                                 <input class="form-control form-control-sm" type="date" name="report_date" min="{{ $minReportDate }}" max="{{ $maxReportDate }}" value="{{ old('report_date', $update->report_date?->toDateString()) }}" required>
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label class="form-label small fw-semibold">Report Cadence</label>
+                                                                <select class="form-select form-select-sm" name="reporting_frequency" required>
+                                                                    @foreach ($reportingFrequencies as $frequency)
+                                                                        <option value="{{ $frequency }}" @selected(old('reporting_frequency', $update->reporting_frequency ?? 'weekly') === $frequency)>{{ ucfirst($frequency) }}</option>
+                                                                    @endforeach
+                                                                </select>
                                                             </div>
                                                             <div class="col-md-3">
                                                                 <label class="form-label small fw-semibold">Progress Score</label>
@@ -293,7 +314,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="11" class="text-muted">No reports yet.</td>
+                                        <td colspan="12" class="text-muted">No reports yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

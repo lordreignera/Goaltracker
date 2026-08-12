@@ -103,6 +103,7 @@ class QuarterlyReportTest extends TestCase
             'specific_output' => 'Replace outdated machines and confirm they are functional.',
             'weight' => 100,
             'planned_weeks' => 2,
+            'reporting_frequency' => ['weekly'],
             'starts_at' => '2026-01-01',
             'due_at' => '2026-01-14',
         ]);
@@ -110,6 +111,7 @@ class QuarterlyReportTest extends TestCase
         $update = $objective->weeklyUpdates()->create([
             'user_id' => $user->id,
             'report_date' => '2026-01-01',
+            'reporting_frequency' => 'weekly',
             'achievement_percentage' => 45,
             'achievement_summary' => 'Installed computers',
             'challenges' => 'Procurement delay remains.',
