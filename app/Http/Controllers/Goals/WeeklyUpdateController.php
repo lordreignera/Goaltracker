@@ -27,7 +27,7 @@ class WeeklyUpdateController extends Controller
         $weeklyUpdate->update($data);
 
         if ($oldEvidencePath && isset($data['evidence_path'])) {
-            Storage::disk('public')->delete($oldEvidencePath);
+            Storage::disk(config('filesystems.evidence_disk'))->delete($oldEvidencePath);
         }
 
         if (in_array($weeklyUpdate->objective->status, ['rejected', 'revision_requested'], true)) {
@@ -45,7 +45,7 @@ class WeeklyUpdateController extends Controller
             404
         );
 
-        return Storage::disk('public')->download(
+        return Storage::disk(config('filesystems.evidence_disk'))->download(
             $weeklyUpdate->evidence_path,
             $weeklyUpdate->evidence_original_name
         );

@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="page-title">Strategic Goals per Pillar</h1>
+        <h1 class="page-title text-center w-100">Strategic Goals per Pillar</h1>
     </x-slot>
 
     <style>
@@ -66,6 +66,29 @@
             font-size: .86rem;
         }
 
+        .planning-action {
+            min-width: 180px;
+        }
+
+        .planning-note {
+            max-width: 220px;
+            white-space: normal;
+        }
+
+        .planning-summary {
+            min-width: 150px;
+        }
+
+        .summary-line {
+            color: #334155;
+            font-size: .86rem;
+            line-height: 1.35;
+        }
+
+        .summary-action {
+            margin-top: 8px;
+        }
+
         .field-hint {
             color: #6b7280;
             font-size: .82rem;
@@ -108,11 +131,73 @@
         .checkbox-dropdown-option:hover {
             background: #f4f6fb;
         }
+
+        @media (max-width: 767.98px) {
+            .goal-panel {
+                border-radius: 10px;
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            .pillar-plan-table {
+                min-width: 0;
+            }
+
+            .pillar-plan-table thead {
+                display: none;
+            }
+
+            .pillar-plan-table,
+            .pillar-plan-table tbody,
+            .pillar-plan-table tr,
+            .pillar-plan-table td {
+                display: block;
+                width: 100%;
+            }
+
+            .pillar-plan-table tr {
+                border: 1px solid #d7dce5;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                overflow: hidden;
+                background: #fff;
+            }
+
+            .pillar-plan-table td {
+                border: 0;
+                border-bottom: 1px solid #edf0f5;
+                padding: 10px 12px;
+            }
+
+            .pillar-plan-table td:last-child {
+                border-bottom: 0;
+            }
+
+            .pillar-plan-table td::before {
+                content: attr(data-label);
+                display: block;
+                margin-bottom: 4px;
+                color: #475569;
+                font-size: .76rem;
+                font-weight: 800;
+                text-transform: uppercase;
+            }
+
+            .pillar-cell,
+            .planning-action,
+            .planning-note {
+                width: 100%;
+                max-width: none;
+            }
+
+            .key-activity-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
-            <h2 class="h5 fw-bold mb-1">Strategic Goals per Pillar</h2>
             <div class="text-muted small">Review each pillar in table format, then add strategic goals/objectives under the right pillar.</div>
         </div>
         <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Back to Goals</a>
@@ -157,60 +242,129 @@
                             @php
                                 $goal = $row[0];
                                 $objective = $row[1];
+                                $latestUpdate = $objective->weeklyUpdates->sortByDesc('report_date')->first();
+                                $latestReview = $latestUpdate?->reviews?->sortByDesc('created_at')->first();
+                                $reportingFrequencies = $objective->reportingFrequencies();
+                                $keyActivities = $objective->keyActivitiesList();
+                                $reportCount = $objective->weeklyUpdates->count();
+                                [$firstReportDate, $lastReportDate] = $objective->reportingDateRange();
                             @endphp
                             <tr>
-                                @if ($loop->first)
-                                    <td class="pillar-cell" rowspan="{{ max(1, $pillarRows->count()) }}">
-                                        <div>{{ $goalPillar->name }}</div>
-                                        @if ($goalPillar->annual_goal)
-                                            <div class="text-muted small fw-normal mt-2">{{ $goalPillar->annual_goal }}</div>
-                                        @endif
-                                    </td>
-                                @endif
-                                <td>
-                                    <div class="fw-semibold">{{ $objective->title }}</div>
-                                    <div class="text-muted small">{{ $goal->title }}</div>
-                                </td>
-                                <td>
-                                    @foreach ($objective->keyActivitiesList() as $activity)
-                                        <div># {{ $activity }}</div>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    <div>{{ $goal->quarter?->name }}</div>
-                                    <div class="text-muted small">{{ $objective->starts_at?->format('M d, Y') }} - {{ $objective->due_at?->format('M d, Y') }}</div>
-                                </td>
-                                <td>{{ $objective->specific_output }}</td>
-                                <td>
-                                    @foreach ($objective->reportingFrequencies() as $frequency)
-                                        <span class="badge text-bg-light border">{{ ucfirst($frequency) }}</span>
-                                    @endforeach
-                                    <div class="text-muted small mt-1">{{ $objective->progressPercent() }}% verified</div>
-                                </td>
-                                <td class="planning-empty">Add through reports</td>
-                                <td class="planning-empty">Add through reports</td>
-                                <td class="planning-empty">Supervisor review</td>
-                                @if ($loop->first)
-                                    <td rowspan="{{ max(1, $pillarRows->count()) }}">
-                                        <button class="btn btn-sm btn-primary" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">
-                                            Add Strategic Goal / Objective
-                                        </button>
-                                    </td>
-                                @endif
-                            </tr>
-                        @empty
-                            <tr>
-                                <td class="pillar-cell">
+                                <td class="pillar-cell" data-label="Goal Pillars">
                                     <div>{{ $goalPillar->name }}</div>
                                     @if ($goalPillar->annual_goal)
                                         <div class="text-muted small fw-normal mt-2">{{ $goalPillar->annual_goal }}</div>
                                     @endif
                                 </td>
-                                <td colspan="8" class="planning-empty">No strategic goals/objectives recorded under this pillar yet.</td>
-                                <td>
-                                    <button class="btn btn-sm btn-primary" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">
-                                        Add Strategic Goal / Objective
+                                <td class="planning-summary" data-label="Strategic Goal / Objective">
+                                    <div class="fw-semibold">{{ $objective->title }}</div>
+                                    <div class="text-muted small">{{ $goal->title }}</div>
+                                    <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
+                                        View Details
                                     </button>
+                                </td>
+                                <td class="planning-summary" data-label="Key Activities">
+                                    <div class="summary-line">{{ count($keyActivities) }} activit{{ count($keyActivities) === 1 ? 'y' : 'ies' }}</div>
+                                    <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
+                                        View Activities
+                                    </button>
+                                </td>
+                                <td data-label="Timeline">
+                                    <div>{{ $goal->quarter?->name }}</div>
+                                    <div class="text-muted small">{{ $objective->starts_at?->format('M d, Y') }} - {{ $objective->due_at?->format('M d, Y') }}</div>
+                                </td>
+                                <td class="planning-summary" data-label="Key Result Areas / Deliverables">
+                                    <div class="summary-line">{{ str($objective->specific_output)->limit(70) }}</div>
+                                    <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
+                                        View Deliverables
+                                    </button>
+                                </td>
+                                <td data-label="Progress">
+                                    @foreach ($reportingFrequencies as $frequency)
+                                        <span class="badge text-bg-light border">{{ ucfirst($frequency) }}</span>
+                                    @endforeach
+                                    <div class="text-muted small mt-1">{{ $objective->progressPercent() }}% verified</div>
+                                </td>
+                                <td class="planning-note" data-label="Next Steps">
+                                    <div class="summary-line">{{ $latestUpdate?->action_points ? str($latestUpdate->action_points)->limit(55) : 'No next step yet' }}</div>
+                                    <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
+                                        View Reports
+                                    </button>
+                                </td>
+                                <td class="planning-note" data-label="Staff Comment">
+                                    <div class="summary-line">{{ $reportCount }} report{{ $reportCount === 1 ? '' : 's' }}</div>
+                                    <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
+                                        View Staff Reports
+                                    </button>
+                                </td>
+                                <td class="planning-note" data-label="Supervisor Review Comment">
+                                    <div class="summary-line">{{ $latestReview?->comments ? str($latestReview->comments)->limit(55) : 'No review yet' }}</div>
+                                    <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
+                                        View Reviews
+                                    </button>
+                                </td>
+                                <td class="planning-action" data-label="Action">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">
+                                                    Add Strategic Goal / Objective
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
+                                                    View Pillar Reports
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
+                                                    View Strategic Goal / Objective
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#editObjectiveModal-{{ $objective->id }}">
+                                                    Edit Strategic Goal / Objective
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">
+                                                    Add Report
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td class="pillar-cell" data-label="Goal Pillars">
+                                    <div>{{ $goalPillar->name }}</div>
+                                    @if ($goalPillar->annual_goal)
+                                        <div class="text-muted small fw-normal mt-2">{{ $goalPillar->annual_goal }}</div>
+                                    @endif
+                                </td>
+                                <td colspan="8" class="planning-empty" data-label="Strategic Goals">No strategic goals/objectives recorded under this pillar yet.</td>
+                                <td data-label="Action">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">
+                                                    Add Strategic Goal / Objective
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
+                                                    View Pillar Reports
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                         @endforelse
@@ -221,9 +375,10 @@
     </div>
 
     <div class="modal fade" id="strategicGoalModal" tabindex="-1" aria-labelledby="strategicGoalModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
             <form id="strategic-goal-form" method="post" action="{{ route('goals.store') }}" class="modal-content" data-strategic-goal-form>
                 @csrf
+                <input type="hidden" name="modal_source" value="strategic_goal">
 
                 <div class="modal-header">
                     <div>
@@ -459,6 +614,246 @@
         </div>
     </div>
 
+    @foreach ($goalPillars as $goalPillar)
+        @php
+            $pillarReportRows = $goalsByPillar->get($goalPillar->id, collect())
+                ->flatMap(function ($goal) use ($goalPillar) {
+                    return $goal->objectives->flatMap(function ($objective) use ($goal, $goalPillar) {
+                        return $objective->weeklyUpdates->sortByDesc('report_date')->map(fn ($update) => [
+                            'pillar' => $goalPillar,
+                            'goal' => $goal,
+                            'objective' => $objective,
+                            'update' => $update,
+                            'review' => $update->reviews?->sortByDesc('created_at')->first(),
+                        ]);
+                    });
+                })
+                ->sortByDesc(fn ($row) => $row['update']->report_date?->timestamp ?? 0)
+                ->values();
+        @endphp
+
+        <div class="modal fade" id="pillarReportsModal-{{ $goalPillar->id }}" tabindex="-1" aria-labelledby="pillarReportsModalLabel-{{ $goalPillar->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h3 class="modal-title h5 fw-bold mb-1" id="pillarReportsModalLabel-{{ $goalPillar->id }}">Pillar Reports</h3>
+                            <div class="text-muted small">{{ $goalPillar->name }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if ($pillarReportRows->isNotEmpty())
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Report Date</th>
+                                            <th>Cadence</th>
+                                            <th>Strategic Goal / Objective</th>
+                                            <th>Achievement</th>
+                                            <th>Next Step</th>
+                                            <th>Staff Claim</th>
+                                            <th>Supervisor Verified</th>
+                                            <th>Supervisor Comment</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($pillarReportRows as $reportRow)
+                                            @php
+                                                $update = $reportRow['update'];
+                                                $objective = $reportRow['objective'];
+                                                $review = $reportRow['review'];
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $update->report_date?->format('M d, Y') }}</td>
+                                                <td>{{ ucfirst($update->reporting_frequency ?? 'weekly') }}</td>
+                                                <td>
+                                                    <div class="fw-semibold">{{ $objective->title }}</div>
+                                                    <div class="text-muted small">{{ $reportRow['goal']->title }}</div>
+                                                </td>
+                                                <td>{{ $update->achievement_summary }}</td>
+                                                <td>{{ $update->action_points ?: 'No next step recorded' }}</td>
+                                                <td>{{ $update->achievement_percentage !== null ? $update->achievement_percentage.'%' : 'No score claim' }}</td>
+                                                <td>{{ $update->verifiedAchievementPercent() !== null ? $update->verifiedAchievementPercent().'%' : 'Not verified' }}</td>
+                                                <td>{{ $review?->comments ?: 'No supervisor comment' }}</td>
+                                                <td><span class="badge text-bg-light border">{{ str_replace('_', ' ', $update->status) }}</span></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-muted">No reports have been submitted under this pillar yet.</div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @foreach ($goalsByPillar->get($goalPillar->id, collect()) as $goal)
+            @foreach ($goal->objectives as $objective)
+                @php
+                    $reportingFrequencies = $objective->reportingFrequencies();
+                    [$firstReportDate, $lastReportDate] = $objective->reportingDateRange();
+                    $minReportDate = $firstReportDate?->toDateString();
+                    $maxReportDate = $lastReportDate?->toDateString();
+                    $latestUpdate = $objective->weeklyUpdates->sortByDesc('report_date')->first();
+                    $latestReview = $latestUpdate?->reviews?->sortByDesc('created_at')->first();
+                @endphp
+
+                <div class="modal fade" id="viewObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="viewObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div>
+                                    <h3 class="modal-title h5 fw-bold mb-1" id="viewObjectiveModalLabel-{{ $objective->id }}">{{ $objective->title }}</h3>
+                                    <div class="text-muted small">{{ $goalPillar->name }} / {{ $goal->quarter?->name }} / {{ $goal->title }}</div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-4">Timeline</dt>
+                                    <dd class="col-sm-8">{{ $objective->starts_at?->format('M d, Y') }} - {{ $objective->due_at?->format('M d, Y') }}</dd>
+
+                                    <dt class="col-sm-4">Report Cadence</dt>
+                                    <dd class="col-sm-8">{{ collect($reportingFrequencies)->map(fn ($frequency) => ucfirst($frequency))->join(', ') }}</dd>
+
+                                    <dt class="col-sm-4">Weight</dt>
+                                    <dd class="col-sm-8">{{ $objective->weight }}%</dd>
+
+                                    <dt class="col-sm-4">Progress</dt>
+                                    <dd class="col-sm-8">{{ $objective->progressPercent() }}% verified</dd>
+
+                                    <dt class="col-sm-4">Key Activities</dt>
+                                    <dd class="col-sm-8">
+                                        <ul class="mb-0 ps-3">
+                                            @foreach ($objective->keyActivitiesList() as $activity)
+                                                <li>{{ $activity }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </dd>
+
+                                    <dt class="col-sm-4">Deliverables</dt>
+                                    <dd class="col-sm-8">{{ $objective->specific_output }}</dd>
+
+                                    <dt class="col-sm-4">Latest Staff Report</dt>
+                                    <dd class="col-sm-8">{{ $latestUpdate?->achievement_summary ?: 'No staff report yet' }}</dd>
+
+                                    <dt class="col-sm-4">Latest Next Step</dt>
+                                    <dd class="col-sm-8">{{ $latestUpdate?->action_points ?: 'No next step reported yet' }}</dd>
+
+                                    <dt class="col-sm-4">Supervisor Comment</dt>
+                                    <dd class="col-sm-8">{{ $latestReview?->comments ?: 'No supervisor review yet' }}</dd>
+                                </dl>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="editObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="editObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-fullscreen-sm-down">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <div>
+                                    <h3 class="modal-title h5 fw-bold mb-1" id="editObjectiveModalLabel-{{ $objective->id }}">Edit Strategic Goal / Objective</h3>
+                                    <div class="text-muted small">{{ $objective->title }}</div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="mb-2">This strategic goal belongs to the goal set <strong>{{ $goal->title }}</strong>.</p>
+                                <p class="text-muted small mb-0">Editing opens the full goal set editor so the objective weights, assignments, activities, and deliverables continue saving together correctly.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <a class="btn btn-maroon" href="{{ route('goals.edit', $goal) }}">Open Editor</a>
+                                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="reportObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="reportObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+                        <form method="post" action="{{ route('objectives.weekly-updates.store', $objective) }}" class="modal-content" enctype="multipart/form-data">
+                            @csrf
+                            <input type="hidden" name="modal_source" value="planning_report_{{ $objective->id }}">
+
+                            <div class="modal-header">
+                                <div>
+                                    <h3 class="modal-title h5 fw-bold mb-1" id="reportObjectiveModalLabel-{{ $objective->id }}">Add Report</h3>
+                                    <div class="text-muted small">{{ $objective->title }}</div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold">Report Date</label>
+                                        <input class="form-control" type="date" name="report_date" min="{{ $minReportDate }}" max="{{ $maxReportDate }}" required>
+                                        <small class="text-muted">{{ $firstReportDate?->format('M d, Y') }} to {{ $lastReportDate?->format('M d, Y') }}</small>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold">Report Cadence</label>
+                                        <select class="form-select" name="reporting_frequency" required>
+                                            @foreach ($reportingFrequencies as $frequency)
+                                                <option value="{{ $frequency }}">{{ ucfirst($frequency) }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-semibold">Progress Score</label>
+                                        <div class="form-check mb-1">
+                                            <input class="form-check-input" type="checkbox" name="is_progress_update" value="1" id="planning-progress-update-{{ $objective->id }}">
+                                            <label class="form-check-label small" for="planning-progress-update-{{ $objective->id }}">This report updates progress</label>
+                                        </div>
+                                        <input class="form-control" type="number" name="achievement_percentage" min="0" max="100" placeholder="Achievement %" data-progress-score disabled>
+                                        <small class="text-muted">Required only when updating progress.</small>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold">Achievement</label>
+                                        <textarea class="form-control" name="achievement_summary" rows="3" placeholder="What was achieved on this report date?" required></textarea>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">Challenges</label>
+                                        <textarea class="form-control" name="challenges" rows="3" placeholder="What blocked or slowed progress?"></textarea>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold">Action Point / Next Step</label>
+                                        <textarea class="form-control" name="action_points" rows="3" placeholder="What should happen next, by whom, or what support is needed?"></textarea>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold">Evidence Document</label>
+                                        <input class="form-control" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.docm,.xls,.xlsx,.xlsm,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif">
+                                        <small class="text-muted">Optional PDF, Word, Excel, CSV, or image file. Max 10MB.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-maroon">Submit Report</button>
+                                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            @endforeach
+        @endforeach
+    @endforeach
+
     <script>
         const objectivesList = document.querySelector('[data-objectives-list]');
         const addObjectiveButton = document.querySelector('[data-add-objective]');
@@ -484,6 +879,7 @@
         const goalPillarSelect = document.querySelector('[name="goal_pillar_id"]');
         const selectedPillarHelp = document.querySelector('[data-selected-pillar-help]');
         const strategicGoalModalElement = document.getElementById('strategicGoalModal');
+        const oldModalSource = @json(old('modal_source'));
 
         function showStrategicGoalModal() {
             if (strategicGoalModalElement && window.bootstrap) {
@@ -604,7 +1000,19 @@
         });
 
         @if ($errors->any())
-            document.addEventListener('DOMContentLoaded', showStrategicGoalModal);
+            document.addEventListener('DOMContentLoaded', () => {
+                if (oldModalSource?.startsWith('planning_report_') && window.bootstrap) {
+                    const modalElement = document.getElementById(`reportObjectiveModal-${oldModalSource.replace('planning_report_', '')}`);
+
+                    if (modalElement) {
+                        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+
+                        return;
+                    }
+                }
+
+                showStrategicGoalModal();
+            });
         @endif
 
         syncDepartmentSummary();
@@ -943,6 +1351,26 @@
         document.querySelector('[name="quarter_id"]')?.addEventListener('change', () => {
             objectivesList.querySelectorAll('[data-objective-row]').forEach(updateObjectiveDueDate);
             updatePlannedWeekPreviews();
+        });
+        document.addEventListener('change', (event) => {
+            const checkbox = event.target.closest('[name="is_progress_update"]');
+
+            if (! checkbox) {
+                return;
+            }
+
+            const form = checkbox.closest('form');
+            const scoreInput = form?.querySelector('[data-progress-score]');
+
+            if (! scoreInput) {
+                return;
+            }
+
+            scoreInput.disabled = ! checkbox.checked;
+
+            if (! checkbox.checked) {
+                scoreInput.value = '';
+            }
         });
         objectivesList?.addEventListener('change', (event) => {
             if (event.target.matches('input[type="date"], [data-objective-weeks]')) {

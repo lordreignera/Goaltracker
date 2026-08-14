@@ -41,7 +41,15 @@ class StoreWeeklyUpdateRequest extends FormRequest
             'achievement_summary' => ['required', 'string', 'max:3000'],
             'challenges' => ['nullable', 'string', 'max:3000'],
             'action_points' => ['nullable', 'string', 'max:3000'],
-            'evidence_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg', 'max:10240'],
+            'evidence_file' => ['nullable', 'file', 'mimes:pdf,doc,docx,docm,xls,xlsx,xlsm,csv,png,jpg,jpeg,webp,heic,heif', 'max:10240'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'evidence_file.mimes' => 'The evidence file must be a PDF, Word, Excel, CSV, PNG, JPG, JPEG, WEBP, HEIC, or HEIF file.',
+            'evidence_file.max' => 'The evidence file must not be larger than 10MB.',
         ];
     }
 
@@ -115,7 +123,7 @@ class StoreWeeklyUpdateRequest extends FormRequest
 
         if ($this->hasFile('evidence_file')) {
             $file = $this->file('evidence_file');
-            $path = Storage::disk('public')->putFile('weekly-update-evidence', $file);
+            $path = Storage::disk(config('filesystems.evidence_disk'))->putFile('weekly-update-evidence', $file);
 
             if (! is_string($path)) {
                 throw ValidationException::withMessages([

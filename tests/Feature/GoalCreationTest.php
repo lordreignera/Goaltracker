@@ -257,6 +257,60 @@ class GoalCreationTest extends TestCase
         $this->assertTrue($goal->assignedSections()->whereKey($section->id)->exists());
     }
 
+    public function test_planning_table_actions_expose_objective_and_pillar_report_modals(): void
+    {
+        $department = Department::create(['name' => 'ICT Department']);
+        $pillar = $this->goalPillar();
+        $unit = Unit::create(['department_id' => $department->id, 'name' => 'Applications Unit']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+
+        $admin = User::factory()->create([
+            'department_id' => $department->id,
+            'unit_id' => $unit->id,
+            'role' => 'admin',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'goal_pillar_id' => $pillar->id,
+            'owner_id' => $admin->id,
+            'created_by' => $admin->id,
+            'title' => 'Operational Excellence Q1',
+            'level' => 'unit',
+        ]);
+        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
+        $objective = $goal->objectives()->create($this->objectiveFields([
+            'title' => 'Improve staff support systems',
+            'key_activities' => "Approve refunds\nUpdate allowance balances",
+        ]));
+        $objective->weeklyUpdates()->create([
+            'user_id' => $admin->id,
+            'report_date' => '2026-01-02',
+            'reporting_frequency' => 'weekly',
+            'report_period_start' => '2026-01-01',
+            'report_period_end' => '2026-01-07',
+            'achievement_summary' => 'Appointments letters were worked on.',
+            'action_points' => 'Orient new staff.',
+            'status' => 'submitted',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('goals.create'));
+
+        $response->assertOk()
+            ->assertSee('View Pillar Reports')
+            ->assertSee('View Strategic Goal / Objective')
+            ->assertSee('Edit Strategic Goal / Objective')
+            ->assertSee('Add Report')
+            ->assertSee("pillarReportsModal-{$pillar->id}", false)
+            ->assertSee("reportObjectiveModal-{$objective->id}", false)
+            ->assertSee(route('objectives.weekly-updates.store', $objective), false)
+            ->assertSee('Appointments letters were worked on.')
+            ->assertSee('Orient new staff.')
+            ->assertSee('modal-fullscreen-sm-down');
+    }
+
     private function goalPillar(array $overrides = []): GoalPillar
     {
         return GoalPillar::create($overrides + [

@@ -173,8 +173,8 @@
 
                             <div class="col-md-5">
                                 <label class="form-label small fw-semibold">Evidence Document</label>
-                                <input class="form-control" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
-                                <small class="text-muted">Optional PDF, Word, Excel, or image file. Max 10MB.</small>
+                                <input class="form-control" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.docm,.xls,.xlsx,.xlsm,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif">
+                                <small class="text-muted">Optional PDF, Word, Excel, CSV, or image file. Max 10MB.</small>
                             </div>
 
                             <div class="col-12">
@@ -266,7 +266,7 @@
                                                             </div>
                                                             <div class="col-md-5">
                                                                 <label class="form-label small fw-semibold">Replace Evidence Document</label>
-                                                                <input class="form-control form-control-sm" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
+                                                                <input class="form-control form-control-sm" type="file" name="evidence_file" accept=".pdf,.doc,.docx,.docm,.xls,.xlsx,.xlsm,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif">
                                                                 @if ($update->hasEvidence())
                                                                     <small class="text-muted">Current: {{ $update->evidence_original_name ?? 'Evidence uploaded' }}</small>
                                                                 @endif

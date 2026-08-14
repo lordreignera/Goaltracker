@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'evidence_disk' => env('EVIDENCE_FILESYSTEM_DISK', 'public'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

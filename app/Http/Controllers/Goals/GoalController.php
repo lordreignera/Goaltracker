@@ -65,7 +65,7 @@ class GoalController extends Controller
         [$departments, $sections, $units] = $this->organizationOptions($request->user());
         $goalPillars = GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $goalsByPillar = Goal::visibleTo($request->user())
-            ->with(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives'])
+            ->with(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives.weeklyUpdates.reviews'])
             ->whereNotNull('goal_pillar_id')
             ->latest()
             ->get()

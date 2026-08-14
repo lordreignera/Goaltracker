@@ -235,6 +235,53 @@ class WeeklyUpdateFlowTest extends TestCase
             ->assertDownload('training-register.jpg');
     }
 
+    public function test_evidence_upload_uses_configured_evidence_disk(): void
+    {
+        Storage::fake('s3');
+        config(['filesystems.evidence_disk' => 's3']);
+
+        [$staff, $objective] = $this->staffAndObjective();
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_date' => '2026-01-01',
+            'achievement_summary' => 'Uploaded evidence to configured storage.',
+            'evidence_file' => UploadedFile::fake()->image('field-photo.webp', 120, 80),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $update = $objective->weeklyUpdates()->firstOrFail();
+
+        Storage::disk('s3')->assertExists($update->evidence_path);
+        $this->assertSame('field-photo.webp', $update->evidence_original_name);
+    }
+
+    public function test_webp_evidence_file_is_allowed(): void
+    {
+        Storage::fake('public');
+
+        [$staff, $objective] = $this->staffAndObjective();
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_date' => '2026-01-01',
+            'achievement_summary' => 'Uploaded a web image.',
+            'evidence_file' => UploadedFile::fake()->image('evidence.webp', 120, 80),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertSame(1, $objective->weeklyUpdates()->count());
+    }
+
+    public function test_unsupported_evidence_file_gets_clear_error_message(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_date' => '2026-01-01',
+            'achievement_summary' => 'Tried to upload unsupported evidence.',
+            'evidence_file' => UploadedFile::fake()->create('evidence.zip', 10, 'application/zip'),
+        ])->assertSessionHasErrors([
+            'evidence_file' => 'The evidence file must be a PDF, Word, Excel, CSV, PNG, JPG, JPEG, WEBP, HEIC, or HEIF file.',
+        ]);
+    }
+
     public function test_approved_daily_report_cannot_be_edited_by_staff(): void
     {
         [$staff, $objective] = $this->staffAndObjective();
