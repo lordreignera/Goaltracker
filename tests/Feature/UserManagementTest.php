@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Department;
+use App\Models\Goal;
+use App\Models\Quarter;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -33,7 +35,11 @@ class UserManagementTest extends TestCase
     public function test_super_admin_can_open_the_user_edit_panel(): void
     {
         $department = Department::create(['name' => 'ICT Department']);
-        $unit = $department->units()->create(['name' => 'Software Development Unit']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
+        $position = $section->positions()->create([
+            'department_id' => $department->id,
+            'title' => 'Software Developer',
+        ]);
         $superAdmin = $this->createSuperAdmin();
 
         $pendingUser = User::factory()->create([
@@ -43,7 +49,8 @@ class UserManagementTest extends TestCase
             'email' => 'norah@example.com',
             'phone_number' => '+256700000001',
             'department_id' => $department->id,
-            'unit_id' => $unit->id,
+            'section_id' => $section->id,
+            'position_id' => $position->id,
             'requested_role' => 'Staff',
             'approval_status' => 'pending',
             'is_active' => false,
@@ -57,6 +64,8 @@ class UserManagementTest extends TestCase
         $response->assertSee('Edit User');
         $response->assertSee('Norah Test');
         $response->assertSee('Save User Changes');
+        $response->assertSee('Software Developer');
+        $response->assertDontSee('No unit');
         $response->assertSee('Back to current list');
         $response->assertSee('All users');
     }
@@ -160,7 +169,6 @@ class UserManagementTest extends TestCase
             'email' => 'grace@example.com',
             'phone_number' => '+256700000099',
             'department_id' => $department->id,
-            'unit_id' => null,
             'requested_role' => 'Program Manager',
             'is_active' => '1',
         ])->assertRedirect();
@@ -187,5 +195,71 @@ class UserManagementTest extends TestCase
         ])->assertForbidden();
 
         $this->assertDatabaseMissing('roles', ['name' => 'Program Manager']);
+    }
+
+    public function test_super_admin_accounts_cannot_be_edited_or_deleted_from_user_management(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $otherSuperAdmin = $this->createSuperAdmin();
+        $department = Department::create(['name' => 'Administration']);
+        Role::firstOrCreate(['name' => 'Staff']);
+
+        $payload = [
+            'first_name' => 'Changed',
+            'second_name' => 'Administrator',
+            'email' => $otherSuperAdmin->email,
+            'phone_number' => '+256700001111',
+            'department_id' => $department->id,
+            'requested_role' => 'Staff',
+            'is_active' => '1',
+        ];
+
+        $this->actingAs($superAdmin)
+            ->put(route('users.management.update', $otherSuperAdmin), $payload)
+            ->assertForbidden();
+
+        $this->actingAs($superAdmin)
+            ->delete(route('users.management.destroy', $otherSuperAdmin))
+            ->assertStatus(422);
+
+        $this->assertTrue($otherSuperAdmin->fresh()->hasRole('Super Admin'));
+    }
+
+    public function test_user_with_goal_history_must_be_deactivated_instead_of_deleted(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+        $department = Department::create(['name' => 'Programs']);
+        $quarter = Quarter::create([
+            'name' => 'Q1 2026',
+            'starts_at' => '2026-01-01',
+            'ends_at' => '2026-03-31',
+        ]);
+        $user = User::factory()->create([
+            'department_id' => $department->id,
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        Goal::create([
+            'quarter_id' => $quarter->id,
+            'created_by' => $user->id,
+            'owner_id' => $user->id,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->delete(route('users.management.destroy', $user))
+            ->assertSessionHasErrors('user');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+    }
+
+    public function test_super_admin_role_name_is_reserved(): void
+    {
+        $superAdmin = $this->createSuperAdmin();
+
+        $this->actingAs($superAdmin)->post(route('roles.management.store'), [
+            'name' => 'super admin',
+        ])->assertSessionHasErrors('name');
+
+        $this->assertSame(1, Role::where('name', 'Super Admin')->count());
     }
 }

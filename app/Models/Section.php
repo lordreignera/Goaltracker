@@ -13,11 +13,6 @@ class Section extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function units()
-    {
-        return $this->hasMany(Unit::class);
-    }
-
     public function positions()
     {
         return $this->hasMany(Position::class);

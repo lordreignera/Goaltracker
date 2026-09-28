@@ -18,4 +18,9 @@ class Quarter extends Model
     {
         return $this->hasMany(Goal::class);
     }
+
+    public function reflections()
+    {
+        return $this->hasMany(QuarterlyReflection::class);
+    }
 }

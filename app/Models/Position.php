@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Position extends Model
 {
-    protected $fillable = ['department_id', 'section_id', 'unit_id', 'title', 'code', 'description'];
+    protected $fillable = ['department_id', 'section_id', 'title', 'code', 'description'];
 
     public function department()
     {
@@ -18,8 +18,8 @@ class Position extends Model
         return $this->belongsTo(Section::class);
     }
 
-    public function unit()
+    public function users()
     {
-        return $this->belongsTo(Unit::class);
+        return $this->hasMany(User::class);
     }
 }

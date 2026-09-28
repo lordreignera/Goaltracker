@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Route;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -40,7 +41,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->from('/login')->post('/_expired-session-test');
 
-        $this->assertGuest();
+        $this->assertGuest('web');
         $response->assertRedirect('/login');
         $response->assertSessionHasErrors('session_expired');
     }
@@ -73,5 +74,66 @@ class AuthenticationTest extends TestCase
         $response->assertSessionHasErrors([
             'email' => 'Your account is awaiting approval. Please contact the administrator.',
         ]);
+    }
+
+    public function test_inactive_user_with_an_existing_session_is_logged_out(): void
+    {
+        $user = User::factory()->create([
+            'approval_status' => 'approved',
+            'is_active' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors([
+            'email' => 'Your account is inactive. Please contact the administrator.',
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_pending_user_with_an_existing_session_is_logged_out(): void
+    {
+        $user = User::factory()->create([
+            'approval_status' => 'pending',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('dashboard'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors([
+            'email' => 'Your account is awaiting approval. Please contact the administrator.',
+        ]);
+        $this->assertGuest();
+    }
+
+    public function test_inactive_user_cannot_reach_framework_managed_profile_routes(): void
+    {
+        $user = User::factory()->create([
+            'approval_status' => 'approved',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('profile.show'))
+            ->assertRedirect(route('login'));
+
+        $this->assertGuest('web');
+    }
+
+    public function test_pending_api_token_cannot_read_authenticated_user_endpoint(): void
+    {
+        $user = User::factory()->create([
+            'approval_status' => 'pending',
+            'is_active' => true,
+        ]);
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/user')
+            ->assertForbidden()
+            ->assertJson([
+                'message' => 'Your account is awaiting approval. Please contact the administrator.',
+            ]);
     }
 }

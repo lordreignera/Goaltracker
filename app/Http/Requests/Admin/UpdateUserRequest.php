@@ -10,7 +10,9 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return (bool) $this->user()?->isSuperAdmin();
+        $managedUser = $this->route('user');
+
+        return (bool) ($this->user()?->isSuperAdmin() && ! $managedUser?->isSuperAdmin());
     }
 
     public function rules(): array
@@ -31,20 +33,16 @@ class UpdateUserRequest extends FormRequest
                 Rule::exists('sections', 'id')
                     ->where(fn ($query) => $query->where('department_id', $this->input('department_id'))),
             ],
-            'unit_id' => [
-                'nullable',
-                Rule::exists('units', 'id')
-                    ->where(fn ($query) => $query
-                        ->where('department_id', $this->input('department_id'))
-                        ->when($this->filled('section_id'), fn ($query) => $query->where('section_id', $this->input('section_id')))),
-            ],
             'position_id' => [
                 'nullable',
                 Rule::exists('positions', 'id')
                     ->where(fn ($query) => $query
                         ->where('department_id', $this->input('department_id'))
-                        ->when($this->filled('section_id'), fn ($query) => $query->where('section_id', $this->input('section_id')))
-                        ->when($this->filled('unit_id'), fn ($query) => $query->where('unit_id', $this->input('unit_id')))),
+                        ->when(
+                            $this->filled('section_id'),
+                            fn ($query) => $query->where('section_id', $this->input('section_id')),
+                            fn ($query) => $query->whereNull('section_id')
+                        )),
             ],
             'requested_role' => ['required', Rule::in($assignableRoles)],
             'is_active' => ['nullable', 'boolean'],

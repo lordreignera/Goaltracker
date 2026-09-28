@@ -2,11 +2,9 @@
 
 namespace App\Http\Requests\Goals;
 
-use App\Services\GoalAccessService;
 use App\Models\GoalPillar;
 use App\Models\Quarter;
-use App\Models\Section;
-use App\Models\Unit;
+use App\Services\GoalAccessService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -26,15 +24,10 @@ class UpdateGoalRequest extends FormRequest
             'quarter_id' => ['required', 'exists:quarters,id'],
             'goal_pillar_id' => ['required', 'exists:goal_pillars,id'],
             'department_ids' => ['required', 'array', 'min:1'],
-            'department_ids.*' => ['integer', 'exists:departments,id'],
-            'section_ids' => ['nullable', 'array'],
-            'section_ids.*' => ['integer', 'exists:sections,id'],
-            'unit_ids' => ['nullable', 'array'],
-            'unit_ids.*' => ['integer', 'exists:units,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'level' => ['required', 'in:department,section,unit,individual'],
+            'department_ids.*' => ['integer', 'distinct', 'exists:departments,id'],
             'objectives' => ['required', 'array', 'min:1'],
-            'objectives.*.id' => ['nullable', 'integer', 'exists:goal_objectives,id'],
+            'objectives.*' => ['array'],
+            'objectives.*.id' => ['nullable', 'integer', 'distinct', 'exists:goal_objectives,id'],
             'objectives.*.title' => ['required', 'string', 'max:255'],
             'objectives.*.key_activities' => ['required', 'array', 'min:1'],
             'objectives.*.key_activities.*' => ['required', 'string', 'max:500'],
@@ -58,99 +51,26 @@ class UpdateGoalRequest extends FormRequest
                     ->unique()
                     ->values();
 
-                $sectionIds = collect($this->input('section_ids', []))
-                    ->filter()
-                    ->map(fn ($id) => (int) $id)
-                    ->unique()
-                    ->values();
-
-                $unitIds = collect($this->input('unit_ids', []))
-                    ->filter()
-                    ->map(fn ($id) => (int) $id)
-                    ->unique()
-                    ->values();
-                $level = $this->input('level');
-
-                if ($level === 'department' && ($sectionIds->isNotEmpty() || $unitIds->isNotEmpty())) {
-                    $validator->errors()->add('level', 'Department goals should only select departments.');
-                }
-
-                if ($level === 'section' && $sectionIds->isEmpty()) {
-                    $validator->errors()->add('section_ids', 'Section goals must select at least one section.');
-                }
-
-                if ($level === 'section' && $unitIds->isNotEmpty()) {
-                    $validator->errors()->add('unit_ids', 'Section goals should not also select units.');
-                }
-
-                if (in_array($level, ['unit', 'individual'], true) && $unitIds->isEmpty()) {
-                    $validator->errors()->add('unit_ids', 'Unit and individual goals must select at least one unit.');
-                }
-
-                if (in_array($level, ['unit', 'individual'], true) && $sectionIds->isNotEmpty()) {
-                    $validator->errors()->add('section_ids', 'Unit and individual goals should use units only. The section is taken from the selected unit.');
-                }
-
-                if ($sectionIds->isNotEmpty()) {
-                    $validSections = Section::whereIn('id', $sectionIds->all())
-                        ->whereIn('department_id', $departmentIds->all())
-                        ->count();
-
-                    if ($validSections !== $sectionIds->count()) {
-                        $validator->errors()->add('section_ids', 'Selected sections must belong to the selected departments.');
-                    }
-                }
-
-                if ($unitIds->isNotEmpty()) {
-                    $validUnits = Unit::whereIn('id', $unitIds->all())
-                        ->whereIn('department_id', $departmentIds->all())
-                        ->when($sectionIds->isNotEmpty(), fn ($query) => $query->whereIn('section_id', $sectionIds->all()))
-                        ->count();
-
-                    if ($validUnits !== $unitIds->count()) {
-                        $validator->errors()->add('unit_ids', 'Selected units must belong to the selected departments and sections.');
-                    }
-                }
-
                 if (! $user || $user->isAdmin()) {
                     return;
                 }
 
-                if ($departmentIds->count() !== 1 || $departmentIds->first() !== (int) $user->department_id) {
-                    $validator->errors()->add('department_ids', 'You can only assign goals to your own department.');
+                if ($departmentIds->diff($user->accessibleDepartmentIds())->isNotEmpty()) {
+                    $validator->errors()->add('department_ids', 'You can only assign goals to departments you can access.');
                 }
 
-                if ($user->section_id && $sectionIds->isNotEmpty() && ($sectionIds->count() !== 1 || $sectionIds->first() !== (int) $user->section_id)) {
-                    $validator->errors()->add('section_ids', 'You can only assign goals to your own section.');
-                }
+            },
+            function (Validator $validator) {
+                $objectives = collect($this->input('objectives', []));
 
-                if ($sectionIds->isNotEmpty()) {
-                    $validSections = Section::whereIn('id', $sectionIds->all())
-                        ->where('department_id', $user->department_id)
-                        ->count();
-
-                    if ($validSections !== $sectionIds->count()) {
-                        $validator->errors()->add('section_ids', 'Selected sections must belong to your department.');
-                    }
-                }
-
-                if ($unitIds->isEmpty()) {
+                if ($objectives->isEmpty() || $objectives->contains(fn ($objective) => ! is_array($objective) || ! isset($objective['weight']) || ! is_numeric($objective['weight']))) {
                     return;
                 }
 
-                if ($user->unit_id && ($unitIds->count() !== 1 || $unitIds->first() !== (int) $user->unit_id)) {
-                    $validator->errors()->add('unit_ids', 'You can only assign goals to your own unit.');
+                $total = $objectives->sum(fn ($objective) => (int) $objective['weight']);
 
-                    return;
-                }
-
-                $validUnits = Unit::whereIn('id', $unitIds->all())
-                    ->where('department_id', $user->department_id)
-                    ->when($user->section_id, fn ($query) => $query->where('section_id', $user->section_id))
-                    ->count();
-
-                if ($validUnits !== $unitIds->count()) {
-                    $validator->errors()->add('unit_ids', 'Selected units must belong to your department.');
+                if ($total !== 100) {
+                    $validator->errors()->add('objectives', "Objective weights must total exactly 100%. Current total is {$total}%.");
                 }
             },
             function (Validator $validator) {
@@ -195,10 +115,16 @@ class UpdateGoalRequest extends FormRequest
                 }
 
                 foreach ($this->input('objectives', []) as $index => $objective) {
-                    $startsAt = $this->date("objectives.{$index}.starts_at");
-                    $dueAt = empty($objective['due_at'])
+                    if (! is_array($objective)) {
+                        continue;
+                    }
+
+                    $startsAtKey = "objectives.{$index}.starts_at";
+                    $dueAtKey = "objectives.{$index}.due_at";
+                    $startsAt = $validator->errors()->has($startsAtKey) ? null : $this->date($startsAtKey);
+                    $dueAt = empty($objective['due_at']) || $validator->errors()->has($dueAtKey)
                         ? null
-                        : $this->date("objectives.{$index}.due_at");
+                        : $this->date($dueAtKey);
                     $plannedWeeks = (int) ($objective['planned_weeks'] ?? 0);
 
                     if ($startsAt && ($startsAt->lt($quarter->starts_at) || $startsAt->gt($quarter->ends_at))) {

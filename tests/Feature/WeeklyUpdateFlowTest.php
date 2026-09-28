@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Department;
 use App\Models\Goal;
 use App\Models\Quarter;
-use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -174,6 +173,17 @@ class WeeklyUpdateFlowTest extends TestCase
         $this->assertSame(0, $objective->weeklyUpdates()->count());
     }
 
+    public function test_user_without_daily_report_permission_does_not_see_report_form(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+        $staff->syncRoles([]);
+
+        $this->actingAs($staff)
+            ->get(route('goals.show', $objective->goal))
+            ->assertOk()
+            ->assertDontSee('Submit Report');
+    }
+
     public function test_user_without_daily_report_permission_cannot_edit_report(): void
     {
         [$staff, $objective] = $this->staffAndObjective();
@@ -336,7 +346,7 @@ class WeeklyUpdateFlowTest extends TestCase
         [$staff, $objective] = $this->staffAndObjective();
         $supervisor = User::factory()->create([
             'department_id' => $staff->department_id,
-            'unit_id' => $staff->unit_id,
+            'section_id' => $staff->section_id,
             'role' => 'supervisor',
             'approval_status' => 'approved',
             'is_active' => true,
@@ -369,7 +379,7 @@ class WeeklyUpdateFlowTest extends TestCase
         [$staff, $objective] = $this->staffAndObjective();
         $supervisor = User::factory()->create([
             'department_id' => $staff->department_id,
-            'unit_id' => $staff->unit_id,
+            'section_id' => $staff->section_id,
             'role' => 'supervisor',
             'approval_status' => 'approved',
             'is_active' => true,
@@ -394,6 +404,121 @@ class WeeklyUpdateFlowTest extends TestCase
         $this->assertSame('submitted', $update->fresh()->status);
     }
 
+    public function test_report_cannot_be_reviewed_again_until_it_is_resubmitted(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+        $supervisor = User::factory()->create([
+            'department_id' => $staff->department_id,
+            'section_id' => $staff->section_id,
+            'role' => 'supervisor',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        Permission::findOrCreate('review goals');
+        Role::findOrCreate('Supervisor')->syncPermissions(['review goals']);
+        $supervisor->assignRole('Supervisor');
+
+        $update = $objective->weeklyUpdates()->create([
+            'user_id' => $staff->id,
+            'report_date' => '2026-01-01',
+            'is_progress_update' => true,
+            'achievement_percentage' => 80,
+            'achievement_summary' => 'Ready for verification.',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($supervisor)->post(route('weekly-updates.reviews.store', $update), [
+            'decision' => 'approved',
+            'verified_percentage' => 75,
+        ])->assertRedirect();
+
+        $this->actingAs($supervisor)->post(route('weekly-updates.reviews.store', $update), [
+            'decision' => 'rejected',
+            'comments' => 'A second decision must not replace the first.',
+        ])->assertStatus(422);
+
+        $this->assertSame('approved', $update->fresh()->status);
+        $this->assertSame(1, $update->reviews()->count());
+    }
+
+    public function test_rejected_or_revision_requested_report_requires_comments(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+        $supervisor = User::factory()->create([
+            'department_id' => $staff->department_id,
+            'section_id' => $staff->section_id,
+            'role' => 'supervisor',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        Permission::findOrCreate('review goals');
+        Role::findOrCreate('Supervisor')->syncPermissions(['review goals']);
+        $supervisor->assignRole('Supervisor');
+        $update = $objective->weeklyUpdates()->create([
+            'user_id' => $staff->id,
+            'report_date' => '2026-01-01',
+            'achievement_summary' => 'Needs review.',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($supervisor)->post(route('weekly-updates.reviews.store', $update), [
+            'decision' => 'revision_requested',
+        ])->assertSessionHasErrors('comments');
+
+        $this->assertSame('submitted', $update->fresh()->status);
+    }
+
+    public function test_reviewer_cannot_approve_their_own_report(): void
+    {
+        [$manager, $objective] = $this->staffAndObjective('Manager', 'manager');
+        Permission::findOrCreate('review goals');
+        Role::findOrCreate('Manager')->givePermissionTo('review goals');
+        $update = $objective->weeklyUpdates()->create([
+            'user_id' => $manager->id,
+            'report_date' => '2026-01-01',
+            'achievement_summary' => 'Manager-authored report.',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($manager)->post(route('weekly-updates.reviews.store', $update), [
+            'decision' => 'approved',
+        ])->assertStatus(422);
+
+        $this->assertSame('submitted', $update->fresh()->status);
+        $this->assertDatabaseCount('supervisor_reviews', 0);
+    }
+
+    public function test_verified_completion_marks_the_parent_goal_completed(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+        $supervisor = User::factory()->create([
+            'department_id' => $staff->department_id,
+            'section_id' => $staff->section_id,
+            'role' => 'supervisor',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        Permission::findOrCreate('review goals');
+        Role::findOrCreate('Supervisor')->syncPermissions(['review goals']);
+        $supervisor->assignRole('Supervisor');
+        $update = $objective->weeklyUpdates()->create([
+            'user_id' => $staff->id,
+            'report_date' => '2026-01-01',
+            'is_progress_update' => true,
+            'achievement_percentage' => 100,
+            'achievement_summary' => 'Objective completed.',
+            'status' => 'submitted',
+        ]);
+
+        $this->actingAs($supervisor)->post(route('weekly-updates.reviews.store', $update), [
+            'decision' => 'approved',
+            'verified_percentage' => 100,
+        ])->assertRedirect();
+
+        $this->assertSame('completed', $objective->fresh()->status);
+        $this->assertSame('completed', $objective->goal->fresh()->status);
+    }
+
     private function staffAndObjective(string $roleName = 'Staff', string $userRole = 'staff'): array
     {
         Permission::findOrCreate('submit daily reports');
@@ -403,12 +528,12 @@ class WeeklyUpdateFlowTest extends TestCase
         Role::findOrCreate('Manager')->syncPermissions(['manage goals']);
 
         $department = Department::create(['name' => 'ICT Department']);
-        $unit = Unit::create(['department_id' => $department->id, 'name' => 'Software Development Unit']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
         $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
 
         $staff = User::factory()->create([
             'department_id' => $department->id,
-            'unit_id' => $unit->id,
+            'section_id' => $section->id,
             'role' => $userRole,
             'approval_status' => 'approved',
             'is_active' => true,
@@ -418,10 +543,10 @@ class WeeklyUpdateFlowTest extends TestCase
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
             'owner_id' => $staff->id,
-            'title' => 'Improve ICT Service Delivery',
-            'level' => 'unit',
+            'created_by' => $staff->id,
+            'status' => 'submitted',
         ]);
-        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
+        $goal->assignments()->create(['department_id' => $department->id, 'section_id' => $section->id]);
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade computers',

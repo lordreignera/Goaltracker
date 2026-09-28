@@ -116,6 +116,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <form method="post" action="{{ route('goal-pillars.store') }}" class="modal-content">
                 @csrf
+                <input type="hidden" name="form_context" value="createGoalPillarModal">
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title h5 fw-bold" id="createGoalPillarModalLabel">Add Goal Pillar</h2>
@@ -160,6 +161,7 @@
                 <form method="post" action="{{ route('goal-pillars.update', $goalPillar) }}" class="modal-content">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="form_context" value="editGoalPillarModal{{ $goalPillar->id }}">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title h5 fw-bold" id="editGoalPillarModalLabel{{ $goalPillar->id }}">Edit Goal Pillar</h2>

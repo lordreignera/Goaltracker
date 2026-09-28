@@ -11,7 +11,6 @@ class QuarterlyReflection extends Model
         'user_id',
         'department_id',
         'section_id',
-        'unit_id',
         'goals_completed',
         'goals_partially_completed',
         'key_wins',
@@ -33,11 +32,6 @@ class QuarterlyReflection extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
     }
 
     public function section()

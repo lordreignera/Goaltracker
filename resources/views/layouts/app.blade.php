@@ -83,8 +83,8 @@
                 height: 100vh;
                 overflow-y: auto;
                 padding: 24px 18px;
-                background: var(--sg-surface);
-                border-right: 1px solid var(--sg-border);
+                background: #111827;
+                border-right: 1px solid #1f2937;
                 z-index: 30;
                 transition: width .2s ease, padding .2s ease, transform .22s ease;
                 scrollbar-width: none;
@@ -131,7 +131,7 @@
             }
 
             .brand-title {
-                color: var(--sg-navy);
+                color: #f8fafc;
                 font-weight: 800;
                 font-size: 1rem;
                 line-height: 1.1;
@@ -141,7 +141,7 @@
             }
 
             .brand-subtitle {
-                color: var(--sg-muted);
+                color: #94a3b8;
                 font-size: .74rem;
                 line-height: 1.2;
                 margin-top: 3px;
@@ -153,10 +153,10 @@
             .sidebar-collapse-toggle {
                 width: 34px;
                 height: 34px;
-                border: 1px solid var(--sg-border);
+                border: 1px solid #374151;
                 border-radius: 10px;
-                background: var(--sg-surface);
-                color: var(--sg-muted);
+                background: #1f2937;
+                color: #cbd5e1;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -165,8 +165,8 @@
             }
 
             .sidebar-collapse-toggle:hover {
-                background: var(--sg-surface-soft);
-                color: var(--sg-blue);
+                background: #374151;
+                color: #ffffff;
             }
 
             .sidebar-collapse-toggle svg {
@@ -177,7 +177,7 @@
             }
 
             .sidebar-section {
-                color: var(--sg-muted);
+                color: #64748b;
                 font-size: .68rem;
                 font-weight: 800;
                 text-transform: uppercase;
@@ -197,7 +197,7 @@
                 min-height: 42px;
                 padding: 10px 12px;
                 border-radius: 10px;
-                color: var(--sg-muted);
+                color: #cbd5e1;
                 text-decoration: none;
                 font-size: .9rem;
                 font-weight: 700;
@@ -218,40 +218,40 @@
             .sidebar-link svg {
                 width: 18px;
                 height: 18px;
-                color: #475569;
+                color: #94a3b8;
                 flex: 0 0 auto;
             }
 
             .sidebar-link:hover {
-                color: var(--sg-navy);
-                background: #eff6ff;
+                color: #ffffff;
+                background: #1f2937;
             }
 
             .sidebar-link:hover svg {
-                color: var(--sg-blue);
+                color: #93c5fd;
             }
 
             .sidebar-link.active {
-                color: var(--sg-navy);
-                background: #dbeafe;
+                color: #ffffff;
+                background: #1d4ed8;
             }
 
             .sidebar-link.active::before {
-                background: var(--sg-blue);
+                background: #bfdbfe;
             }
 
             .sidebar-link.active svg {
-                color: var(--sg-blue);
+                color: #ffffff;
             }
 
             .sidebar-help {
                 display: block;
                 margin-top: 28px;
                 padding: 14px;
-                border: 1px solid var(--sg-border);
+                border: 1px solid #374151;
                 border-radius: 12px;
-                background: var(--sg-surface);
-                color: var(--sg-text);
+                background: #1f2937;
+                color: #e5e7eb;
                 text-decoration: none;
                 box-shadow: 0 10px 24px rgba(15, 23, 42, .04);
                 transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
@@ -259,16 +259,22 @@
 
             .sidebar-help:hover,
             .sidebar-help:focus {
-                background: #eff6ff;
-                border-color: #bfdbfe;
-                color: var(--sg-text);
+                background: #374151;
+                border-color: #4b5563;
+                color: #ffffff;
                 transform: translateY(-1px);
             }
 
             .sidebar-help svg {
                 width: 20px;
                 height: 20px;
-                color: var(--sg-blue);
+                color: #93c5fd;
+            }
+
+            .app-sidebar .mobile-sidebar-close {
+                border-color: #374151;
+                background: #1f2937;
+                color: #ffffff;
             }
 
             .app-shell.sidebar-collapsed .app-sidebar {
@@ -846,7 +852,7 @@
             $canManageDepartments = $currentUser->isAdmin() || $currentUser->can('manage departments');
             $canManageGoalPillars = $currentUser->isAdmin() || $currentUser->can('manage goal pillars');
             $canManageSections = $currentUser->isAdmin() || $currentUser->can('manage sections');
-            $canManageUnits = $currentUser->isAdmin() || $currentUser->can('manage units');
+            $canManagePositions = $currentUser->isAdmin() || $currentUser->can('manage positions');
             $canManageUsers = $currentUser->isAdmin() || $currentUser->can('manage users');
             $canManageQuarters = $currentUser->isAdmin() || $currentUser->can('manage quarters');
             $canManageRoles = $currentUser->isAdmin();
@@ -918,7 +924,7 @@
                     @endif
                     @if ($currentUser->canManageGoals())
                         <a class="sidebar-link {{ request()->routeIs('goals.create') ? 'active' : '' }}" href="{{ route('goals.create') }}">
-                            {!! $icon('plus') !!}<span>Strategic Goals per Pillar</span>
+                            {!! $icon('plus') !!}<span>Work Plan Goals</span>
                         </a>
                     @endif
                     <a class="sidebar-link {{ request()->routeIs('goals.*') && ! request()->routeIs('goals.create') ? 'active' : '' }}" href="{{ route('goals.index') }}">
@@ -942,9 +948,9 @@
                                 {!! $icon('sections') !!}<span>Sections</span>
                             </a>
                         @endif
-                        @if ($canManageUnits)
-                            <a class="sidebar-link {{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
-                                {!! $icon('sections') !!}<span>Units</span>
+                        @if ($canManagePositions)
+                            <a class="sidebar-link {{ request()->routeIs('positions.*') ? 'active' : '' }}" href="{{ route('positions.index') }}">
+                                {!! $icon('users') !!}<span>Positions</span>
                             </a>
                         @endif
                         @if ($canManageUsers)
@@ -1148,6 +1154,14 @@
                     document.body.classList.remove('sidebar-open');
                 }
             });
+
+            @if ($errors->any() && old('form_context'))
+                const invalidFormModal = document.getElementById(@json(old('form_context')));
+
+                if (invalidFormModal) {
+                    bootstrap.Modal.getOrCreateInstance(invalidFormModal).show();
+                }
+            @endif
         </script>
     </body>
 </html>

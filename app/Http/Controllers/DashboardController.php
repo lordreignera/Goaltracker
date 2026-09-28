@@ -4,15 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Goal;
+use App\Models\GoalPillar;
+use App\Models\Quarter;
 use App\Models\WeeklyUpdate;
+use App\Services\GoalAccessService;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request, GoalAccessService $access)
     {
         $user = $request->user();
-        $goals = Goal::query()->visibleTo($user)->with('objectives')->get();
+        $goals = Goal::query()
+            ->visibleTo($user)
+            ->with(['pillar', 'quarter', 'assignedDepartments', 'objectives.weeklyUpdates.reviews'])
+            ->latest()
+            ->get();
+        $goalPillars = GoalPillar::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         $goalProgress = $goals->map(fn (Goal $goal) => $goal->progress());
         $onTrackGoals = $goals->filter(fn (Goal $goal) => $goal->progress() >= 70)->count();
@@ -36,6 +47,16 @@ class DashboardController extends Controller
                 ->whereHas('objective.goal', fn ($query) => $query->visibleTo($user))
                 ->count(),
             'goals' => $goals,
+            'goalPillars' => $goalPillars,
+            'goalsByPillar' => $goals->whereNotNull('goal_pillar_id')->groupBy('goal_pillar_id'),
+            'canCreateGoals' => $user->canManageGoals(),
+            'reportableGoalIds' => $goals
+                ->filter(fn (Goal $goal) => $access->canSubmitDailyReport($user, $goal))
+                ->pluck('id'),
+            'quarters' => Quarter::orderByDesc('starts_at')->get(),
+            'departments' => $user->isAdmin()
+                ? Department::orderBy('name')->get()
+                : Department::whereIn('id', $user->accessibleDepartmentIds())->orderBy('name')->get(),
         ]);
     }
 }

@@ -26,21 +26,21 @@
 
     <div class="card">
         <h2>How the System Works</h2>
-        <p>The system helps teams create quarterly goals, break them into weighted sub-goals, submit progress reports, and calculate official progress from supervisor-verified scores.</p>
+        <p>The system helps each office organize quarterly work plan goals by activity pillar, submit progress reports, and calculate official progress from supervisor-verified scores.</p>
     </div>
 
     <h2>Create a Goal</h2>
     <ul>
-        <li>Open Create Goal and choose the quarter, department, and goal level.</li>
-        <li>Select the pillar, quarter, organization scope, strategic goal, key activities, and deliverables.</li>
-        <li>Add sub-goals with deliverable / evidence, weight, start date, and timeline.</li>
-        <li>All sub-goal weights must total 100%.</li>
+        <li>Open Create Goal, choose the quarter and pillar, then select one or more departments available to you.</li>
+        <li>Enter each goal name, dates, weight, key activities, and deliverable.</li>
+        <li>Add all work plan goals required for the selected activity pillar.</li>
+        <li>All work plan goal weights must total 100%.</li>
     </ul>
 
     <h2>Submit a Report</h2>
     <ul>
-        <li>Open the goal and find the relevant sub-goal.</li>
-        <li>Enter the report date. The system regulates whether the sub-goal reports daily, weekly, or monthly.</li>
+        <li>Open the office work plan and find the relevant work plan goal.</li>
+        <li>Enter the report date. The system regulates whether the work plan goal reports daily, weekly, or monthly.</li>
         <li>Write what was achieved in Achievement.</li>
         <li>Add blockers in Challenges and the next required response in Action Point / Next Step.</li>
         <li>Attach evidence when available, such as a PDF, Word document, Excel sheet, or photo.</li>
@@ -52,19 +52,19 @@
     <p>Not every report should change the percentage. A report can simply record what happened, the challenge faced, the next action, and supporting evidence. The percentage is only required when the user ticks This report updates progress.</p>
     <table>
         <thead>
-            <tr><th>Sub-goal cadence</th><th>What the system allows</th><th>Good use case</th></tr>
+            <tr><th>Work plan goal cadence</th><th>What the system allows</th><th>Good use case</th></tr>
         </thead>
         <tbody>
-            <tr><td><strong>Daily</strong></td><td>One report per day for that sub-goal.</td><td>Daily outreach, attendance tracking, or field implementation.</td></tr>
+            <tr><td><strong>Daily</strong></td><td>One report per day for that work plan goal.</td><td>Daily outreach, attendance tracking, or field implementation.</td></tr>
             <tr><td><strong>Weekly</strong></td><td>One report per week-long reporting period.</td><td>Trainings, departmental rollouts, or recurring team execution.</td></tr>
             <tr><td><strong>Monthly</strong></td><td>One report per month-long reporting period.</td><td>Finance reconciliations, audits, or monthly performance reviews.</td></tr>
         </tbody>
     </table>
     <div class="formula">
-        Tick This report updates progress when the report gives a new official achievement percentage for the sub-goal.<br>
+        Tick This report updates progress when the report gives a new official achievement percentage for the work plan goal.<br>
         Leave it unticked when the report is only an activity note, challenge, action point, or evidence upload.
     </div>
-    <p><strong>Example:</strong> A weekly sub-goal is "Train 20 cell leaders." On Monday, the staff can upload attendance evidence and note that 8 leaders attended without updating progress. On Friday, after the week's work is complete, the staff ticks This report updates progress and claims 40%. The supervisor may verify 35%. The system uses 35% as the official progress score.</p>
+    <p><strong>Example:</strong> A weekly work plan goal is "Train 20 cell leaders." On Monday, the staff can upload attendance evidence and note that 8 leaders attended without updating progress. On Friday, after the week's work is complete, the staff ticks This report updates progress and claims 40%. The supervisor may verify 35%. The system uses 35% as the official progress score.</p>
 
     <h2>Supervisor Review</h2>
     <ul>
@@ -76,14 +76,14 @@
 
     <h2>How Main Goal Progress Is Calculated</h2>
     <div class="formula">
-        Sub-goal contribution = sub-goal weight x supervisor verified score.<br>
-        Main goal progress = total of all sub-goal contributions.
+        Work plan goal contribution = goal weight x supervisor verified score.<br>
+        Office work plan progress = total of all work plan goal contributions.
     </div>
     <h3>Live Example</h3>
     <p>Main goal: Increase the number of effective community cells during the quarter.</p>
     <table>
         <thead>
-            <tr><th>Sub-goal</th><th>Weight</th><th>Verified score</th><th>Contribution</th></tr>
+            <tr><th>Work Plan Goal</th><th>Weight</th><th>Verified score</th><th>Contribution</th></tr>
         </thead>
         <tbody>
             <tr><td>Train cell leaders</td><td>30%</td><td>60%</td><td>18%</td></tr>

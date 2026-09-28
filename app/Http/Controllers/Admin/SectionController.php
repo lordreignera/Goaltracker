@@ -17,7 +17,7 @@ class SectionController extends Controller
         return view('sections.index', [
             'departments' => Department::orderBy('name')->get(),
             'sections' => Section::with('department')
-                ->withCount(['units', 'users', 'goals'])
+                ->withCount(['positions', 'users', 'goals'])
                 ->when($request->filled('search'), function ($query) use ($request) {
                     $query->where(function ($query) use ($request) {
                         $query->where('name', 'like', '%'.$request->search.'%')
@@ -38,7 +38,13 @@ class SectionController extends Controller
 
         Section::create($request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('sections', 'name')
+                    ->where(fn ($query) => $query->where('department_id', $request->department_id)),
+            ],
             'code' => ['nullable', 'string', 'max:50'],
             'description' => ['nullable', 'string'],
         ]));
@@ -73,8 +79,8 @@ class SectionController extends Controller
     {
         abort_unless($request->user()->isAdmin() || $request->user()->can('manage sections'), 403);
 
-        if ($section->units()->exists() || $section->users()->exists() || $section->goals()->exists()) {
-            return back()->withErrors(['section' => 'This section has units, users, or goals and cannot be deleted.']);
+        if ($section->positions()->exists() || $section->users()->exists() || $section->goals()->exists()) {
+            return back()->withErrors(['section' => 'This section has positions, users, or goals and cannot be deleted.']);
         }
 
         $section->delete();

@@ -222,6 +222,10 @@
     @endphp
 
     <div class="dashboard-grid">
+        @if ($errors->any() && old('modal_source') !== 'dashboard_goal')
+            <x-validation-errors class="alert alert-danger mb-0" />
+        @endif
+
         <section class="summary-grid">
             <article class="summary-card">
                 <div class="d-flex justify-content-between gap-3">
@@ -272,6 +276,24 @@
             </article>
         </section>
 
+        <section class="dashboard-card">
+            <div class="p-3 p-md-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                <div>
+                    <h2 class="h6 mb-1 fw-bold">Activity Pillars and Work Plan Goals</h2>
+                    <div class="text-muted small">Goals, activities, deliverables, reporting status, and verified progress in one view.</div>
+                </div>
+                @if ($canCreateGoals)
+                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#dashboardCreateGoalModal">Create Goal</button>
+                @endif
+            </div>
+
+            @include('goals.pillar-overview', [
+                'planningContext' => 'dashboard',
+                'canAddGoals' => $canCreateGoals,
+                'reportableGoalIds' => $reportableGoalIds,
+            ])
+        </section>
+
         <div class="row g-3">
             <div class="col-xl-8">
                 <section class="dashboard-card h-100 p-4">
@@ -295,14 +317,14 @@
                             <div class="d-grid gap-3">
                                 @forelse ($goalRows as $goal)
                                     <div class="bar-row">
-                                        <div class="fw-semibold text-truncate">{{ $goal->title }}</div>
+                                        <div class="fw-semibold text-truncate">{{ $goal->assignedDepartments->pluck('name')->join(', ') ?: 'Office' }} Work Plan</div>
                                         <div class="bar-track">
                                             <div class="bar-fill" style="width: {{ $goal->progress() }}%"></div>
                                         </div>
                                         <div class="text-muted text-end">{{ $goal->progress() }}%</div>
                                     </div>
                                 @empty
-                                    <div class="text-muted">No goals are visible for your department, section, or unit yet.</div>
+                                    <div class="text-muted">No goals are visible for your department or section yet.</div>
                                 @endforelse
                             </div>
                         </div>
@@ -362,7 +384,7 @@
             <div class="p-4 border-bottom d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
                 <div>
                     <h2 class="h6 mb-1 fw-bold">Recent Goal Activity</h2>
-                    <div class="text-muted small">Goals filtered by your department, section, unit, and role access.</div>
+                    <div class="text-muted small">Goals filtered by your department, section, and role access.</div>
                 </div>
                 <a class="btn btn-sm btn-primary" href="{{ route('goals.index') }}">Manage Goals</a>
             </div>
@@ -379,7 +401,7 @@
                     <tbody>
                     @forelse ($goals as $goal)
                         <tr>
-                            <td class="fw-bold">{{ $goal->title }}</td>
+                            <td class="fw-bold">{{ $goal->assignedDepartments->pluck('name')->join(', ') ?: 'Office' }} Work Plan</td>
                             <td><span class="badge text-bg-light border">{{ str_replace('_', ' ', $goal->status) }}</span></td>
                             <td>
                                 <div class="progress" style="height: 8px;"><div class="progress-bar" style="width: {{ $goal->progress() }}%"></div></div>
@@ -388,11 +410,15 @@
                             <td class="text-end"><a href="{{ route('goals.show', $goal) }}" class="btn btn-sm btn-outline-secondary">Open</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="text-muted p-4">No goals are visible for your department, section, or unit yet.</td></tr>
+                        <tr><td colspan="4" class="text-muted p-4">No goals are visible for your department or section yet.</td></tr>
                     @endforelse
                     </tbody>
                 </table>
             </div>
         </section>
     </div>
+
+    @if ($canCreateGoals)
+        @include('goals.dashboard-create-modal')
+    @endif
 </x-app-layout>

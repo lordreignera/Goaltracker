@@ -43,11 +43,11 @@ class QuarterlyReportController extends Controller
 
             fputcsv($handle, [
                 'Goal Pillar',
-                'Goal Set',
-                'Strategic Goal / Objective',
+                'Office Work Plan',
+                'Work Plan Goal',
                 'Key Activities',
                 'Timeline',
-                'Key Result Areas / Deliverables',
+                'Deliverable',
                 'Reporting Frequency',
                 'Reporting Period',
                 'Report Date',

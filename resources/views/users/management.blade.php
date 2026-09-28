@@ -109,7 +109,7 @@
                         <label class="form-label small fw-semibold">Primary Department</label>
                         <select class="form-select" name="department_id" required>
                             @foreach ($departments as $department)
-                                <option value="{{ $department->id }}" @selected($editUser->department_id === $department->id)>{{ $department->name }}</option>
+                                <option value="{{ $department->id }}" @selected((int) old('department_id', $editUser->department_id) === $department->id)>{{ $department->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -118,16 +118,7 @@
                         <select class="form-select" name="section_id">
                             <option value="">No section</option>
                             @foreach ($sections as $section)
-                                <option value="{{ $section->id }}" @selected($editUser->section_id === $section->id)>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-semibold">Unit</label>
-                        <select class="form-select" name="unit_id">
-                            <option value="">No unit</option>
-                            @foreach ($units as $unit)
-                                <option value="{{ $unit->id }}" @selected($editUser->unit_id === $unit->id)>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</option>
+                                <option value="{{ $section->id }}" @selected((int) old('section_id', $editUser->section_id) === $section->id)>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -136,7 +127,7 @@
                         <select class="form-select" name="position_id">
                             <option value="">No position</option>
                             @foreach ($positions as $position)
-                                <option value="{{ $position->id }}" @selected($editUser->position_id === $position->id)>{{ $position->department->name ?? 'Department' }} - {{ $position->section->name ?? 'Section' }} - {{ $position->unit->name ?? 'Unit' }} - {{ $position->title }}</option>
+                                <option value="{{ $position->id }}" @selected((int) old('position_id', $editUser->position_id) === $position->id)>{{ $position->department->name ?? 'Department' }} - {{ $position->section->name ?? 'Department position' }} - {{ $position->title }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -144,13 +135,13 @@
                         <label class="form-label small fw-semibold">Role</label>
                         <select class="form-select" name="requested_role" required>
                             @foreach ($roles as $role)
-                                <option value="{{ $role }}" @selected($editUser->requested_role === $role)>{{ $role }}</option>
+                                <option value="{{ $role }}" @selected(old('requested_role', $editUser->requested_role) === $role)>{{ $role }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <label class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="is_active" value="1" @checked($editUser->is_active)>
+                            <input class="form-check-input" type="checkbox" name="is_active" value="1" @checked(old('is_active', $editUser->is_active))>
                             <span class="form-check-label">Active user</span>
                         </label>
                     </div>
@@ -176,7 +167,7 @@
         <div class="p-4 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
             <div>
                 <h2 class="h5 fw-bold mb-1">Users</h2>
-                <div class="text-muted small">Edit department, section, unit, position, role, and active state before or after approval. Passwords are not editable here.</div>
+                <div class="text-muted small">Edit department, section, position, role, and active state before or after approval. Passwords are not editable here.</div>
             </div>
             @if (request('status') !== 'all')
                     <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_filter($allUsersQuery, function ($value) { return filled($value); })) }}">View all users</a>
@@ -205,7 +196,7 @@
                         </td>
                         <td>
                             <div>{{ $user->department?->name ?? 'Not selected' }}</div>
-                            <small class="text-muted d-block">{{ $user->section?->name ?? 'No section' }} / {{ $user->unit?->name ?? 'No unit' }}</small>
+                            <small class="text-muted d-block">{{ $user->section?->name ?? 'No section' }}</small>
                             <small class="text-muted d-block">{{ $user->position?->title ?? 'No position' }}</small>
                             @if ($user->accessibleDepartments->isNotEmpty())
                                 <small class="text-muted d-block">Access: {{ $user->accessibleDepartments->pluck('name')->join(', ') }}</small>
@@ -227,28 +218,30 @@
                         </td>
                         <td>{{ $user->last_login_at?->format('d M Y, H:i') ?? 'Never' }}</td>
                         <td class="text-end">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_merge($listQuery, ['edit_user' => $user->id])) }}">
-                                Edit
-                            </a>
-                            @if ($user->approval_status !== 'approved')
-                                <form method="post" action="{{ route('users.management.approve', $user) }}" class="d-inline">
-                                    @csrf
-                                    <button class="btn btn-sm btn-success">Approve</button>
-                                </form>
-                            @endif
-                            @if ($user->approval_status === 'pending')
-                                <form method="post" action="{{ route('users.management.reject', $user) }}" class="d-inline">
-                                    @csrf
-                                    <button class="btn btn-sm btn-outline-danger">Reject</button>
-                                </form>
-                            @endif
-                            @unless (auth()->id() === $user->id)
+                            @if (auth()->user()->isSuperAdmin() && ! $user->isSuperAdmin())
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('users.management.index', array_merge($listQuery, ['edit_user' => $user->id])) }}">
+                                    Edit
+                                </a>
+                                @if ($user->approval_status !== 'approved')
+                                    <form method="post" action="{{ route('users.management.approve', $user) }}" class="d-inline">
+                                        @csrf
+                                        <button class="btn btn-sm btn-success">Approve</button>
+                                    </form>
+                                @endif
+                                @if ($user->approval_status === 'pending')
+                                    <form method="post" action="{{ route('users.management.reject', $user) }}" class="d-inline">
+                                        @csrf
+                                        <button class="btn btn-sm btn-outline-danger">Reject</button>
+                                    </form>
+                                @endif
                                 <form method="post" action="{{ route('users.management.destroy', $user) }}" class="d-inline" onsubmit="return confirm('Delete this user request/account?');">
                                     @csrf
                                     @method('DELETE')
                                     <button class="btn btn-sm btn-outline-dark">Delete</button>
                                 </form>
-                            @endunless
+                            @else
+                                <span class="text-muted small">Protected</span>
+                            @endif
                         </td>
                     </tr>
                 @empty

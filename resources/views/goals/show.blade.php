@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="page-title">{{ $goal->title }}</h1>
+        <h1 class="page-title">{{ $goal->assignedDepartments->pluck('name')->join(', ') ?: 'Office' }} Work Plan</h1>
     </x-slot>
 
     <style>
@@ -46,13 +46,11 @@
                         <div class="text-muted">
                             {{ $goal->quarter->name }} /
                             {{ $goal->pillar?->name ?? 'Unassigned pillar' }} /
-                            {{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }} /
-                            {{ $goal->assignedSections->isNotEmpty() ? $goal->assignedSections->pluck('name')->unique()->join(', ') : 'Department-wide' }} /
-                            {{ $goal->assignedUnits->isNotEmpty() ? $goal->assignedUnits->pluck('name')->unique()->join(', ') : 'All units' }}
+                            {{ $goal->assignedDepartments->pluck('name')->unique()->join(', ') }}
                         </div>
 
                         <div class="mt-3">
-                            <strong>Goal Set:</strong> {{ $goal->title }}
+                            <strong>Status:</strong> {{ str_replace('_', ' ', ucfirst($goal->status)) }}
                         </div>
                     </div>
 
@@ -67,7 +65,7 @@
                         @if ($canUpdateGoal)
                             <div class="goal-action-stack mt-3">
                                 <a class="btn btn-sm btn-outline-secondary" href="{{ route('goals.edit', $goal) }}">
-                                    Edit Goal Set
+                                    Edit Work Plan
                                 </a>
 
                                 <form method="post" action="{{ route('goals.submit', $goal) }}">
@@ -93,7 +91,7 @@
                     $maxReportDate = $lastReportDate?->toDateString();
                 @endphp
 
-                <div class="bg-white border rounded-3 p-4 mb-3">
+                <div class="bg-white border rounded-3 p-4 mb-3" id="report-objective-{{ $objective->id }}">
                     <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
                         <div>
                             <h2 class="h5 mb-1">{{ $objective->title }}</h2>
@@ -113,7 +111,7 @@
                                         @endforeach
                                     </ul>
                                 </div>
-                                <div class="mt-1"><strong>Key Result Areas / Deliverables:</strong> {{ $objective->specific_output }}</div>
+                                <div class="mt-1"><strong>Deliverable:</strong> {{ $objective->specific_output }}</div>
                             </div>
                         </div>
 
@@ -133,12 +131,13 @@
                         </div>
                     </div>
 
+                    @if ($canSubmitReport)
                     <form method="post" action="{{ route('objectives.weekly-updates.store', $objective) }}" class="daily-report-form border rounded-3 p-3 p-md-4 mb-3" enctype="multipart/form-data">
                         @csrf
 
                         @if ($errors->any())
                             <div class="alert alert-danger py-2 small">
-                                Please check the report fields. Dates must stay within the strategic goal/objective timeline, and progress updates need an achievement percentage.
+                                Please check the report fields. Dates must stay within the work plan goal timeline, and progress updates need an achievement percentage.
                             </div>
                         @endif
 
@@ -195,6 +194,7 @@
 
                         <button class="btn btn-sm btn-primary mt-3">Submit Report</button>
                     </form>
+                    @endif
 
                     <div class="table-responsive">
                         <table class="table table-sm align-middle mb-0">

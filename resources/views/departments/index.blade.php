@@ -110,6 +110,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <form method="post" action="{{ route('departments.store') }}" class="modal-content">
                 @csrf
+                <input type="hidden" name="form_context" value="createDepartmentModal">
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title h5 fw-bold" id="createDepartmentModalLabel">Add Department</h2>
@@ -142,6 +143,7 @@
                 <form method="post" action="{{ route('departments.update', $department) }}" class="modal-content">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="form_context" value="editDepartmentModal{{ $department->id }}">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title h5 fw-bold" id="editDepartmentModalLabel{{ $department->id }}">Edit Department</h2>

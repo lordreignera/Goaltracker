@@ -6,7 +6,6 @@ use App\Models\Department;
 use App\Models\Goal;
 use App\Models\GoalPillar;
 use App\Models\Quarter;
-use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -25,7 +24,7 @@ class QuarterlyReportTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Quarterly Performance Report');
-        $response->assertSee('Improve ICT Service Delivery');
+        $response->assertSee('Upgrade staff computers');
         $response->assertSee('Operational Excellence');
         $response->assertSee('Installed computers');
         $response->assertSee('Procurement delay remains');
@@ -66,7 +65,7 @@ class QuarterlyReportTest extends TestCase
     private function reportingData(): array
     {
         $department = Department::create(['name' => 'ICT Department']);
-        $unit = Unit::create(['department_id' => $department->id, 'name' => 'Software Development Unit']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
         $pillar = GoalPillar::create([
             'name' => 'Operational Excellence',
             'annual_goal' => 'Both teams operate with clear systems, shared accountability, and healthy internal cultures by year-end.',
@@ -82,7 +81,7 @@ class QuarterlyReportTest extends TestCase
 
         $user = User::factory()->create([
             'department_id' => $department->id,
-            'unit_id' => $unit->id,
+            'section_id' => $section->id,
             'role' => 'staff',
             'approval_status' => 'approved',
             'is_active' => true,
@@ -92,10 +91,9 @@ class QuarterlyReportTest extends TestCase
             'quarter_id' => $quarter->id,
             'goal_pillar_id' => $pillar->id,
             'owner_id' => $user->id,
-            'title' => 'Improve ICT Service Delivery',
-            'level' => 'unit',
+            'status' => 'submitted',
         ]);
-        $goal->assignments()->create(['department_id' => $department->id, 'unit_id' => $unit->id]);
+        $goal->assignments()->create(['department_id' => $department->id, 'section_id' => $section->id]);
 
         $objective = $goal->objectives()->create([
             'title' => 'Upgrade staff computers',

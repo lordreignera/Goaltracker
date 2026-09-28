@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
@@ -33,7 +34,7 @@ class DepartmentController extends Controller
         abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('departments', 'name')],
             'description' => ['nullable', 'string'],
         ]);
 
@@ -49,7 +50,7 @@ class DepartmentController extends Controller
         abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
         $department->update($request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('departments', 'name')->ignore($department)],
             'description' => ['nullable', 'string'],
         ]));
 
@@ -60,8 +61,8 @@ class DepartmentController extends Controller
     {
         abort_unless($request->user()->isAdmin() || $request->user()->can('manage departments'), 403);
 
-        if ($department->sections()->exists() || $department->users()->exists() || $department->goals()->exists()) {
-            return back()->withErrors(['department' => 'This department has sections, users, or goals and cannot be deleted.']);
+        if ($department->sections()->exists() || $department->positions()->exists() || $department->users()->exists() || $department->goals()->exists()) {
+            return back()->withErrors(['department' => 'This department has sections, positions, users, or goals and cannot be deleted.']);
         }
 
         $department->delete();

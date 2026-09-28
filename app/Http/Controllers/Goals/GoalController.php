@@ -9,8 +9,6 @@ use App\Models\Department;
 use App\Models\Goal;
 use App\Models\GoalPillar;
 use App\Models\Quarter;
-use App\Models\Section;
-use App\Models\Unit;
 use App\Services\GoalAccessService;
 use App\Services\GoalManagementService;
 use Illuminate\Http\Request;
@@ -22,38 +20,31 @@ class GoalController extends Controller
         $user = $request->user();
 
         $goals = Goal::visibleTo($user)
-            ->with(['pillar', 'quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives'])
+            ->with(['pillar', 'quarter', 'assignedDepartments', 'objectives'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
 
-                $query->where(function ($query) use ($search) {
-                    $query->where('title', 'like', '%' . $search . '%')
-                        ->orWhereHas('objectives', function ($query) use ($search) {
-                            $query->where('title', 'like', '%' . $search . '%')
-                                ->orWhere('key_activities', 'like', '%' . $search . '%')
-                                ->orWhere('specific_output', 'like', '%' . $search . '%');
-                        });
+                $query->whereHas('objectives', function ($query) use ($search) {
+                    $query->where('title', 'like', '%'.$search.'%')
+                        ->orWhere('key_activities', 'like', '%'.$search.'%')
+                        ->orWhere('specific_output', 'like', '%'.$search.'%');
                 });
             })
             ->when($request->filled('quarter_id'), fn ($query) => $query->where('quarter_id', $request->quarter_id))
             ->when($request->filled('goal_pillar_id'), fn ($query) => $query->where('goal_pillar_id', $request->goal_pillar_id))
             ->when($request->filled('department_id'), fn ($query) => $query->whereHas('assignedDepartments', fn ($query) => $query->whereKey($request->department_id)))
-            ->when($request->filled('section_id'), fn ($query) => $query->whereHas('assignedSections', fn ($query) => $query->whereKey($request->section_id)))
-            ->when($request->filled('unit_id'), fn ($query) => $query->whereHas('assignedUnits', fn ($query) => $query->whereKey($request->unit_id)))
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->status))
             ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        [$departments, $sections, $units] = $this->organizationOptions($user);
+        $departments = $this->departmentOptions($user);
 
         return view('goals.index', [
             'goals' => $goals,
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'goalPillars' => GoalPillar::orderBy('sort_order')->orderBy('name')->get(),
             'departments' => $departments,
-            'sections' => $sections,
-            'units' => $units,
             'canCreateGoals' => $user->canManageGoals(),
         ]);
     }
@@ -62,10 +53,10 @@ class GoalController extends Controller
     {
         abort_unless($request->user()->canManageGoals(), 403);
 
-        [$departments, $sections, $units] = $this->organizationOptions($request->user());
+        $departments = $this->departmentOptions($request->user());
         $goalPillars = GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
         $goalsByPillar = Goal::visibleTo($request->user())
-            ->with(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives.weeklyUpdates.reviews'])
+            ->with(['quarter', 'assignedDepartments', 'objectives.weeklyUpdates.reviews'])
             ->whereNotNull('goal_pillar_id')
             ->latest()
             ->get()
@@ -76,8 +67,6 @@ class GoalController extends Controller
             'goalPillars' => $goalPillars,
             'goalsByPillar' => $goalsByPillar,
             'departments' => $departments,
-            'sections' => $sections,
-            'units' => $units,
         ]);
     }
 
@@ -87,7 +76,7 @@ class GoalController extends Controller
 
         return redirect()
             ->route('goals.show', $goal)
-            ->with('status', 'Goal set and strategic goals/objectives created.');
+            ->with('status', 'Office work plan draft saved.');
     }
 
     public function show(Request $request, Goal $goal)
@@ -101,12 +90,11 @@ class GoalController extends Controller
                 'quarter',
                 'pillar',
                 'assignedDepartments',
-                'assignedSections',
-                'assignedUnits',
                 'objectives.weeklyUpdates.reviews',
             ]),
             'canUpdateGoal' => $access->canUpdateGoal($request->user(), $goal),
             'canReviewGoal' => $access->canReviewGoal($request->user(), $goal),
+            'canSubmitReport' => $access->canSubmitDailyReport($request->user(), $goal),
         ]);
     }
 
@@ -114,15 +102,13 @@ class GoalController extends Controller
     {
         abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
 
-        [$departments, $sections, $units] = $this->organizationOptions($request->user());
+        $departments = $this->departmentOptions($request->user());
 
         return view('goals.edit', [
-            'goal' => $goal->load(['quarter', 'assignedDepartments', 'assignedSections', 'assignedUnits', 'objectives']),
+            'goal' => $goal->load(['quarter', 'assignedDepartments', 'objectives']),
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'goalPillars' => GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
             'departments' => $departments,
-            'sections' => $sections,
-            'units' => $units,
         ]);
     }
 
@@ -132,18 +118,19 @@ class GoalController extends Controller
 
         return redirect()
             ->route('goals.show', $goal)
-            ->with('status', 'Goal set and strategic goals/objectives updated.');
+            ->with('status', 'Office work plan draft updated.');
     }
 
     public function submit(Request $request, Goal $goal)
     {
         abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
+        abort_if($goal->status !== 'draft', 422, 'Only a draft work plan can be submitted.');
 
         $weightTotal = $goal->objectives()->sum('weight');
 
         if ($weightTotal !== 100) {
             return back()->withErrors([
-                'objectives' => "Objective weights must equal 100%. Current total is {$weightTotal}%.",
+                'objectives' => "Objective weights must total exactly 100%. Current total is {$weightTotal}%.",
             ]);
         }
 
@@ -152,36 +139,28 @@ class GoalController extends Controller
             'submitted_at' => now(),
         ]);
 
-        return back()->with('status', 'Goal submitted for review.');
+        return back()->with('status', 'Office work plan submitted for review.');
     }
 
-    private function organizationOptions($user): array
+    public function destroy(Request $request, Goal $goal, GoalManagementService $goals)
+    {
+        abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
+
+        $goals->deleteGoal($goal);
+
+        return redirect()
+            ->route('goals.index')
+            ->with('status', 'Office work plan deleted.');
+    }
+
+    private function departmentOptions($user)
     {
         if ($user->isAdmin()) {
-            return [
-                Department::orderBy('name')->get(),
-                Section::with('department')->orderBy('name')->get(),
-                Unit::with(['department', 'section'])->orderBy('name')->get(),
-            ];
+            return Department::orderBy('name')->get();
         }
 
-        $departments = Department::whereKey($user->department_id)
+        return Department::whereIn('id', $user->accessibleDepartmentIds())
             ->orderBy('name')
             ->get();
-
-        $sections = Section::with('department')
-            ->where('department_id', $user->department_id)
-            ->when($user->section_id, fn ($query) => $query->whereKey($user->section_id))
-            ->orderBy('name')
-            ->get();
-
-        $units = Unit::with(['department', 'section'])
-            ->where('department_id', $user->department_id)
-            ->when($user->section_id, fn ($query) => $query->where('section_id', $user->section_id))
-            ->when($user->unit_id, fn ($query) => $query->whereKey($user->unit_id))
-            ->orderBy('name')
-            ->get();
-
-        return [$departments, $sections, $units];
     }
 }

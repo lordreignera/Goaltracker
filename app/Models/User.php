@@ -24,6 +24,13 @@ class User extends Authenticatable
     use Notifiable;
     use TwoFactorAuthenticatable;
 
+    protected $attributes = [
+        'role' => 'staff',
+        'requested_role' => 'Staff',
+        'approval_status' => 'approved',
+        'is_active' => true,
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -38,7 +45,6 @@ class User extends Authenticatable
         'password',
         'department_id',
         'section_id',
-        'unit_id',
         'position_id',
         'supervisor_id',
         'role',
@@ -112,11 +118,6 @@ class User extends Authenticatable
             ->all();
     }
 
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
-    }
-
     public function section()
     {
         return $this->belongsTo(Section::class);
@@ -140,6 +141,41 @@ class User extends Authenticatable
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function approvedUsers()
+    {
+        return $this->hasMany(User::class, 'approved_by');
+    }
+
+    public function createdGoals()
+    {
+        return $this->hasMany(Goal::class, 'created_by');
+    }
+
+    public function ownedGoals()
+    {
+        return $this->hasMany(Goal::class, 'owner_id');
+    }
+
+    public function approvedGoals()
+    {
+        return $this->hasMany(Goal::class, 'approved_by');
+    }
+
+    public function weeklyUpdates()
+    {
+        return $this->hasMany(WeeklyUpdate::class);
+    }
+
+    public function supervisorReviews()
+    {
+        return $this->hasMany(SupervisorReview::class, 'supervisor_id');
+    }
+
+    public function quarterlyReflections()
+    {
+        return $this->hasMany(QuarterlyReflection::class);
     }
 
     public function isApproved(): bool
@@ -185,7 +221,7 @@ class User extends Authenticatable
                 'manage departments',
                 'manage goal pillars',
                 'manage sections',
-                'manage units',
+                'manage positions',
                 'manage users',
                 'manage quarters',
             ]);

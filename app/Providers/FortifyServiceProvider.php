@@ -2,13 +2,13 @@
 
 namespace App\Providers;
 
-use App\Http\Responses\PendingApprovalRegisterResponse;
-use App\Models\Department;
-use App\Models\User;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Http\Responses\PendingApprovalRegisterResponse;
+use App\Models\Department;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\RegisterResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -41,7 +41,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::redirectUserForTwoFactorAuthenticationUsing(RedirectIfTwoFactorAuthenticatable::class);
         Fortify::registerView(fn () => view('auth.register', [
-            'departments' => Department::with('sections.units.positions')->orderBy('name')->get(),
+            'departments' => Department::with('sections.positions')->orderBy('name')->get(),
         ]));
 
         Fortify::authenticateUsing(function (Request $request) {
@@ -92,5 +92,4 @@ class FortifyServiceProvider extends ServiceProvider
             );
         });
     }
-
 }

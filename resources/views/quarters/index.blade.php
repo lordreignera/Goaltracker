@@ -100,6 +100,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <form method="post" action="{{ route('quarters.store') }}" class="modal-content">
                 @csrf
+                <input type="hidden" name="form_context" value="createQuarterModal">
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title h5 fw-bold" id="createQuarterModalLabel">Add Quarter</h2>
@@ -137,6 +138,7 @@
                 <form method="post" action="{{ route('quarters.update', $quarter) }}" class="modal-content">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="form_context" value="editQuarterModal{{ $quarter->id }}">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title h5 fw-bold" id="editQuarterModalLabel{{ $quarter->id }}">Edit Quarter</h2>

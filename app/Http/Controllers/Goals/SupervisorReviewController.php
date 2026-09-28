@@ -13,6 +13,8 @@ class SupervisorReviewController extends Controller
     {
         $goal = $weeklyUpdate->objective->goal;
         abort_unless(app(GoalAccessService::class)->canReviewGoal($request->user(), $goal), 403);
+        abort_if($weeklyUpdate->user_id === $request->user()->id, 422, 'You cannot review your own report.');
+        abort_if($weeklyUpdate->status !== 'submitted', 422, 'Only a submitted report can be reviewed. Ask the author to resubmit it first.');
 
         $data = $request->validate([
             'decision' => ['required', 'in:approved,rejected,revision_requested'],
@@ -23,7 +25,7 @@ class SupervisorReviewController extends Controller
                 'min:0',
                 'max:100',
             ],
-            'comments' => ['nullable', 'string'],
+            'comments' => ['required_if:decision,rejected,revision_requested', 'nullable', 'string', 'max:3000'],
         ]);
 
         if ($data['decision'] !== 'approved' || ! $weeklyUpdate->is_progress_update) {
@@ -45,6 +47,16 @@ class SupervisorReviewController extends Controller
 
         if ($data['decision'] === 'revision_requested') {
             $weeklyUpdate->objective->update(['status' => 'revision_requested']);
+        }
+
+        if ($data['decision'] === 'approved') {
+            $goal->load('objectives');
+            $allObjectivesComplete = $goal->objectives->isNotEmpty()
+                && $goal->objectives->every(fn ($objective) => $objective->status === 'completed');
+
+            $goal->update([
+                'status' => $allObjectivesComplete ? 'completed' : 'in_progress',
+            ]);
         }
 
         return back()->with('status', 'Review saved.');

@@ -13,8 +13,6 @@ class Goal extends Model
         'goal_pillar_id',
         'created_by',
         'owner_id',
-        'title',
-        'level',
         'status',
         'submitted_at',
         'approved_at',
@@ -55,14 +53,6 @@ class Goal extends Model
     {
         return $this->belongsToMany(Department::class, 'goal_assignments', 'goal_id', 'department_id')
             ->wherePivotNotNull('department_id')
-            ->distinct()
-            ->withTimestamps();
-    }
-
-    public function assignedUnits()
-    {
-        return $this->belongsToMany(Unit::class, 'goal_assignments', 'goal_id', 'unit_id')
-            ->wherePivotNotNull('unit_id')
             ->distinct()
             ->withTimestamps();
     }

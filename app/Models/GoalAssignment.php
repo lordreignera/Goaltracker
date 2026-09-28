@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class GoalAssignment extends Model
 {
-    protected $fillable = ['goal_id', 'department_id', 'section_id', 'unit_id', 'user_id'];
+    protected $fillable = ['goal_id', 'department_id', 'section_id', 'user_id'];
 
     public function goal()
     {
@@ -16,11 +16,6 @@ class GoalAssignment extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class);
     }
 
     public function section()

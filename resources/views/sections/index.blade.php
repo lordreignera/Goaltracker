@@ -59,7 +59,7 @@
                     <th>Section</th>
                     <th>Department</th>
                     <th>Code</th>
-                    <th>Units</th>
+                    <th>Positions</th>
                     <th>Users</th>
                     <th>Goals</th>
                     <th>Actions</th>
@@ -76,7 +76,7 @@
                     </td>
                     <td>{{ $section->department->name }}</td>
                     <td><span class="badge text-bg-light border">{{ $section->code ?: '-' }}</span></td>
-                    <td>{{ $section->units_count }}</td>
+                    <td>{{ $section->positions_count }}</td>
                     <td>{{ $section->users_count }}</td>
                     <td>{{ $section->goals_count }}</td>
                     <td>
@@ -101,6 +101,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <form method="post" action="{{ route('sections.store') }}" class="modal-content">
                 @csrf
+                <input type="hidden" name="form_context" value="createSectionModal">
                 <div class="modal-header">
                     <div>
                         <h2 class="modal-title h5 fw-bold" id="createSectionModalLabel">Add Section</h2>
@@ -140,6 +141,7 @@
                 <form method="post" action="{{ route('sections.update', $section) }}" class="modal-content">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="form_context" value="editSectionModal{{ $section->id }}">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title h5 fw-bold" id="editSectionModalLabel{{ $section->id }}">Edit Section</h2>

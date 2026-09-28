@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="page-title text-center w-100">Strategic Goals per Pillar</h1>
+        <h1 class="page-title text-center w-100">Work Plan Goals by Activity Pillar</h1>
     </x-slot>
 
     <style>
@@ -39,8 +39,26 @@
         }
 
         .pillar-plan-table {
-            min-width: 1180px;
+            width: 100%;
+            min-width: 0;
+            table-layout: fixed;
             border-collapse: collapse;
+        }
+
+        .pillar-plan-table th:nth-child(1) { width: 15%; }
+        .pillar-plan-table th:nth-child(2) { width: 22%; }
+        .pillar-plan-table th:nth-child(3) { width: 23%; }
+        .pillar-plan-table th:nth-child(4) { width: 14%; }
+        .pillar-plan-table th:nth-child(6) { width: 16%; }
+        .pillar-plan-table th:nth-child(10) { width: 10%; }
+
+        .pillar-plan-table td,
+        .pillar-plan-table th {
+            overflow-wrap: anywhere;
+        }
+
+        .pillar-plan-table .planning-hidden {
+            display: none !important;
         }
 
         .pillar-plan-table th,
@@ -67,7 +85,7 @@
         }
 
         .planning-action {
-            min-width: 180px;
+            min-width: 0;
         }
 
         .planning-note {
@@ -93,43 +111,6 @@
             color: #6b7280;
             font-size: .82rem;
             margin-top: .35rem;
-        }
-
-        .checkbox-dropdown {
-            position: relative;
-        }
-
-        .checkbox-dropdown-toggle {
-            min-height: 42px;
-            background-color: #fff;
-        }
-
-        .checkbox-dropdown-menu {
-            position: absolute;
-            top: calc(100% + 4px);
-            left: 0;
-            right: 0;
-            z-index: 20;
-            max-height: 260px;
-            overflow-y: auto;
-            border: 1px solid #d9dee7;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 14px 34px rgba(20, 24, 31, .12);
-            padding: 8px;
-        }
-
-        .checkbox-dropdown-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 6px;
-            padding: 8px;
-            cursor: pointer;
-        }
-
-        .checkbox-dropdown-option:hover {
-            background: #f4f6fb;
         }
 
         @media (max-width: 767.98px) {
@@ -198,7 +179,7 @@
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-3">
         <div>
-            <div class="text-muted small">Review each pillar in table format, then add strategic goals/objectives under the right pillar.</div>
+            <div class="text-muted small">Review each activity pillar, then add goals and activities from your office work plan.</div>
         </div>
         <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Back to Goals</a>
     </div>
@@ -209,7 +190,7 @@
         <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
             <div>
                 <h3 class="h6 fw-bold mb-1">Pillar Planning Table</h3>
-                <div class="text-muted small">This follows the quarterly report structure: pillar, strategic goal/objective, activities, timeline, deliverables, and reporting columns.</div>
+                <div class="text-muted small">Pillar, work plan goal, activities, dates, weight, deliverable, and reporting progress.</div>
             </div>
         </div>
 
@@ -217,16 +198,16 @@
             <table class="table table-sm pillar-plan-table align-middle">
                 <thead>
                     <tr>
-                        <th>Goal Pillars</th>
-                        <th>Strategic Goal / Objective</th>
-                        <th>Key Activities</th>
+                        <th>Activity Pillar</th>
+                        <th>Work Plan Goal</th>
+                        <th>Activities & Deliverable</th>
                         <th>Timeline</th>
-                        <th>Key Result Areas / Deliverables</th>
-                        <th>Progress</th>
-                        <th>Next Steps</th>
-                        <th>Staff Comment</th>
-                        <th>Supervisor Review Comment</th>
-                        <th>Action</th>
+                        <th class="planning-hidden">Deliverable</th>
+                        <th>Reporting & Progress</th>
+                        <th class="planning-hidden">Next Steps</th>
+                        <th class="planning-hidden">Staff Comment</th>
+                        <th class="planning-hidden">Supervisor Review Comment</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -250,21 +231,25 @@
                                 [$firstReportDate, $lastReportDate] = $objective->reportingDateRange();
                             @endphp
                             <tr>
-                                <td class="pillar-cell" data-label="Goal Pillars">
+                                <td class="pillar-cell" data-label="Activity Pillar">
                                     <div>{{ $goalPillar->name }}</div>
                                     @if ($goalPillar->annual_goal)
                                         <div class="text-muted small fw-normal mt-2">{{ $goalPillar->annual_goal }}</div>
                                     @endif
                                 </td>
-                                <td class="planning-summary" data-label="Strategic Goal / Objective">
+                                <td class="planning-summary" data-label="Work Plan Goal">
                                     <div class="fw-semibold">{{ $objective->title }}</div>
-                                    <div class="text-muted small">{{ $goal->title }}</div>
+                                    <div class="text-muted small">{{ $goal->assignedDepartments->pluck('name')->join(', ') }} office</div>
+                                    <button class="btn btn-sm btn-primary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">
+                                        Add Report
+                                    </button>
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
                                         View Details
                                     </button>
                                 </td>
-                                <td class="planning-summary" data-label="Key Activities">
+                                <td class="planning-summary" data-label="Activities & Deliverable">
                                     <div class="summary-line">{{ count($keyActivities) }} activit{{ count($keyActivities) === 1 ? 'y' : 'ies' }}</div>
+                                    <div class="summary-line mt-1"><strong>Deliverable:</strong> {{ str($objective->specific_output)->limit(80) }}</div>
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
                                         View Activities
                                     </button>
@@ -272,38 +257,39 @@
                                 <td data-label="Timeline">
                                     <div>{{ $goal->quarter?->name }}</div>
                                     <div class="text-muted small">{{ $objective->starts_at?->format('M d, Y') }} - {{ $objective->due_at?->format('M d, Y') }}</div>
+                                    <span class="badge text-bg-light border mt-2">{{ $objective->weight }}% weight</span>
                                 </td>
-                                <td class="planning-summary" data-label="Key Result Areas / Deliverables">
+                                <td class="planning-summary planning-hidden" data-label="Deliverable">
                                     <div class="summary-line">{{ str($objective->specific_output)->limit(70) }}</div>
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
                                         View Deliverables
                                     </button>
                                 </td>
-                                <td data-label="Progress">
+                                <td data-label="Reporting & Progress">
                                     @foreach ($reportingFrequencies as $frequency)
                                         <span class="badge text-bg-light border">{{ ucfirst($frequency) }}</span>
                                     @endforeach
                                     <div class="text-muted small mt-1">{{ $objective->progressPercent() }}% verified</div>
                                 </td>
-                                <td class="planning-note" data-label="Next Steps">
+                                <td class="planning-note planning-hidden" data-label="Next Steps">
                                     <div class="summary-line">{{ $latestUpdate?->action_points ? str($latestUpdate->action_points)->limit(55) : 'No next step yet' }}</div>
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
                                         View Reports
                                     </button>
                                 </td>
-                                <td class="planning-note" data-label="Staff Comment">
+                                <td class="planning-note planning-hidden" data-label="Staff Comment">
                                     <div class="summary-line">{{ $reportCount }} report{{ $reportCount === 1 ? '' : 's' }}</div>
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
                                         View Staff Reports
                                     </button>
                                 </td>
-                                <td class="planning-note" data-label="Supervisor Review Comment">
+                                <td class="planning-note planning-hidden" data-label="Supervisor Review Comment">
                                     <div class="summary-line">{{ $latestReview?->comments ? str($latestReview->comments)->limit(55) : 'No review yet' }}</div>
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
                                         View Reviews
                                     </button>
                                 </td>
-                                <td class="planning-action" data-label="Action">
+                                <td class="planning-action" data-label="Actions">
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                             Actions
@@ -311,28 +297,25 @@
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
                                                 <button class="dropdown-item" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">
-                                                    Add Strategic Goal / Objective
+                                                    Add Work Goal
                                                 </button>
                                             </li>
                                             <li>
-                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
-                                                    View Pillar Reports
-                                                </button>
+                                                <a class="dropdown-item" href="{{ route('goals.edit', $goal) }}">Edit</a>
                                             </li>
                                             <li>
-                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
-                                                    View Strategic Goal / Objective
-                                                </button>
+                                                <form method="post" action="{{ route('goals.destroy', $goal) }}" onsubmit="return confirm('Delete this work plan? This cannot be undone.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <input type="hidden" name="modal_source" value="delete_goal">
+                                                    <button class="dropdown-item text-danger" type="submit">Delete</button>
+                                                </form>
                                             </li>
                                             <li>
-                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#editObjectiveModal-{{ $objective->id }}">
-                                                    Edit Strategic Goal / Objective
-                                                </button>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">Add Report</button>
                                             </li>
                                             <li>
-                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">
-                                                    Add Report
-                                                </button>
+                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">View Progress</button>
                                             </li>
                                         </ul>
                                     </div>
@@ -340,28 +323,21 @@
                             </tr>
                         @empty
                             <tr>
-                                <td class="pillar-cell" data-label="Goal Pillars">
+                                <td class="pillar-cell" data-label="Activity Pillar">
                                     <div>{{ $goalPillar->name }}</div>
                                     @if ($goalPillar->annual_goal)
                                         <div class="text-muted small fw-normal mt-2">{{ $goalPillar->annual_goal }}</div>
                                     @endif
                                 </td>
-                                <td colspan="8" class="planning-empty" data-label="Strategic Goals">No strategic goals/objectives recorded under this pillar yet.</td>
-                                <td data-label="Action">
+                                <td colspan="8" class="planning-empty" data-label="Work Plan Goals">
+                                    No work plan goals recorded under this pillar yet.
+                                </td>
+                                <td data-label="Actions">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Actions
-                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <button class="dropdown-item" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">
-                                                    Add Strategic Goal / Objective
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#pillarReportsModal-{{ $goalPillar->id }}">
-                                                    View Pillar Reports
-                                                </button>
+                                                <button class="dropdown-item" type="button" data-add-for-pillar data-pillar-id="{{ $goalPillar->id }}" data-pillar-name="{{ $goalPillar->name }}">Add Work Goal</button>
                                             </li>
                                         </ul>
                                     </div>
@@ -376,14 +352,14 @@
 
     <div class="modal fade" id="strategicGoalModal" tabindex="-1" aria-labelledby="strategicGoalModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down">
-            <form id="strategic-goal-form" method="post" action="{{ route('goals.store') }}" class="modal-content" data-strategic-goal-form>
+            <form id="strategic-goal-form" method="post" action="{{ route('goals.store') }}" class="modal-content" data-strategic-goal-form data-weight-form>
                 @csrf
                 <input type="hidden" name="modal_source" value="strategic_goal">
 
                 <div class="modal-header">
                     <div>
-                        <h3 class="modal-title h5 fw-bold mb-1" id="strategicGoalModalLabel">Add Strategic Goal / Objective</h3>
-                        <div class="text-muted small" data-selected-pillar-help>Select a pillar from the table, then complete the quarter, department/section/unit, activities, and deliverables.</div>
+                        <h3 class="modal-title h5 fw-bold mb-1" id="strategicGoalModalLabel">Add Work Plan Goal</h3>
+                        <div class="text-muted small" data-selected-pillar-help>Select a pillar, then complete the quarter, departments, activities, and deliverables.</div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -411,100 +387,12 @@
                         </option>
                     @endforeach
                 </select>
-                <small class="text-muted">Align this goal set to the annual pillar.</small>
+                <small class="text-muted">Align this work plan to the annual activity pillar.</small>
             </div>
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Departments</label>
-                <div class="checkbox-dropdown" data-department-dropdown>
-                    <button class="form-select text-start checkbox-dropdown-toggle" type="button" data-department-toggle aria-expanded="false">
-                        <span data-department-summary>Select departments</span>
-                    </button>
-
-                    <div class="checkbox-dropdown-menu d-none" data-department-menu>
-                        @foreach ($departments as $department)
-                            <label class="checkbox-dropdown-option">
-                                <input
-                                    class="form-check-input mt-0"
-                                    type="checkbox"
-                                    name="department_ids[]"
-                                    value="{{ $department->id }}"
-                                    data-department-checkbox
-                                    data-department-name="{{ $department->name }}"
-                                    @checked(in_array($department->id, old('department_ids', [])))>
-                                <span>{{ $department->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-                <small class="text-muted">Choose one or more departments.</small>
-            </div>
-            <div class="col-md-4" data-section-scope>
-                <label class="form-label fw-semibold">Sections</label>
-                <div class="checkbox-dropdown" data-section-dropdown>
-                    <button class="form-select text-start checkbox-dropdown-toggle" type="button" data-section-toggle aria-expanded="false">
-                        <span data-section-summary>Select sections</span>
-                    </button>
-
-                    <div class="checkbox-dropdown-menu d-none" data-section-menu>
-                        @foreach ($sections as $section)
-                            <label class="checkbox-dropdown-option" data-section-option>
-                                <input
-                                    class="form-check-input mt-0"
-                                    type="checkbox"
-                                    name="section_ids[]"
-                                    value="{{ $section->id }}"
-                                    data-section-checkbox
-                                    data-section-name="{{ $section->department->name ?? 'Department' }} - {{ $section->name }}"
-                                    data-department-id="{{ $section->department_id }}"
-                                    @checked(in_array($section->id, old('section_ids', [])))>
-                                <span>{{ $section->department->name ?? 'Department' }} - {{ $section->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-                <small class="text-muted d-block mb-2">Select sections for section-wide goals.</small>
-            </div>
-
-            <div class="col-md-4" data-unit-scope>
-                <label class="form-label fw-semibold">Lower Units</label>
-                <div class="checkbox-dropdown" data-unit-dropdown>
-                    <button class="form-select text-start checkbox-dropdown-toggle" type="button" data-unit-toggle aria-expanded="false">
-                        <span data-unit-summary>Select units</span>
-                    </button>
-
-                    <div class="checkbox-dropdown-menu d-none" data-unit-menu>
-                        @foreach ($units as $unit)
-                            <label class="checkbox-dropdown-option" data-unit-option>
-                                <input
-                                    class="form-check-input mt-0"
-                                    type="checkbox"
-                                    name="unit_ids[]"
-                                    value="{{ $unit->id }}"
-                                    data-unit-checkbox
-                                    data-unit-name="{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}"
-                                    data-department-id="{{ $unit->department_id }}"
-                                    data-section-id="{{ $unit->section_id }}"
-                                    @checked(in_array($unit->id, old('unit_ids', [])))>
-                                <span>{{ $unit->department->name ?? 'Department' }} - {{ $unit->section->name ?? 'Section' }} - {{ $unit->name }}</span>
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
-                <small class="text-muted">Select units for unit or individual goals.</small>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Goal Level</label>
-                <select class="form-select" name="level" required data-level-select>
-                    <option value="department" @selected(old('level') === 'department')>Department</option>
-                    <option value="section" @selected(old('level') === 'section')>Section</option>
-                    <option value="unit" @selected(old('level') === 'unit')>Unit</option>
-                    <option value="individual" @selected(old('level') === 'individual')>Individual</option>
-                </select>
-            </div>
-            <div class="col-12">
-                <label class="form-label fw-semibold">Goal Set Name</label>
-                <textarea class="form-control" name="title" rows="2" placeholder="Operational Excellence Q1 action plan" required>{{ old('title') }}</textarea>
-                <div class="field-hint">Use this to name the quarterly goal set. Add the actual strategic goals/objectives below.</div>
+                @include('goals.department-picker', [
+                    'selectedDepartmentIds' => old('department_ids', auth()->user()->department_id ? [auth()->user()->department_id] : []),
+                ])
             </div>
         </div>
 
@@ -512,11 +400,13 @@
 
         <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
             <div>
-                <label class="form-label fw-semibold mb-0">Strategic Goals / Objectives, Key Activities & Deliverables</label>
-                <div class="field-hint mb-0">Set each scored strategic goal/objective, list its activities, and define the key result areas/deliverables.</div>
+                <label class="form-label fw-semibold mb-0">Work Plan Goals, Key Activities & Deliverables</label>
+                <div class="field-hint mb-0">Add the goals and activities in your work plan, with measurable deliverables.</div>
             </div>
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-objective>Add Strategic Goal / Objective</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-objective>Add Work Plan Goal</button>
         </div>
+
+        @include('goals.weight-summary')
 
         @error('objectives')
             <div class="alert alert-danger py-2 small">{{ $message }}</div>
@@ -541,12 +431,13 @@
                 @endphp
                 <div class="objective-row" data-objective-row>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong class="small">Strategic Goal / Objective {{ $index + 1 }}</strong>
+                        <strong class="small">Work Plan Goal {{ $index + 1 }}</strong>
                         <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-4">
-                            <input class="form-control" name="objectives[{{ $index }}][title]" value="{{ $objective['title'] ?? '' }}" placeholder="Strategic goal / objective" required>
+                            <label class="form-label small fw-semibold">Goal Name</label>
+                            <input class="form-control" name="objectives[{{ $index }}][title]" value="{{ $objective['title'] ?? '' }}" placeholder="Goal name" required>
                         </div>
                         <div class="col-md-2">
                             <input class="form-control" type="number" min="1" max="100" name="objectives[{{ $index }}][weight]" value="{{ $objective['weight'] ?? '' }}" placeholder="Weight %" required>
@@ -592,7 +483,7 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label small fw-semibold">Key Result Areas / Deliverables</label>
+                            <label class="form-label small fw-semibold">Deliverable</label>
                             <textarea class="form-control" name="objectives[{{ $index }}][specific_output]" rows="3" placeholder="What result, deliverable, or evidence should be produced?" required>{{ $objective['specific_output'] ?? '' }}</textarea>
                         </div>
                         <div class="col-12">
@@ -606,7 +497,7 @@
         <div class="small text-muted mb-4">Example: 20 + 25 + 20 + 15 + 20 = 100%. Official progress comes from supervisor-approved progress updates.</div>
 
                     <div class="modal-footer px-0 pb-0">
-                        <button class="btn btn-maroon">Save Goal Set</button>
+                        <button class="btn btn-maroon" data-weight-submit>Save Draft</button>
                         <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
                     </div>
                 </div>
@@ -650,7 +541,7 @@
                                         <tr>
                                             <th>Report Date</th>
                                             <th>Cadence</th>
-                                            <th>Strategic Goal / Objective</th>
+                                            <th>Work Plan Goal</th>
                                             <th>Achievement</th>
                                             <th>Next Step</th>
                                             <th>Staff Claim</th>
@@ -671,7 +562,7 @@
                                                 <td>{{ ucfirst($update->reporting_frequency ?? 'weekly') }}</td>
                                                 <td>
                                                     <div class="fw-semibold">{{ $objective->title }}</div>
-                                                    <div class="text-muted small">{{ $reportRow['goal']->title }}</div>
+                                                    <div class="text-muted small">{{ $reportRow['goal']->assignedDepartments->pluck('name')->join(', ') }}</div>
                                                 </td>
                                                 <td>{{ $update->achievement_summary }}</td>
                                                 <td>{{ $update->action_points ?: 'No next step recorded' }}</td>
@@ -712,7 +603,7 @@
                             <div class="modal-header">
                                 <div>
                                     <h3 class="modal-title h5 fw-bold mb-1" id="viewObjectiveModalLabel-{{ $objective->id }}">{{ $objective->title }}</h3>
-                                    <div class="text-muted small">{{ $goalPillar->name }} / {{ $goal->quarter?->name }} / {{ $goal->title }}</div>
+                                    <div class="text-muted small">{{ $goalPillar->name }} / {{ $goal->quarter?->name }} / {{ $goal->assignedDepartments->pluck('name')->join(', ') }}</div>
                                 </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
@@ -764,14 +655,14 @@
                         <div class="modal-content">
                             <div class="modal-header">
                                 <div>
-                                    <h3 class="modal-title h5 fw-bold mb-1" id="editObjectiveModalLabel-{{ $objective->id }}">Edit Strategic Goal / Objective</h3>
+                                    <h3 class="modal-title h5 fw-bold mb-1" id="editObjectiveModalLabel-{{ $objective->id }}">Edit Work Plan Goal</h3>
                                     <div class="text-muted small">{{ $objective->title }}</div>
                                 </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <p class="mb-2">This strategic goal belongs to the goal set <strong>{{ $goal->title }}</strong>.</p>
-                                <p class="text-muted small mb-0">Editing opens the full goal set editor so the objective weights, assignments, activities, and deliverables continue saving together correctly.</p>
+                                <p class="mb-2">This goal belongs to the <strong>{{ $goal->assignedDepartments->pluck('name')->join(', ') }}</strong> office work plan.</p>
+                                <p class="text-muted small mb-0">Editing opens the full work plan editor so the goal weights, activities, dates, and deliverables continue saving together correctly.</p>
                             </div>
                             <div class="modal-footer">
                                 <a class="btn btn-maroon" href="{{ route('goals.edit', $goal) }}">Open Editor</a>
@@ -857,24 +748,6 @@
     <script>
         const objectivesList = document.querySelector('[data-objectives-list]');
         const addObjectiveButton = document.querySelector('[data-add-objective]');
-        const levelSelect = document.querySelector('[data-level-select]');
-        const departmentDropdown = document.querySelector('[data-department-dropdown]');
-        const departmentToggle = document.querySelector('[data-department-toggle]');
-        const departmentMenu = document.querySelector('[data-department-menu]');
-        const departmentSummary = document.querySelector('[data-department-summary]');
-        const departmentCheckboxes = Array.from(document.querySelectorAll('[data-department-checkbox]'));
-        const sectionScope = document.querySelector('[data-section-scope]');
-        const unitScope = document.querySelector('[data-unit-scope]');
-        const sectionDropdown = document.querySelector('[data-section-dropdown]');
-        const sectionToggle = document.querySelector('[data-section-toggle]');
-        const sectionMenu = document.querySelector('[data-section-menu]');
-        const sectionSummary = document.querySelector('[data-section-summary]');
-        const sectionCheckboxes = Array.from(document.querySelectorAll('[data-section-checkbox]'));
-        const unitDropdown = document.querySelector('[data-unit-dropdown]');
-        const unitToggle = document.querySelector('[data-unit-toggle]');
-        const unitMenu = document.querySelector('[data-unit-menu]');
-        const unitSummary = document.querySelector('[data-unit-summary]');
-        const unitCheckboxes = Array.from(document.querySelectorAll('[data-unit-checkbox]'));
         const strategicGoalForm = document.querySelector('[data-strategic-goal-form]');
         const goalPillarSelect = document.querySelector('[name="goal_pillar_id"]');
         const selectedPillarHelp = document.querySelector('[data-selected-pillar-help]');
@@ -891,100 +764,6 @@
             strategicGoalForm?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function selectedDepartmentIds() {
-            return departmentCheckboxes.filter((checkbox) => checkbox.checked).map((checkbox) => String(checkbox.value));
-        }
-
-        function syncDepartmentSummary() {
-            syncCheckboxSummary(departmentSummary, departmentCheckboxes, 'Select departments', 'departmentName', 'departments selected');
-        }
-
-        function syncSectionSummary() {
-            syncCheckboxSummary(sectionSummary, sectionCheckboxes, 'Select sections', 'sectionName', 'sections selected');
-        }
-
-        function syncUnitSummary() {
-            syncCheckboxSummary(unitSummary, unitCheckboxes, 'Select units', 'unitName', 'units selected');
-        }
-
-        function syncCheckboxSummary(summary, checkboxes, emptyText, nameKey, manyText) {
-            if (! summary) {
-                return;
-            }
-
-            const selected = checkboxes
-                .filter((checkbox) => checkbox.checked && ! checkbox.disabled)
-                .map((checkbox) => checkbox.dataset[nameKey]);
-
-            if (selected.length === 0) {
-                summary.textContent = emptyText;
-            } else if (selected.length <= 2) {
-                summary.textContent = selected.join(', ');
-            } else {
-                summary.textContent = `${selected.length} ${manyText}`;
-            }
-        }
-
-        function closeDepartmentDropdown() {
-            departmentMenu?.classList.add('d-none');
-            departmentToggle?.setAttribute('aria-expanded', 'false');
-        }
-
-        function closeSectionDropdown() {
-            sectionMenu?.classList.add('d-none');
-            sectionToggle?.setAttribute('aria-expanded', 'false');
-        }
-
-        function closeUnitDropdown() {
-            unitMenu?.classList.add('d-none');
-            unitToggle?.setAttribute('aria-expanded', 'false');
-        }
-
-        function bindCheckboxDropdown(toggle, menu) {
-            toggle?.addEventListener('click', () => {
-                const isOpen = ! menu?.classList.contains('d-none');
-
-                menu?.classList.toggle('d-none', isOpen);
-                toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-            });
-        }
-
-        bindCheckboxDropdown(departmentToggle, departmentMenu);
-        bindCheckboxDropdown(sectionToggle, sectionMenu);
-        bindCheckboxDropdown(unitToggle, unitMenu);
-
-        document.addEventListener('click', (event) => {
-            if (! departmentDropdown?.contains(event.target)) {
-                closeDepartmentDropdown();
-            }
-
-            if (! sectionDropdown?.contains(event.target)) {
-                closeSectionDropdown();
-            }
-
-            if (! unitDropdown?.contains(event.target)) {
-                closeUnitDropdown();
-            }
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                closeDepartmentDropdown();
-                closeSectionDropdown();
-                closeUnitDropdown();
-            }
-        });
-
-        departmentCheckboxes.forEach((checkbox) => {
-            checkbox.addEventListener('change', () => {
-                syncDepartmentSummary();
-                syncGoalScopeFields();
-            });
-        });
-
-        sectionCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', syncSectionSummary));
-        unitCheckboxes.forEach((checkbox) => checkbox.addEventListener('change', syncUnitSummary));
-
         document.querySelectorAll('[data-add-for-pillar]').forEach((button) => {
             button.addEventListener('click', () => {
                 if (goalPillarSelect) {
@@ -992,7 +771,7 @@
                 }
 
                 if (selectedPillarHelp && button.dataset.pillarName) {
-                    selectedPillarHelp.textContent = `Adding under ${button.dataset.pillarName}. Complete the quarter, department/section/unit, strategic goal/objective, activities, and deliverables.`;
+                    selectedPillarHelp.textContent = `Adding under ${button.dataset.pillarName}. Complete the office, work plan goal, activities, dates, weight, and deliverable.`;
                 }
 
                 showStrategicGoalModal();
@@ -1001,6 +780,10 @@
 
         @if ($errors->any())
             document.addEventListener('DOMContentLoaded', () => {
+                if (oldModalSource === 'delete_goal') {
+                    return;
+                }
+
                 if (oldModalSource?.startsWith('planning_report_') && window.bootstrap) {
                     const modalElement = document.getElementById(`reportObjectiveModal-${oldModalSource.replace('planning_report_', '')}`);
 
@@ -1015,55 +798,9 @@
             });
         @endif
 
-        syncDepartmentSummary();
-        syncSectionSummary();
-        syncUnitSummary();
-
-        function syncGoalScopeFields() {
-            const level = levelSelect?.value || 'department';
-            const departmentIds = selectedDepartmentIds();
-            const showSections = level === 'section';
-            const showUnits = level === 'unit' || level === 'individual';
-
-            sectionScope?.classList.toggle('d-none', ! showSections);
-            unitScope?.classList.toggle('d-none', ! showUnits);
-
-            sectionToggle?.toggleAttribute('disabled', ! showSections);
-            unitToggle?.toggleAttribute('disabled', ! showUnits);
-
-            sectionCheckboxes.forEach((checkbox) => {
-                const option = checkbox.closest('[data-section-option]');
-                const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(checkbox.dataset.departmentId));
-                const disabled = ! showSections || ! matchesDepartment;
-
-                option?.classList.toggle('d-none', ! matchesDepartment);
-                checkbox.disabled = disabled;
-
-                if (checkbox.checked && disabled) {
-                    checkbox.checked = false;
-                }
-            });
-
-            unitCheckboxes.forEach((checkbox) => {
-                const option = checkbox.closest('[data-unit-option]');
-                const matchesDepartment = departmentIds.length === 0 || departmentIds.includes(String(checkbox.dataset.departmentId));
-                const disabled = ! showUnits || ! matchesDepartment;
-
-                option?.classList.toggle('d-none', ! matchesDepartment);
-                checkbox.disabled = disabled;
-
-                if (checkbox.checked && disabled) {
-                    checkbox.checked = false;
-                }
-            });
-
-            syncSectionSummary();
-            syncUnitSummary();
-        }
-
         function renumberObjectives() {
             objectivesList.querySelectorAll('[data-objective-row]').forEach((row, index) => {
-                row.querySelector('strong').textContent = `Strategic Goal / Objective ${index + 1}`;
+                row.querySelector('strong').textContent = `Work Plan Goal ${index + 1}`;
                 row.querySelectorAll('input, textarea, select').forEach((field) => {
                     field.name = field.name.replace(/objectives\[\d+\]/, `objectives[${index}]`);
                 });
@@ -1091,12 +828,12 @@
             wrapper.dataset.objectiveRow = '';
             wrapper.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong class="small">Strategic Goal / Objective ${index + 1}</strong>
+                    <strong class="small">Work Plan Goal ${index + 1}</strong>
                     <button class="btn btn-sm btn-outline-danger" type="button" data-remove-objective>Remove</button>
                 </div>
                 <div class="row g-2">
                     <div class="col-md-4">
-                        <input class="form-control" name="objectives[${index}][title]" placeholder="Strategic goal / objective" required>
+                        <input class="form-control" name="objectives[${index}][title]" placeholder="Goal name" required>
                     </div>
                     <div class="col-md-2">
                         <input class="form-control" type="number" min="1" max="100" name="objectives[${index}][weight]" placeholder="Weight %" required>
@@ -1144,7 +881,7 @@
                         </div>
                     </div>
                     <div class="col-12">
-                        <label class="form-label small fw-semibold">Key Result Areas / Deliverables</label>
+                        <label class="form-label small fw-semibold">Deliverable</label>
                         <textarea class="form-control" name="objectives[${index}][specific_output]" rows="3" placeholder="What result, deliverable, or evidence should be produced?" required></textarea>
                     </div>
                     <div class="col-12">
@@ -1344,8 +1081,6 @@
             });
         }
 
-        levelSelect?.addEventListener('change', syncGoalScopeFields);
-        syncGoalScopeFields();
 
         document.querySelector('[name="quarter_id"]')?.addEventListener('change', applyObjectiveDateLimits);
         document.querySelector('[name="quarter_id"]')?.addEventListener('change', () => {

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('quarters', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->date('starts_at');
             $table->date('ends_at');
             $table->boolean('is_active')->default(false);
@@ -33,8 +33,6 @@ return new class extends Migration
             $table->foreignId('goal_pillar_id')->nullable()->constrained('goal_pillars')->nullOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('owner_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('title');
-            $table->enum('level', ['department', 'section', 'unit', 'individual'])->default('department');
             $table->enum('status', ['draft', 'submitted', 'approved', 'in_progress', 'completed', 'archived'])->default('draft');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('approved_at')->nullable();
@@ -47,11 +45,10 @@ return new class extends Migration
             $table->foreignId('goal_id')->constrained()->cascadeOnDelete();
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('section_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->timestamps();
 
-            $table->index(['department_id', 'section_id', 'unit_id']);
+            $table->index(['department_id', 'section_id']);
             $table->index(['user_id']);
         });
 
@@ -108,7 +105,6 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('section_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained()->cascadeOnDelete();
             $table->text('goals_completed')->nullable();
             $table->text('goals_partially_completed')->nullable();
             $table->text('key_wins')->nullable();

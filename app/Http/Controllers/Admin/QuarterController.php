@@ -55,8 +55,8 @@ class QuarterController extends Controller
     {
         abort_unless($request->user()->isAdmin() || $request->user()->can('manage quarters'), 403);
 
-        if ($quarter->goals()->exists()) {
-            return back()->withErrors(['quarter' => 'This quarter has goals and cannot be deleted.']);
+        if ($quarter->goals()->exists() || $quarter->reflections()->exists()) {
+            return back()->withErrors(['quarter' => 'This quarter has goals or reflections and cannot be deleted.']);
         }
 
         $quarter->delete();

@@ -59,7 +59,7 @@ class StoreWeeklyUpdateRequest extends FormRequest
             function (Validator $validator) {
                 $objective = $this->route('objective');
 
-                if (! $objective instanceof GoalObjective || ! $this->filled('report_date')) {
+                if (! $objective instanceof GoalObjective || ! $this->filled('report_date') || $validator->errors()->has('report_date')) {
                     return;
                 }
 
@@ -75,7 +75,7 @@ class StoreWeeklyUpdateRequest extends FormRequest
                 if (! in_array($reportingFrequency, $objective->reportingFrequencies(), true)) {
                     $validator->errors()->add(
                         'reporting_frequency',
-                        'Select a reporting cadence allowed for this strategic goal/objective.'
+                        'Select a reporting cadence allowed for this work plan goal.'
                     );
                 }
 
@@ -99,7 +99,7 @@ class StoreWeeklyUpdateRequest extends FormRequest
                 if ($alreadySubmitted) {
                     $validator->errors()->add(
                         'report_date',
-                        'You have already submitted a report for this sub-goal reporting period. Edit the existing submission instead.'
+                        'You have already submitted a report for this work plan goal reporting period. Edit the existing submission instead.'
                     );
                 }
             },

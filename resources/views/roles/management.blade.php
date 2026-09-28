@@ -131,6 +131,7 @@
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <form method="post" action="{{ route('roles.management.store') }}" class="modal-content">
                     @csrf
+                    <input type="hidden" name="form_context" value="createRoleModal">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title h5 fw-bold" id="createRoleModalLabel">Add Role</h2>
@@ -171,6 +172,7 @@
                 <form method="post" action="{{ route('roles.management.permissions.update', $role) }}" class="modal-content">
                     @csrf
                     @method('PUT')
+                    <input type="hidden" name="form_context" value="editRoleModal{{ $role->id }}">
                     <div class="modal-header">
                         <div>
                             <h2 class="modal-title h5 fw-bold" id="editRoleModalLabel{{ $role->id }}">{{ $role->name }} Permissions</h2>

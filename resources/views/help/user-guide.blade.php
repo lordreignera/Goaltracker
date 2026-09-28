@@ -168,7 +168,7 @@
                 </div>
                 <h2 class="h5 fw-bold mb-2">How the SMART Goals Tracker Works</h2>
                 <p class="text-muted mb-0">
-                    The system helps teams create quarterly goals, break them into weighted sub-goals, submit progress reports, and calculate official progress from supervisor-verified scores.
+                    The system helps each office organize quarterly work plan goals by activity pillar, submit progress reports, and calculate official progress from supervisor-verified scores.
                 </p>
             </section>
 
@@ -179,21 +179,21 @@
                         <span class="guide-step-number">1</span>
                         <div>
                             <div class="fw-bold">Open Create Goal</div>
-                            <div class="text-muted small">Choose the quarter, department, and goal level.</div>
+                            <div class="text-muted small">Choose the quarter and pillar, then select one or more departments available to you.</div>
                         </div>
                     </div>
                     <div class="guide-step">
                         <span class="guide-step-number">2</span>
                         <div>
                             <div class="fw-bold">Enter the main goal details</div>
-                            <div class="text-muted small">Select the pillar, quarter, organization scope, strategic goal, key activities, and deliverables.</div>
+                            <div class="text-muted small">Enter the goal name, dates, weight, key activities, and deliverable.</div>
                         </div>
                     </div>
                     <div class="guide-step">
                         <span class="guide-step-number">3</span>
                         <div>
-                            <div class="fw-bold">Add sub-goals</div>
-                            <div class="text-muted small">Each sub-goal needs a deliverable / evidence, weight, start date, and timeline. All weights must total 100%.</div>
+                            <div class="fw-bold">Add work plan goals</div>
+                            <div class="text-muted small">Each work plan goal needs a deliverable / evidence, weight, start date, and timeline. All weights must total 100%.</div>
                         </div>
                     </div>
                 </div>
@@ -202,13 +202,13 @@
             <section class="guide-card p-4">
                 <h2 class="h5 fw-bold mb-3">Submit a Report</h2>
                 <ul class="guide-list text-muted">
-                    <li>Open the goal and find the relevant sub-goal.</li>
-                    <li>Enter the report date. The system regulates whether the sub-goal reports daily, weekly, or monthly.</li>
+                    <li>Open the office work plan and find the relevant work plan goal.</li>
+                    <li>Enter the report date. The system regulates whether the work plan goal reports daily, weekly, or monthly.</li>
                     <li>Write what was achieved in the Achievement field.</li>
                     <li>Add any blockers in Challenges and the next required response in Action Point / Next Step.</li>
                     <li>Attach evidence when available, such as a PDF, Word document, Excel sheet, or photo.</li>
                     <li>Tick This report updates progress only when the report should carry an achievement percentage.</li>
-                    <li>You can submit one report per sub-goal reporting period.</li>
+                    <li>You can submit one report per work plan goal reporting period.</li>
                     <li>A submitted report affects official progress only when it is a progress update and the supervisor approves a verified score.</li>
                 </ul>
             </section>
@@ -223,7 +223,7 @@
                     <table class="guide-table">
                         <thead>
                             <tr>
-                                <th>Sub-goal cadence</th>
+                                <th>Work plan goal cadence</th>
                                 <th>What the system allows</th>
                                 <th>Good use case</th>
                             </tr>
@@ -231,7 +231,7 @@
                         <tbody>
                             <tr>
                                 <td><strong>Daily</strong></td>
-                                <td>One report per day for that sub-goal.</td>
+                                <td>One report per day for that work plan goal.</td>
                                 <td>Activities that need close follow-up, such as daily outreach, attendance tracking, or field implementation.</td>
                             </tr>
                             <tr>
@@ -250,20 +250,20 @@
 
                 <div class="formula-card mb-3">
                     <div class="fw-bold">How to decide whether to tick progress update</div>
-                    <div class="small mt-1">Tick it when the report gives a new official achievement percentage for the sub-goal.</div>
+                    <div class="small mt-1">Tick it when the report gives a new official achievement percentage for the work plan goal.</div>
                     <div class="small">Leave it unticked when the report is only an activity note, challenge, action point, or evidence upload.</div>
                 </div>
 
                 <h3 class="h6 fw-bold mb-2">Example</h3>
                 <p class="text-muted mb-0">
-                    A weekly sub-goal is “Train 20 cell leaders.” On Monday, the staff can upload attendance evidence and note that 8 leaders attended without updating progress. On Friday, after the week’s work is complete, the staff ticks <strong>This report updates progress</strong> and claims 40%. The supervisor reviews the evidence and may verify 35%. The system uses 35% as the official progress score.
+                    A weekly work plan goal is “Train 20 cell leaders.” On Monday, the staff can upload attendance evidence and note that 8 leaders attended without updating progress. On Friday, after the week’s work is complete, the staff ticks <strong>This report updates progress</strong> and claims 40%. The supervisor reviews the evidence and may verify 35%. The system uses 35% as the official progress score.
                 </p>
             </section>
 
             <section class="guide-card p-4">
                 <h2 class="h5 fw-bold mb-3">Supervisor Review</h2>
                 <p class="text-muted">
-                    Supervisors see the staff claim, review the report history for that sub-goal, and enter a verified percentage only when the report is a progress update.
+                    Supervisors see the staff claim, review the report history for that work plan goal, and enter a verified percentage only when the report is a progress update.
                 </p>
                 <ul class="guide-list text-muted">
                     <li><strong>Approve normal report:</strong> confirms the narrative/evidence but does not change the goal percentage.</li>
@@ -276,23 +276,23 @@
             <section class="guide-card p-4">
                 <h2 class="h5 fw-bold mb-3">How Progress Is Calculated</h2>
                 <p class="text-muted">
-                    The system does not simply count how many reports were submitted. It calculates official progress from the latest approved supervisor-verified score for each sub-goal.
+                    The system does not simply count how many reports were submitted. It calculates official progress from the latest approved supervisor-verified score for each work plan goal.
                 </p>
 
                 <div class="formula-card mb-3">
                     <div class="fw-bold">Main goal formula</div>
-                    <div class="small mt-1">Sub-goal contribution = sub-goal weight x supervisor verified score</div>
-                    <div class="small">Main goal progress = total of all sub-goal contributions</div>
+                    <div class="small mt-1">Work plan goal contribution = goal weight x supervisor verified score</div>
+                    <div class="small">Office work plan progress = total of all work plan goal contributions</div>
                 </div>
 
-                <h3 class="h6 fw-bold mb-2">Live Example: Main Goal With Three Sub-goals</h3>
+                <h3 class="h6 fw-bold mb-2">Live Example: Office Work Plan With Three Goals</h3>
                 <p class="text-muted small">
                     Main goal: Increase the number of effective community cells during the quarter.
                 </p>
 
                 <div class="calculation-box mb-3">
                     <div class="calculation-row">
-                        <div>Sub-goal</div>
+                        <div>Work Plan Goal</div>
                         <div>Weight</div>
                         <div>Verified score</div>
                         <div>Contribution</div>
@@ -395,7 +395,7 @@
             <section class="guide-card p-4">
                 <h2 class="h6 fw-bold mb-3">Admin Setup Checklist</h2>
                 <ul class="guide-list text-muted small">
-                    <li>Create departments, sections, and units.</li>
+                    <li>Create departments, sections, and positions.</li>
                     <li>Approve staff accounts and assign roles.</li>
                     <li>Confirm the active quarter / cycle.</li>
                     <li>Review roles and permissions when access changes.</li>
@@ -405,7 +405,7 @@
             <section class="guide-card p-4">
                 <h2 class="h6 fw-bold mb-3">Need Support?</h2>
                 <p class="text-muted small mb-0">
-                    Contact your system administrator if you cannot see a goal, cannot submit a report, or need your department/unit assignment corrected.
+                    Contact your system administrator if you cannot see a goal, cannot submit a report, or need your department, section, or position assignment corrected.
                 </p>
             </section>
         </aside>

@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\Department;
 use App\Models\CompanySetting;
+use App\Models\Department;
 use App\Models\GoalPillar;
+use App\Models\Position;
 use App\Models\Quarter;
 use App\Models\User;
-use App\Models\Position;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -179,29 +179,22 @@ class DatabaseSeeder extends Seeder
                 'description' => $details['description'],
             ]);
 
-            foreach ($details['sections'] as $sectionIndex => $sectionUnits) {
-                $sectionName = is_string($sectionIndex) ? $sectionIndex : $sectionUnits;
-                $units = is_array($sectionUnits) ? $sectionUnits : [];
+            foreach ($details['sections'] as $sectionIndex => $sectionPositions) {
+                $sectionName = is_string($sectionIndex) ? $sectionIndex : $sectionPositions;
+                $positions = is_array($sectionPositions) ? $sectionPositions : [];
 
                 $section = $department->sections()->updateOrCreate(['name' => $sectionName], [
                     'code' => $this->sectionCode($departmentIndex, $sectionIndex),
                     'description' => "Operational section under {$departmentName}.",
                 ]);
 
-                foreach ($units as $unitIndex => $unitName) {
-                    $unit = $section->units()->updateOrCreate(['name' => $unitName], [
-                        'department_id' => $department->id,
-                        'code' => $this->unitCode($departmentIndex, $unitIndex + 1),
-                        'description' => "Operational unit under {$sectionName}.",
-                    ]);
-
+                foreach ($positions as $positionIndex => $positionTitle) {
                     Position::updateOrCreate([
                         'department_id' => $department->id,
                         'section_id' => $section->id,
-                        'title' => $unitName,
+                        'title' => $positionTitle,
                     ], [
-                        'unit_id' => $unit->id,
-                        'code' => $this->positionCode($departmentIndex, $unitIndex + 1),
+                        'code' => $this->positionCode($departmentIndex, $positionIndex + 1),
                         'description' => "Organogram position under {$sectionName}.",
                     ]);
                 }
@@ -290,7 +283,7 @@ class DatabaseSeeder extends Seeder
             'manage departments',
             'manage goal pillars',
             'manage sections',
-            'manage units',
+            'manage positions',
             'manage users',
             'manage quarters',
             'manage goals',
@@ -350,11 +343,6 @@ class DatabaseSeeder extends Seeder
     private function departmentCode(int $index): string
     {
         return (string) (100000 + $index);
-    }
-
-    private function unitCode(int $departmentIndex, int $unitIndex): string
-    {
-        return 'U'.str_pad((string) $departmentIndex, 2, '0', STR_PAD_LEFT).str_pad((string) $unitIndex, 2, '0', STR_PAD_LEFT);
     }
 
     private function sectionCode(int $departmentIndex, int|string $sectionIndex): string

@@ -14,7 +14,11 @@ class GoalAccessService
             return true;
         }
 
-        return $this->belongsToUserDepartmentOrUnit($user, $goal);
+        if ($goal->status === 'draft' && $goal->created_by !== $user->id) {
+            return false;
+        }
+
+        return $this->belongsToUserDepartmentOrSection($user, $goal);
     }
 
     public function canUpdateGoal(User $user, Goal $goal): bool
@@ -33,7 +37,7 @@ class GoalAccessService
         }
 
         return $user->canReviewGoals()
-            && $this->belongsToUserDepartmentOrUnit($user, $goal);
+            && $this->belongsToUserDepartmentOrSection($user, $goal);
     }
 
     public function canSubmitDailyReport(User $user, Goal $goal): bool
@@ -55,35 +59,36 @@ class GoalAccessService
 
         $departmentIds = $user->accessibleDepartmentIds();
 
-        return $query->where(function (Builder $query) use ($user, $departmentIds) {
-            $query->whereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
-                ->orWhereHas('assignments', function (Builder $query) use ($user, $departmentIds) {
-                    $query->whereIn('department_id', $departmentIds)
-                        ->where(function (Builder $query) use ($user) {
-                            $query->whereNull('section_id')
-                                ->whereNull('unit_id');
+        return $query
+            ->where(function (Builder $query) use ($user) {
+                $query->where('status', '!=', 'draft')
+                    ->orWhere('created_by', $user->id);
+            })
+            ->where(function (Builder $query) use ($user, $departmentIds) {
+                $query->whereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
+                    ->orWhereHas('assignments', function (Builder $query) use ($user, $departmentIds) {
+                        $query->whereIn('department_id', $departmentIds)
+                            ->where(function (Builder $query) use ($user) {
+                                $query->whereNull('section_id')
+                                    ->whereNull('user_id');
 
-                            if ($user->section_id) {
-                                $query->orWhere(function (Builder $query) use ($user) {
-                                    $query->where('department_id', $user->department_id)
-                                        ->where('section_id', $user->section_id)
-                                        ->whereNull('unit_id');
-                                });
-                            }
-
-                            if ($user->unit_id) {
-                                $query->orWhere(function (Builder $query) use ($user) {
-                                    $query->where('department_id', $user->department_id)
-                                        ->where('unit_id', $user->unit_id);
-                                });
-                            }
-                        });
-                });
-        });
+                                if ($user->section_id) {
+                                    $query->orWhere(function (Builder $query) use ($user) {
+                                        $query->where('department_id', $user->department_id)
+                                            ->where('section_id', $user->section_id);
+                                    });
+                                }
+                            });
+                    });
+            });
     }
 
-    private function belongsToUserDepartmentOrUnit(User $user, Goal $goal): bool
+    private function belongsToUserDepartmentOrSection(User $user, Goal $goal): bool
     {
+        if ($goal->assignments()->where('user_id', $user->id)->exists()) {
+            return true;
+        }
+
         $departmentIds = $user->accessibleDepartmentIds();
 
         if (empty($departmentIds)) {
@@ -91,30 +96,17 @@ class GoalAccessService
         }
 
         return $goal->assignments()
-            ->where(function (Builder $query) use ($user, $departmentIds) {
-                $query->where('user_id', $user->id)
-                    ->orWhere(function (Builder $query) use ($user, $departmentIds) {
-                        $query->whereIn('department_id', $departmentIds)
-                            ->where(function (Builder $query) use ($user) {
-                                $query->whereNull('section_id')
-                                    ->whereNull('unit_id');
+            ->whereIn('department_id', $departmentIds)
+            ->where(function (Builder $query) use ($user) {
+                $query->whereNull('section_id')
+                    ->whereNull('user_id');
 
-                                if ($user->section_id) {
-                                    $query->orWhere(function (Builder $query) use ($user) {
-                                        $query->where('department_id', $user->department_id)
-                                            ->where('section_id', $user->section_id)
-                                            ->whereNull('unit_id');
-                                    });
-                                }
-
-                                if ($user->unit_id) {
-                                    $query->orWhere(function (Builder $query) use ($user) {
-                                        $query->where('department_id', $user->department_id)
-                                            ->where('unit_id', $user->unit_id);
-                                    });
-                                }
-                            });
+                if ($user->section_id) {
+                    $query->orWhere(function (Builder $query) use ($user) {
+                        $query->where('department_id', $user->department_id)
+                            ->where('section_id', $user->section_id);
                     });
+                }
             })
             ->exists();
     }

@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Models\Goal;
-use App\Models\Section;
-use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -15,22 +13,20 @@ class GoalManagementService
     {
         $this->validateObjectiveWeights($data['objectives']);
 
-        [$departmentIds, $sectionIds, $unitIds] = $this->assignmentIds($data);
+        $departmentIds = $this->departmentIds($data);
 
         $goal = new Goal([
             'quarter_id' => $data['quarter_id'],
             'goal_pillar_id' => $data['goal_pillar_id'],
             'created_by' => $user->id,
             'owner_id' => $user->id,
-            'title' => $data['title'],
-            'level' => $data['level'],
             'status' => 'draft',
         ]);
 
-        DB::transaction(function () use ($goal, $data, $departmentIds, $sectionIds, $unitIds) {
+        DB::transaction(function () use ($goal, $data, $departmentIds) {
             $goal->save();
 
-            $this->syncAssignments($goal, $departmentIds->all(), $sectionIds->all(), $unitIds->all());
+            $this->syncAssignments($goal, $departmentIds->all());
 
             foreach ($this->normalizedObjectives($data['objectives']) as $objective) {
                 $goal->objectives()->create($objective + ['status' => 'pending']);
@@ -44,7 +40,7 @@ class GoalManagementService
     {
         $this->validateObjectiveWeights($data['objectives']);
 
-        [$departmentIds, $sectionIds, $unitIds] = $this->assignmentIds($data);
+        $departmentIds = $this->departmentIds($data);
 
         $keptObjectiveIds = collect($data['objectives'])
             ->pluck('id')
@@ -52,15 +48,24 @@ class GoalManagementService
             ->map(fn ($id) => (int) $id)
             ->values();
 
-        DB::transaction(function () use ($goal, $data, $departmentIds, $sectionIds, $unitIds, $keptObjectiveIds) {
+        DB::transaction(function () use ($goal, $data, $departmentIds, $keptObjectiveIds) {
+            $hasReportedObjectiveRemoval = $goal->objectives()
+                ->whereNotIn('id', $keptObjectiveIds)
+                ->whereHas('weeklyUpdates')
+                ->exists();
+
+            if ($hasReportedObjectiveRemoval) {
+                throw ValidationException::withMessages([
+                    'objectives' => 'Objectives with submitted reports cannot be removed. Keep the objective to preserve its reporting history.',
+                ]);
+            }
+
             $goal->update([
                 'quarter_id' => $data['quarter_id'],
                 'goal_pillar_id' => $data['goal_pillar_id'],
-                'title' => $data['title'],
-                'level' => $data['level'],
             ]);
 
-            $this->syncAssignments($goal, $departmentIds->all(), $sectionIds->all(), $unitIds->all());
+            $this->syncAssignments($goal, $departmentIds->all());
 
             $goal->objectives()
                 ->whereNotIn('id', $keptObjectiveIds)
@@ -84,6 +89,17 @@ class GoalManagementService
         return $goal->refresh();
     }
 
+    public function deleteGoal(Goal $goal): void
+    {
+        if ($goal->objectives()->whereHas('weeklyUpdates')->exists()) {
+            throw ValidationException::withMessages([
+                'goal' => 'This work plan has submitted reports and cannot be deleted. Archive it instead to preserve its reporting history.',
+            ]);
+        }
+
+        $goal->delete();
+    }
+
     private function validateObjectiveWeights(array $objectives): void
     {
         $objectiveTotal = collect($objectives)
@@ -91,7 +107,7 @@ class GoalManagementService
 
         if ($objectiveTotal !== 100) {
             throw ValidationException::withMessages([
-                'objectives' => "Objective weights must equal 100%. Current total is {$objectiveTotal}%.",
+                'objectives' => "Objective weights must total exactly 100%. Current total is {$objectiveTotal}%.",
             ]);
         }
     }
@@ -115,57 +131,22 @@ class GoalManagementService
             ->all();
     }
 
-    private function assignmentIds(array $data): array
+    private function departmentIds(array $data)
     {
-        $departmentIds = collect($data['department_ids'])
+        return collect($data['department_ids'])
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values();
-
-        $unitIds = collect($data['unit_ids'] ?? [])
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
-
-        $sectionIds = collect($data['section_ids'] ?? [])
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
-
-        return [$departmentIds, $sectionIds, $unitIds];
     }
 
-    private function syncAssignments(Goal $goal, array $departmentIds, array $sectionIds, array $unitIds): void
+    private function syncAssignments(Goal $goal, array $departmentIds): void
     {
         $goal->assignments()->delete();
 
-        $units = Unit::whereIn('id', $unitIds)->get(['id', 'department_id', 'section_id']);
-        $sections = Section::whereIn('id', $sectionIds)->get(['id', 'department_id']);
-        $unitDepartmentIds = $units->pluck('department_id')->unique();
-        $unitSectionIds = $units->pluck('section_id')->filter()->unique();
-        $sectionDepartmentIds = $sections->pluck('department_id')->unique();
-
-        foreach (collect($departmentIds)->diff($unitDepartmentIds)->diff($sectionDepartmentIds) as $departmentId) {
+        foreach ($departmentIds as $departmentId) {
             $goal->assignments()->create([
                 'department_id' => $departmentId,
             ]);
         }
-
-        $sections->whereNotIn('id', $unitSectionIds)->each(function (Section $section) use ($goal) {
-            $goal->assignments()->create([
-                'department_id' => $section->department_id,
-                'section_id' => $section->id,
-            ]);
-        });
-
-        $units->each(function (Unit $unit) use ($goal) {
-            $goal->assignments()->create([
-                'department_id' => $unit->department_id,
-                'section_id' => $unit->section_id,
-                'unit_id' => $unit->id,
-            ]);
-        });
     }
 }

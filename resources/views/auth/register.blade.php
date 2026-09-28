@@ -3,8 +3,7 @@
         $companySettings = \App\Models\CompanySetting::current();
 
         $departmentSections = collect([]);
-        $sectionUnits = collect([]);
-        $unitPositions = collect([]);
+        $sectionPositions = collect([]);
 
         if (isset($departments) && $departments->isNotEmpty()) {
             $departmentSections = $departments->mapWithKeys(function ($department) {
@@ -18,25 +17,11 @@
                 ];
             });
 
-            $sectionUnits = $departments
+            $sectionPositions = $departments
                 ->flatMap(fn ($department) => $department->sections)
                 ->mapWithKeys(function ($section) {
                     return [
-                        $section->id => $section->units->map(function ($unit) {
-                            return [
-                                'id' => $unit->id,
-                                'name' => $unit->name,
-                            ];
-                        })->values(),
-                    ];
-                });
-
-            $unitPositions = $departments
-                ->flatMap(fn ($department) => $department->sections)
-                ->flatMap(fn ($section) => $section->units)
-                ->mapWithKeys(function ($unit) {
-                    return [
-                        $unit->id => $unit->positions->map(function ($position) {
+                        $section->id => $section->positions->map(function ($position) {
                             return [
                                 'id' => $position->id,
                                 'title' => $position->title,
@@ -258,16 +243,9 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label for="unit_id" class="form-label fw-semibold">Unit</label>
-                            <select id="unit_id" class="form-select" name="unit_id" required>
-                                <option value="">Select section first</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
                             <label for="position_id" class="form-label fw-semibold">Position</label>
                             <select id="position_id" class="form-select" name="position_id" required>
-                                <option value="">Select unit first</option>
+                                <option value="">Select section first</option>
                             </select>
                         </div>
 
@@ -308,16 +286,13 @@
 
     <script>
         const departmentSections = @json($departmentSections);
-        const sectionUnits = @json($sectionUnits);
-        const unitPositions = @json($unitPositions);
+        const sectionPositions = @json($sectionPositions);
         const oldDepartmentId = @json((string) old('department_id', ''));
         const oldSectionId = @json((string) old('section_id', ''));
-        const oldUnitId = @json((string) old('unit_id', ''));
         const oldPositionId = @json((string) old('position_id', ''));
 
         const departmentSelect = document.getElementById('department_id');
         const sectionSelect = document.getElementById('section_id');
-        const unitSelect = document.getElementById('unit_id');
         const positionSelect = document.getElementById('position_id');
 
         function refreshSections() {
@@ -343,44 +318,18 @@
                 sectionSelect.appendChild(option);
             });
 
-            refreshUnits();
-        }
-
-        function refreshUnits() {
-            const selectedSection = sectionSelect.value;
-            const units = sectionUnits[selectedSection] || [];
-
-            unitSelect.innerHTML = '';
-
-            const placeholder = document.createElement('option');
-            placeholder.value = '';
-            placeholder.textContent = selectedSection ? 'Select unit' : 'Select section first';
-            unitSelect.appendChild(placeholder);
-
-            units.forEach((unit) => {
-                const option = document.createElement('option');
-                option.value = unit.id;
-                option.textContent = unit.name;
-
-                if (String(unit.id) === oldUnitId) {
-                    option.selected = true;
-                }
-
-                unitSelect.appendChild(option);
-            });
-
             refreshPositions();
         }
 
         function refreshPositions() {
-            const selectedUnit = unitSelect.value;
-            const positions = unitPositions[selectedUnit] || [];
+            const selectedSection = sectionSelect.value;
+            const positions = sectionPositions[selectedSection] || [];
 
             positionSelect.innerHTML = '';
 
             const placeholder = document.createElement('option');
             placeholder.value = '';
-            placeholder.textContent = selectedUnit ? 'Select position' : 'Select unit first';
+            placeholder.textContent = selectedSection ? 'Select position' : 'Select section first';
             positionSelect.appendChild(placeholder);
 
             positions.forEach((position) => {
@@ -396,14 +345,13 @@
             });
         }
 
-        if (departmentSelect && sectionSelect && unitSelect && positionSelect) {
+        if (departmentSelect && sectionSelect && positionSelect) {
             if (oldDepartmentId) {
                 departmentSelect.value = oldDepartmentId;
             }
 
             departmentSelect.addEventListener('change', refreshSections);
-            sectionSelect.addEventListener('change', refreshUnits);
-            unitSelect.addEventListener('change', refreshPositions);
+            sectionSelect.addEventListener('change', refreshPositions);
             refreshSections();
         }
 

@@ -54,7 +54,7 @@
             <div class="d-flex justify-content-between gap-2 mb-1">
                 <div>
                     <div class="fw-semibold">{{ $row['title'] }}</div>
-                    <div class="text-muted small">{{ $row['pillar'] }} / {{ $row['department'] }} / {{ $row['section'] }} / {{ $row['unit'] }} / {{ $row['achievement'] }}% average strategic goal/objective achievement</div>
+                    <div class="text-muted small">{{ $row['pillar'] }} / {{ $row['department'] }} / {{ $row['section'] }} / {{ $row['achievement'] }}% average work plan goal achievement</div>
                 </div>
                 <div class="fw-bold">{{ $row['progress'] }}%</div>
             </div>
@@ -71,9 +71,9 @@
         <table class="table table-sm align-middle">
             <thead>
                 <tr>
-                    <th>Goal Set</th>
+                    <th>Office Work Plan</th>
                     <th>Goal Pillar</th>
-                    <th>Strategic Goal / Objective</th>
+                    <th>Work Plan Goal</th>
                     <th>Timeline</th>
                     <th>Frequency</th>
                     <th>Reporting Period</th>
@@ -101,7 +101,7 @@
                                 <strong>Key Activities:</strong>
                                 <div>{!! nl2br(e($row['objective_key_activities'])) !!}</div>
                             </div>
-                            <div class="small"><strong>Key Result Areas / Deliverables:</strong> {{ $row['objective_specific_output'] }}</div>
+                            <div class="small"><strong>Deliverable:</strong> {{ $row['objective_specific_output'] }}</div>
                         </td>
                         <td>{{ $row['timeline'] }}</td>
                         <td>{{ ucfirst($row['reporting_frequency']) }}</td>

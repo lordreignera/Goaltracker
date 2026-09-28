@@ -31,20 +31,12 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::exists('sections', 'id')
                     ->where(fn ($query) => $query->where('department_id', $input['department_id'] ?? null)),
             ],
-            'unit_id' => [
-                'required',
-                Rule::exists('units', 'id')
-                    ->where(fn ($query) => $query
-                        ->where('department_id', $input['department_id'] ?? null)
-                        ->where('section_id', $input['section_id'] ?? null)),
-            ],
             'position_id' => [
                 'required',
                 Rule::exists('positions', 'id')
                     ->where(fn ($query) => $query
                         ->where('department_id', $input['department_id'] ?? null)
-                        ->where('section_id', $input['section_id'] ?? null)
-                        ->where('unit_id', $input['unit_id'] ?? null)),
+                        ->where('section_id', $input['section_id'] ?? null)),
             ],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
@@ -58,7 +50,6 @@ class CreateNewUser implements CreatesNewUsers
             'phone_number' => $input['phone_number'],
             'department_id' => $input['department_id'],
             'section_id' => $input['section_id'],
-            'unit_id' => $input['unit_id'],
             'position_id' => $input['position_id'],
             'role' => 'staff',
             'requested_role' => 'Staff',

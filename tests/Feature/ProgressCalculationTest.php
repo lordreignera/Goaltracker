@@ -21,7 +21,7 @@ class ProgressCalculationTest extends TestCase
 
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
-            'title' => 'Increase effective community cells',
+            'status' => 'submitted',
         ]);
         $goal->assignments()->create(['department_id' => $department->id]);
 
@@ -58,7 +58,7 @@ class ProgressCalculationTest extends TestCase
     {
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
-            'title' => $title,
+            'status' => 'submitted',
         ]);
         $goal->assignments()->create(['department_id' => $department->id]);
         $this->addVerifiedObjective($goal, $supervisor, $title.' objective', 100, $score);

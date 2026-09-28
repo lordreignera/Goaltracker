@@ -1,32 +1,32 @@
 <?php
 
-use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\CompanySettingController;
+use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\GoalPillarController;
+use App\Http\Controllers\Admin\PositionController;
 use App\Http\Controllers\Admin\QuarterController;
 use App\Http\Controllers\Admin\RoleManagementController;
 use App\Http\Controllers\Admin\SectionController;
-use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HelpController;
 use App\Http\Controllers\Goals\GoalController;
 use App\Http\Controllers\Goals\ObjectiveController;
 use App\Http\Controllers\Goals\SupervisorReviewController;
 use App\Http\Controllers\Goals\WeeklyUpdateController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\Reports\QuarterlyReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/help/user-guide', [HelpController::class, 'index'])->name('help.user-guide');
     Route::get('/help/user-guide/pdf', [HelpController::class, 'pdf'])->name('help.user-guide.pdf');
     Route::resource('departments', DepartmentController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('goal-pillars', GoalPillarController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('sections', SectionController::class)->only(['index', 'store', 'update', 'destroy']);
-    Route::resource('units', UnitController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('positions', PositionController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('quarters', QuarterController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('settings/company', [CompanySettingController::class, 'edit'])->name('settings.company.edit');
     Route::put('settings/company', [CompanySettingController::class, 'update'])->name('settings.company.update');
@@ -41,7 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::get('users/approvals', [UserManagementController::class, 'index'])->name('users.approvals.index');
     Route::post('users/approvals/{user}/approve', [UserManagementController::class, 'approve'])->name('users.approvals.approve');
     Route::post('users/approvals/{user}/reject', [UserManagementController::class, 'reject'])->name('users.approvals.reject');
-    Route::resource('goals', GoalController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update']);
+    Route::resource('goals', GoalController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     Route::post('goals/{goal}/submit', [GoalController::class, 'submit'])->name('goals.submit');
     Route::post('goals/{goal}/objectives', [ObjectiveController::class, 'store'])->name('goals.objectives.store');
     Route::post('objectives/{objective}/weekly-updates', [WeeklyUpdateController::class, 'store'])->name('objectives.weekly-updates.store');

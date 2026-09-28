@@ -8,11 +8,6 @@ class Department extends Model
 {
     protected $fillable = ['name', 'code', 'description'];
 
-    public function units()
-    {
-        return $this->hasMany(Unit::class);
-    }
-
     public function positions()
     {
         return $this->hasMany(Position::class);

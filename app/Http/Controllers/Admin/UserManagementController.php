@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Department;
 use App\Models\Position;
 use App\Models\Section;
-use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -21,7 +20,7 @@ class UserManagementController extends Controller
 
         $status = $request->input('status', 'pending');
 
-        $users = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'position', 'roles'])
+        $users = User::with(['department', 'accessibleDepartments', 'section', 'position', 'roles'])
             ->when($status !== 'all', fn ($query) => $query->where('approval_status', $status))
             ->when($request->filled('search'), function ($query) use ($request) {
                 $query->where(function ($query) use ($request) {
@@ -37,16 +36,19 @@ class UserManagementController extends Controller
 
         $editUser = null;
         if ($request->filled('edit_user')) {
-            $editUser = User::with(['department', 'accessibleDepartments', 'section', 'unit', 'position', 'roles'])->find($request->edit_user);
+            $editUser = User::with(['department', 'accessibleDepartments', 'section', 'position', 'roles'])->find($request->edit_user);
+
+            if ($editUser?->isSuperAdmin()) {
+                $editUser = null;
+            }
         }
 
         return view('users.management', [
             'users' => $users,
             'editUser' => $editUser,
-            'departments' => Department::with('sections.units')->orderBy('name')->get(),
+            'departments' => Department::with('sections.positions')->orderBy('name')->get(),
             'sections' => Section::with('department')->orderBy('name')->get(),
-            'units' => Unit::with(['department', 'section'])->orderBy('name')->get(),
-            'positions' => Position::with(['department', 'section', 'unit'])->orderBy('title')->get(),
+            'positions' => Position::with(['department', 'section'])->orderBy('title')->get(),
             'roles' => Role::where('name', '!=', 'Super Admin')->orderBy('name')->pluck('name'),
             'status' => $status,
         ]);
@@ -64,7 +66,6 @@ class UserManagementController extends Controller
             'email' => $data['email'],
             'department_id' => $data['department_id'],
             'section_id' => $data['section_id'] ?? null,
-            'unit_id' => $data['unit_id'] ?? null,
             'position_id' => $data['position_id'] ?? null,
             'requested_role' => $data['requested_role'],
             'is_active' => $request->boolean('is_active'),
@@ -82,6 +83,8 @@ class UserManagementController extends Controller
     public function approve(Request $request, User $user)
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
+        abort_if($user->isSuperAdmin(), 422, 'Super Admin accounts are protected.');
+        abort_if($user->approval_status === 'approved', 422, 'This account is already approved.');
 
         $user->forceFill([
             'approval_status' => 'approved',
@@ -99,7 +102,7 @@ class UserManagementController extends Controller
     public function reject(Request $request, User $user)
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
-        abort_if($user->approval_status === 'approved', 422, 'Approved accounts cannot be rejected. Delete the account if it should be removed.');
+        abort_if($user->approval_status === 'approved', 422, 'Approved accounts cannot be rejected. Deactivate the account if access should be removed.');
 
         $user->forceFill([
             'approval_status' => 'rejected',
@@ -117,6 +120,21 @@ class UserManagementController extends Controller
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         abort_if($request->user()->is($user), 422, 'You cannot delete your own account.');
+        abort_if($user->isSuperAdmin(), 422, 'Super Admin accounts are protected and cannot be deleted here.');
+
+        $hasAuditHistory = $user->approvedUsers()->exists()
+            || $user->createdGoals()->exists()
+            || $user->ownedGoals()->exists()
+            || $user->approvedGoals()->exists()
+            || $user->weeklyUpdates()->exists()
+            || $user->supervisorReviews()->exists()
+            || $user->quarterlyReflections()->exists();
+
+        if ($hasAuditHistory) {
+            return back()->withErrors([
+                'user' => 'This user has approval, goal, report, review, or reflection history and cannot be deleted. Deactivate the account instead.',
+            ]);
+        }
 
         $name = $user->name;
         $user->delete();

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -30,7 +30,7 @@ class RoleManagementController extends Controller
         $request->merge(['name' => Str::headline($request->input('name'))]);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:100', Rule::unique('roles', 'name')],
+            'name' => ['required', 'string', 'max:100', Rule::notIn(['Super Admin']), Rule::unique('roles', 'name')],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::exists('permissions', 'name')],
         ]);

@@ -18,11 +18,10 @@ class QuarterlyReportService
                 'pillar',
                 'assignedDepartments',
                 'assignedSections',
-                'assignedUnits',
                 'objectives.weeklyUpdates.user',
                 'objectives.weeklyUpdates.reviews.supervisor',
             ])
-            ->orderBy('title')
+            ->orderBy('created_at')
             ->get();
 
         $goalRows = $goals->map(fn (Goal $goal) => $this->goalRow($goal));
@@ -49,11 +48,10 @@ class QuarterlyReportService
     private function goalRow(Goal $goal): array
     {
         return [
-            'title' => $goal->title,
+            'title' => ($goal->assignedDepartments->pluck('name')->join(', ') ?: 'Department').' Work Plan',
             'pillar' => $goal->pillar?->name ?? 'Unassigned',
             'department' => $goal->assignedDepartments->pluck('name')->unique()->join(', '),
             'section' => $goal->assignedSections->pluck('name')->unique()->join(', ') ?: 'Department-wide',
-            'unit' => $goal->assignedUnits->pluck('name')->unique()->join(', ') ?: 'All units',
             'progress' => $goal->progress(),
             'objectives_count' => $goal->objectives->count(),
             'achievement' => round($goal->objectives->avg(fn ($objective) => $objective->progressPercent()) ?? 0, 1),
@@ -89,7 +87,7 @@ class QuarterlyReportService
             return $goal->objectives->flatMap(function ($objective) use ($goal) {
                 return $objective->weeklyUpdates->map(function ($update) use ($goal, $objective) {
                     return [
-                        'goal' => $goal->title,
+                        'goal' => ($goal->assignedDepartments->pluck('name')->join(', ') ?: 'Department').' Work Plan',
                         'pillar' => $goal->pillar?->name ?? 'Unassigned',
                         'objective' => $objective->title,
                         'objective_key_activities' => $objective->key_activities,
