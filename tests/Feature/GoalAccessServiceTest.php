@@ -116,6 +116,7 @@ class GoalAccessServiceTest extends TestCase
         $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
         $creator = User::factory()->create(['department_id' => $department->id]);
         $colleague = User::factory()->create(['department_id' => $department->id]);
+        $admin = User::factory()->create(['role' => 'admin']);
         $goal = Goal::create([
             'quarter_id' => $quarter->id,
             'created_by' => $creator->id,
@@ -129,9 +130,13 @@ class GoalAccessServiceTest extends TestCase
         $this->assertFalse($service->canViewGoal($colleague, $goal));
         $this->assertTrue(Goal::visibleTo($creator)->whereKey($goal)->exists());
         $this->assertFalse(Goal::visibleTo($colleague)->whereKey($goal)->exists());
+        $this->assertFalse($service->canSubmitDailyReport($admin, $goal));
+        $this->assertFalse($service->canReviewGoal($admin, $goal));
 
         $goal->update(['status' => 'submitted']);
 
         $this->assertTrue($service->canViewGoal($colleague, $goal->fresh()));
+        $this->assertTrue($service->canSubmitDailyReport($admin, $goal->fresh()));
+        $this->assertTrue($service->canReviewGoal($admin, $goal->fresh()));
     }
 }

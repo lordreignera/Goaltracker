@@ -100,6 +100,27 @@ class WeeklyUpdateFlowTest extends TestCase
             ->assertDontSee('Submit Daily Report');
     }
 
+    public function test_draft_goal_cannot_be_reported_on_until_it_is_submitted(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+        $objective->goal->update(['status' => 'draft', 'submitted_at' => null]);
+
+        $this->actingAs($staff)->get(route('goals.show', $objective->goal))
+            ->assertOk()
+            ->assertSee('Draft')
+            ->assertSee('Edit Work Plan')
+            ->assertSee('Submit Goal')
+            ->assertDontSee('Submit Report');
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_date' => '2026-01-01',
+            'reporting_frequency' => 'daily',
+            'achievement_summary' => 'This report must not be accepted while the goal is a draft.',
+        ])->assertForbidden();
+
+        $this->assertSame(0, $objective->weeklyUpdates()->count());
+    }
+
     public function test_normal_report_does_not_store_achievement_score(): void
     {
         [$staff, $objective] = $this->staffAndObjective();

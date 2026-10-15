@@ -33,6 +33,10 @@ class GoalAccessService
 
     public function canReviewGoal(User $user, Goal $goal): bool
     {
+        if ($goal->status === 'draft') {
+            return false;
+        }
+
         if ($user->isAdmin()) {
             return true;
         }
@@ -43,6 +47,10 @@ class GoalAccessService
 
     public function canSubmitDailyReport(User $user, Goal $goal): bool
     {
+        if ($goal->status === 'draft') {
+            return false;
+        }
+
         if (! $this->canViewGoal($user, $goal)) {
             return false;
         }

@@ -375,7 +375,7 @@ class GoalCreationTest extends TestCase
             'goal_pillar_id' => $pillar->id,
             'created_by' => $supervisor->id,
             'owner_id' => $supervisor->id,
-            'status' => 'draft',
+            'status' => 'submitted',
         ]);
         $goal->assignments()->create(['department_id' => $department->id]);
         $objective = $goal->objectives()->create($this->objectiveFields([
@@ -402,6 +402,43 @@ class GoalCreationTest extends TestCase
             ->assertSee('View Progress')
             ->assertSee(route('goals.destroy', $goal), false)
             ->assertSee("#report-objective-{$objective->id}", false);
+    }
+
+    public function test_dashboard_draft_shows_completion_actions_without_reporting_actions(): void
+    {
+        $department = Department::create(['name' => 'Programs Department']);
+        $pillar = $this->goalPillar();
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $creator = User::factory()->create([
+            'department_id' => $department->id,
+            'role' => 'staff',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'goal_pillar_id' => $pillar->id,
+            'created_by' => $creator->id,
+            'owner_id' => $creator->id,
+            'status' => 'draft',
+        ]);
+        $goal->assignments()->create(['department_id' => $department->id]);
+        $objective = $goal->objectives()->create($this->objectiveFields([
+            'title' => 'Draft outreach plan',
+            'key_activities' => 'Prepare the draft outreach plan.',
+            'weight' => 100,
+        ]) + ['status' => 'pending']);
+
+        $this->actingAs($creator)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Draft outreach plan')
+            ->assertSee('Draft')
+            ->assertSee('Complete and submit this goal before reporting.')
+            ->assertSee('Edit')
+            ->assertSee('Submit Goal')
+            ->assertSee(route('goals.submit', $goal), false)
+            ->assertDontSee('Add Report')
+            ->assertDontSee(route('objectives.weekly-updates.store', $objective), false);
     }
 
     public function test_objective_with_reporting_history_cannot_be_removed_from_goal(): void
@@ -559,6 +596,7 @@ class GoalCreationTest extends TestCase
             'created_by' => $admin->id,
             'title' => 'Operational Excellence Q1',
             'level' => 'section',
+            'status' => 'submitted',
         ]);
         $goal->assignments()->create(['department_id' => $department->id, 'section_id' => $section->id]);
         $objective = $goal->objectives()->create($this->objectiveFields([

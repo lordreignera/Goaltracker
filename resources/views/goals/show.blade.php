@@ -68,10 +68,12 @@
                                     Edit Work Plan
                                 </a>
 
-                                <form method="post" action="{{ route('goals.submit', $goal) }}">
-                                    @csrf
-                                    <button class="btn btn-sm btn-outline-success w-100">Submit Goal</button>
-                                </form>
+                                @if ($goal->status === 'draft')
+                                    <form method="post" action="{{ route('goals.submit', $goal) }}">
+                                        @csrf
+                                        <button class="btn btn-sm btn-outline-success w-100">Submit Goal</button>
+                                    </form>
+                                @endif
                             </div>
                         @endif
                     </div>

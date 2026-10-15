@@ -100,6 +100,10 @@
                         <td data-label="Work Plan Goal">
                             <div class="fw-bold">{{ $objective->title }}</div>
                             <div class="text-muted small mt-1">{{ $goal->assignedDepartments->pluck('name')->join(', ') }}</div>
+                            @if ($goal->status === 'draft')
+                                <span class="badge text-bg-warning border mt-1">Draft</span>
+                                <div class="text-muted small mt-1">Complete and submit this goal before reporting.</div>
+                            @endif
                             <div class="pillar-goal-actions">
                                 @if ($canReport)
                                     @if ($planningContext === 'create')
@@ -171,6 +175,14 @@
                                     @endif
                                     @if ($canManageGoal)
                                         <li><a class="dropdown-item" href="{{ route('goals.edit', $goal) }}">Edit</a></li>
+                                        @if ($goal->status === 'draft')
+                                            <li>
+                                                <form method="post" action="{{ route('goals.submit', $goal) }}">
+                                                    @csrf
+                                                    <button class="dropdown-item" type="submit">Submit Goal</button>
+                                                </form>
+                                            </li>
+                                        @endif
                                         <li>
                                             <form method="post" action="{{ route('goals.destroy', $goal) }}" onsubmit="return confirm('Delete this work plan? This cannot be undone.');">
                                                 @csrf

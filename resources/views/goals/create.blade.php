@@ -254,6 +254,10 @@
                                 <td class="planning-summary" data-label="Work Plan Goal">
                                     <div class="fw-semibold">{{ $objective->title }}</div>
                                     <div class="text-muted small">{{ $goal->assignedDepartments->pluck('name')->join(', ') }} office</div>
+                                    @if ($goal->status === 'draft')
+                                        <span class="badge text-bg-warning border mt-1">Draft</span>
+                                        <div class="text-muted small mt-1">Complete and submit this goal before reporting.</div>
+                                    @endif
                                     @if ($canReport)
                                         <button class="btn btn-sm btn-primary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">
                                             Add Report
@@ -320,6 +324,14 @@
                                                 <li>
                                                     <a class="dropdown-item" href="{{ route('goals.edit', $goal) }}">Edit</a>
                                                 </li>
+                                                @if ($goal->status === 'draft')
+                                                    <li>
+                                                        <form method="post" action="{{ route('goals.submit', $goal) }}">
+                                                            @csrf
+                                                            <button class="dropdown-item" type="submit">Submit Goal</button>
+                                                        </form>
+                                                    </li>
+                                                @endif
                                                 <li>
                                                     <form method="post" action="{{ route('goals.destroy', $goal) }}" onsubmit="return confirm('Delete this work plan? This cannot be undone.');">
                                                         @csrf
