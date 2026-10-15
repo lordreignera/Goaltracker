@@ -19,6 +19,7 @@ class StoreGoalRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'save_action' => ['nullable', 'in:draft,submit'],
             'quarter_id' => ['required', 'exists:quarters,id'],
             'goal_pillar_id' => ['required', 'exists:goal_pillars,id'],
             'department_ids' => ['required', 'array', 'min:1'],

@@ -49,6 +49,7 @@ class GoalCreationTest extends TestCase
             ->assertSee('Key Activities')
             ->assertSee('Deliverable')
             ->assertSee('Save Draft')
+            ->assertSee('Save Goal')
             ->assertDontSee('Goal Set Name')
             ->assertDontSee('Goal Level')
             ->assertDontSee('Unit');
@@ -129,6 +130,36 @@ class GoalCreationTest extends TestCase
         );
         $this->assertTrue($goal->assignedDepartments()->whereKey($department->id)->exists());
         $this->assertFalse($goal->assignedSections()->exists());
+    }
+
+    public function test_save_goal_creates_a_submitted_work_plan(): void
+    {
+        $department = Department::create(['name' => 'Programs Department']);
+        $pillar = $this->goalPillar();
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $user = User::factory()->create([
+            'department_id' => $department->id,
+            'role' => 'staff',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->post(route('goals.store'), [
+            'save_action' => 'submit',
+            'quarter_id' => $quarter->id,
+            'goal_pillar_id' => $pillar->id,
+            'department_ids' => [$department->id],
+            'objectives' => [
+                $this->objectiveFields(['title' => 'Train program leaders', 'weight' => 100]),
+            ],
+        ]);
+
+        $goal = Goal::whereHas('objectives', fn ($query) => $query->where('title', 'Train program leaders'))->firstOrFail();
+
+        $response->assertRedirect(route('goals.show', $goal));
+        $response->assertSessionHas('status', 'Office work plan saved and submitted for review.');
+        $this->assertSame('submitted', $goal->status);
+        $this->assertNotNull($goal->submitted_at);
     }
 
     public function test_goal_objective_weights_must_total_one_hundred(): void
@@ -361,6 +392,8 @@ class GoalCreationTest extends TestCase
             ->assertSee('data-dashboard-goal-form', false)
             ->assertSee('data-weight-summary', false)
             ->assertSee(route('goals.store'), false)
+            ->assertSee('Save Draft')
+            ->assertSee('Save Goal')
             ->assertSee('Community outreach visits')
             ->assertSee('Add Work Goal')
             ->assertSee('Edit')

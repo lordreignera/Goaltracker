@@ -14,13 +14,15 @@ class GoalManagementService
         $this->validateObjectiveWeights($data['objectives']);
 
         $departmentIds = $this->departmentIds($data);
+        $isSubmitted = ($data['save_action'] ?? 'draft') === 'submit';
 
         $goal = new Goal([
             'quarter_id' => $data['quarter_id'],
             'goal_pillar_id' => $data['goal_pillar_id'],
             'created_by' => $user->id,
             'owner_id' => $user->id,
-            'status' => 'draft',
+            'status' => $isSubmitted ? 'submitted' : 'draft',
+            'submitted_at' => $isSubmitted ? now() : null,
         ]);
 
         DB::transaction(function () use ($goal, $data, $departmentIds) {

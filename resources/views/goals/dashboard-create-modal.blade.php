@@ -174,7 +174,8 @@
 
             <div class="modal-footer">
                 <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary" data-weight-submit>Save Draft</button>
+                <button class="btn btn-outline-primary" name="save_action" value="draft" data-weight-submit>Save Draft</button>
+                <button class="btn btn-primary" name="save_action" value="submit" data-weight-submit>Save Goal</button>
             </div>
         </form>
     </div>

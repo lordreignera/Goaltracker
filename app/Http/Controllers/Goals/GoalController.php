@@ -78,11 +78,15 @@ class GoalController extends Controller
 
     public function store(StoreGoalRequest $request, GoalManagementService $goals)
     {
-        $goal = $goals->createGoal($request->user(), $request->validated());
+        $data = $request->validated();
+        $goal = $goals->createGoal($request->user(), $data);
+        $isSubmitted = ($data['save_action'] ?? 'draft') === 'submit';
 
         return redirect()
             ->route('goals.show', $goal)
-            ->with('status', 'Office work plan draft saved.');
+            ->with('status', $isSubmitted
+                ? 'Office work plan saved and submitted for review.'
+                : 'Office work plan draft saved.');
     }
 
     public function show(Request $request, Goal $goal)

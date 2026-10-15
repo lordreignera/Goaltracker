@@ -24,6 +24,18 @@
             color: #fff;
         }
 
+        .btn-outline-maroon {
+            border-color: var(--arm-maroon);
+            color: var(--arm-maroon);
+            font-weight: 700;
+        }
+
+        .btn-outline-maroon:hover {
+            background: var(--arm-maroon);
+            border-color: var(--arm-maroon);
+            color: #fff;
+        }
+
         .objective-row {
             border: 1px solid #e6e9ef;
             border-radius: 12px;
@@ -505,8 +517,9 @@
         <div class="small text-muted mb-4">Example: 20 + 25 + 20 + 15 + 20 = 100%. Official progress comes from supervisor-approved progress updates.</div>
 
                     <div class="modal-footer px-0 pb-0">
-                        <button class="btn btn-maroon" data-weight-submit>Save Draft</button>
                         <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-outline-maroon" name="save_action" value="draft" data-weight-submit>Save Draft</button>
+                        <button class="btn btn-maroon" name="save_action" value="submit" data-weight-submit>Save Goal</button>
                     </div>
                 </div>
             </form>

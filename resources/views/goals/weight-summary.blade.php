@@ -52,9 +52,9 @@
             const totalLabel = form.querySelector('[data-weight-total]');
             const progress = form.querySelector('[data-weight-progress]');
             const message = form.querySelector('[data-weight-message]');
-            const submit = form.querySelector('[data-weight-submit]');
+            const submitButtons = form.querySelectorAll('[data-weight-submit]');
 
-            if (! summary || ! totalLabel || ! progress || ! message || ! submit) {
+            if (! summary || ! totalLabel || ! progress || ! message || submitButtons.length === 0) {
                 return;
             }
 
@@ -71,7 +71,9 @@
                 progress.style.width = `${Math.min(total, 100)}%`;
                 summary.classList.toggle('is-valid', total === 100);
                 summary.classList.toggle('is-over', total > 100);
-                submit.disabled = total !== 100;
+                submitButtons.forEach((button) => {
+                    button.disabled = total !== 100;
+                });
 
                 if (total === 100) {
                     message.textContent = 'Ready to save. The objective weights total exactly 100%.';
