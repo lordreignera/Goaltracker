@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Department;
 use App\Models\Goal;
+use App\Models\GoalPillar;
 use App\Models\Quarter;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,6 +31,8 @@ class StaffAccessControlTest extends TestCase
         $response->assertOk();
         $response->assertSee('Dashboard');
         $response->assertSee('Goals');
+        $response->assertSee('Create Goal');
+        $response->assertSee('Work Plan Goals');
         $response->assertDontSee('User Management');
         $response->assertDontSee('Departments');
         $response->assertDontSee('Positions');
@@ -105,11 +108,77 @@ class StaffAccessControlTest extends TestCase
         $response->assertSee(route('goals.show', $ownSectionGoal), false);
         $response->assertDontSee(route('goals.show', $otherSectionGoal), false);
         $response->assertDontSee(route('goals.show', $otherDepartmentGoal), false);
-        $response->assertDontSee('Create Goal');
+        $response->assertSee('Create Goal');
 
         $this->actingAs($staff)
             ->delete(route('goals.destroy', $departmentGoal))
             ->assertForbidden();
         $this->assertDatabaseHas('goals', ['id' => $departmentGoal->id]);
+    }
+
+    public function test_staff_can_create_edit_and_submit_their_own_department_goal(): void
+    {
+        Role::findOrCreate('Staff');
+
+        $department = Department::create(['name' => 'Programs']);
+        $otherDepartment = Department::create(['name' => 'Finance']);
+        $quarter = Quarter::create([
+            'name' => 'Q1 2026',
+            'starts_at' => '2026-01-01',
+            'ends_at' => '2026-03-31',
+            'is_active' => true,
+        ]);
+        $pillar = GoalPillar::create([
+            'name' => 'Operational Excellence',
+            'annual_goal' => 'Strengthen accountable operating systems.',
+            'sort_order' => 1,
+            'is_active' => true,
+        ]);
+        $staff = User::factory()->create([
+            'department_id' => $department->id,
+            'role' => 'staff',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        $staff->assignRole('Staff');
+
+        $this->actingAs($staff)
+            ->get(route('goals.create'))
+            ->assertOk()
+            ->assertSee('Add Work Goal');
+
+        $payload = [
+            'quarter_id' => $quarter->id,
+            'goal_pillar_id' => $pillar->id,
+            'department_ids' => [$department->id],
+            'objectives' => [[
+                'title' => 'Complete the quarterly work plan',
+                'key_activities' => ['Prepare activities', 'Confirm deliverables'],
+                'specific_output' => 'Approved quarterly work plan.',
+                'weight' => 100,
+                'planned_weeks' => 2,
+                'reporting_frequency' => ['weekly'],
+                'starts_at' => '2026-01-01',
+                'due_at' => '2026-01-14',
+            ]],
+        ];
+
+        $this->actingAs($staff)
+            ->post(route('goals.store'), $payload)
+            ->assertRedirect();
+
+        $goal = Goal::where('created_by', $staff->id)->firstOrFail();
+
+        $this->actingAs($staff)->get(route('goals.edit', $goal))->assertOk();
+        $this->actingAs($staff)->put(route('goals.update', $goal), $payload)->assertRedirect();
+        $this->actingAs($staff)->post(route('goals.submit', $goal))->assertRedirect();
+
+        $this->assertSame('submitted', $goal->fresh()->status);
+        $this->actingAs($staff)->get(route('goals.edit', $goal))->assertForbidden();
+
+        $payload['department_ids'] = [$otherDepartment->id];
+        $this->actingAs($staff)
+            ->post(route('goals.store'), $payload)
+            ->assertSessionHasErrors('department_ids');
     }
 }

@@ -207,6 +207,11 @@ class User extends Authenticatable
             || $this->can('manage goals');
     }
 
+    public function canCreateGoals(): bool
+    {
+        return $this->isApproved();
+    }
+
     public function canReviewGoals(): bool
     {
         return $this->isAdmin()

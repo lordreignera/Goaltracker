@@ -290,6 +290,7 @@
             @include('goals.pillar-overview', [
                 'planningContext' => 'dashboard',
                 'canAddGoals' => $canCreateGoals,
+                'manageableGoalIds' => $manageableGoalIds,
                 'reportableGoalIds' => $reportableGoalIds,
             ])
         </section>

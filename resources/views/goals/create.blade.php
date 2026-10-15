@@ -229,6 +229,8 @@
                                 $keyActivities = $objective->keyActivitiesList();
                                 $reportCount = $objective->weeklyUpdates->count();
                                 [$firstReportDate, $lastReportDate] = $objective->reportingDateRange();
+                                $canManageGoal = $manageableGoalIds->contains($goal->id);
+                                $canReport = $reportableGoalIds->contains($goal->id);
                             @endphp
                             <tr>
                                 <td class="pillar-cell" data-label="Activity Pillar">
@@ -240,9 +242,11 @@
                                 <td class="planning-summary" data-label="Work Plan Goal">
                                     <div class="fw-semibold">{{ $objective->title }}</div>
                                     <div class="text-muted small">{{ $goal->assignedDepartments->pluck('name')->join(', ') }} office</div>
-                                    <button class="btn btn-sm btn-primary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">
-                                        Add Report
-                                    </button>
+                                    @if ($canReport)
+                                        <button class="btn btn-sm btn-primary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">
+                                            Add Report
+                                        </button>
+                                    @endif
                                     <button class="btn btn-sm btn-outline-secondary summary-action" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">
                                         View Details
                                     </button>
@@ -300,20 +304,24 @@
                                                     Add Work Goal
                                                 </button>
                                             </li>
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('goals.edit', $goal) }}">Edit</a>
-                                            </li>
-                                            <li>
-                                                <form method="post" action="{{ route('goals.destroy', $goal) }}" onsubmit="return confirm('Delete this work plan? This cannot be undone.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <input type="hidden" name="modal_source" value="delete_goal">
-                                                    <button class="dropdown-item text-danger" type="submit">Delete</button>
-                                                </form>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">Add Report</button>
-                                            </li>
+                                            @if ($canManageGoal)
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ route('goals.edit', $goal) }}">Edit</a>
+                                                </li>
+                                                <li>
+                                                    <form method="post" action="{{ route('goals.destroy', $goal) }}" onsubmit="return confirm('Delete this work plan? This cannot be undone.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <input type="hidden" name="modal_source" value="delete_goal">
+                                                        <button class="dropdown-item text-danger" type="submit">Delete</button>
+                                                    </form>
+                                                </li>
+                                            @endif
+                                            @if ($canReport)
+                                                <li>
+                                                    <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">Add Report</button>
+                                                </li>
+                                            @endif
                                             <li>
                                                 <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#viewObjectiveModal-{{ $objective->id }}">View Progress</button>
                                             </li>
@@ -595,6 +603,8 @@
                     $maxReportDate = $lastReportDate?->toDateString();
                     $latestUpdate = $objective->weeklyUpdates->sortByDesc('report_date')->first();
                     $latestReview = $latestUpdate?->reviews?->sortByDesc('created_at')->first();
+                    $canManageGoal = $manageableGoalIds->contains($goal->id);
+                    $canReport = $reportableGoalIds->contains($goal->id);
                 @endphp
 
                 <div class="modal fade" id="viewObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="viewObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
@@ -650,7 +660,8 @@
                     </div>
                 </div>
 
-                <div class="modal fade" id="editObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="editObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
+                @if ($canManageGoal)
+                    <div class="modal fade" id="editObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="editObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
                     <div class="modal-dialog modal-fullscreen-sm-down">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -670,9 +681,11 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    </div>
+                @endif
 
-                <div class="modal fade" id="reportObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="reportObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
+                @if ($canReport)
+                    <div class="modal fade" id="reportObjectiveModal-{{ $objective->id }}" tabindex="-1" aria-labelledby="reportObjectiveModalLabel-{{ $objective->id }}" aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
                         <form method="post" action="{{ route('objectives.weekly-updates.store', $objective) }}" class="modal-content" enctype="multipart/form-data">
                             @csrf
@@ -740,7 +753,8 @@
                             </div>
                         </form>
                     </div>
-                </div>
+                    </div>
+                @endif
             @endforeach
         @endforeach
     @endforeach

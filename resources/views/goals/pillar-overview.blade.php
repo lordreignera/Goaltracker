@@ -1,6 +1,7 @@
 @php
     $planningContext = $planningContext ?? 'dashboard';
     $canAddGoals = $canAddGoals ?? false;
+    $manageableGoalIds = collect($manageableGoalIds ?? []);
     $reportableGoalIds = collect($reportableGoalIds ?? []);
 @endphp
 
@@ -83,7 +84,8 @@
                         $keyActivities = $objective->keyActivitiesList();
                         $latestUpdate = $objective->weeklyUpdates->sortByDesc('report_date')->first();
                         $latestReview = $latestUpdate?->reviews?->sortByDesc('created_at')->first();
-                        $canReport = $planningContext === 'create' || $reportableGoalIds->contains($goal->id);
+                        $canManageGoal = $manageableGoalIds->contains($goal->id);
+                        $canReport = $reportableGoalIds->contains($goal->id);
                     @endphp
                     <tr>
                         <td data-label="Activity Pillar">
@@ -166,6 +168,8 @@
                                         <li>
                                             <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#dashboardCreateGoalModal" data-dashboard-add-for-pillar data-pillar-id="{{ $goalPillar->id }}">Add Work Goal</button>
                                         </li>
+                                    @endif
+                                    @if ($canManageGoal)
                                         <li><a class="dropdown-item" href="{{ route('goals.edit', $goal) }}">Edit</a></li>
                                         <li>
                                             <form method="post" action="{{ route('goals.destroy', $goal) }}" onsubmit="return confirm('Delete this work plan? This cannot be undone.');">

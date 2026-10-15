@@ -45,28 +45,34 @@ class GoalController extends Controller
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'goalPillars' => GoalPillar::orderBy('sort_order')->orderBy('name')->get(),
             'departments' => $departments,
-            'canCreateGoals' => $user->canManageGoals(),
+            'canCreateGoals' => $user->canCreateGoals(),
         ]);
     }
 
     public function create(Request $request)
     {
-        abort_unless($request->user()->canManageGoals(), 403);
+        abort_unless($request->user()->canCreateGoals(), 403);
 
         $departments = $this->departmentOptions($request->user());
         $goalPillars = GoalPillar::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
-        $goalsByPillar = Goal::visibleTo($request->user())
+        $access = app(GoalAccessService::class);
+        $visibleGoals = Goal::visibleTo($request->user())
             ->with(['quarter', 'assignedDepartments', 'objectives.weeklyUpdates.reviews'])
             ->whereNotNull('goal_pillar_id')
             ->latest()
-            ->get()
-            ->groupBy('goal_pillar_id');
+            ->get();
 
         return view('goals.create', [
             'quarters' => Quarter::orderByDesc('starts_at')->get(),
             'goalPillars' => $goalPillars,
-            'goalsByPillar' => $goalsByPillar,
+            'goalsByPillar' => $visibleGoals->groupBy('goal_pillar_id'),
             'departments' => $departments,
+            'manageableGoalIds' => $visibleGoals
+                ->filter(fn (Goal $goal) => $access->canUpdateGoal($request->user(), $goal))
+                ->pluck('id'),
+            'reportableGoalIds' => $visibleGoals
+                ->filter(fn (Goal $goal) => $access->canSubmitDailyReport($request->user(), $goal))
+                ->pluck('id'),
         ]);
     }
 

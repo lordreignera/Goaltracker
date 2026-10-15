@@ -27,7 +27,8 @@ class GoalAccessService
             return false;
         }
 
-        return $user->canManageGoals();
+        return $user->canManageGoals()
+            || ($goal->created_by === $user->id && $goal->status === 'draft');
     }
 
     public function canReviewGoal(User $user, Goal $goal): bool

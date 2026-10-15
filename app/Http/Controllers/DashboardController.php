@@ -49,7 +49,10 @@ class DashboardController extends Controller
             'goals' => $goals,
             'goalPillars' => $goalPillars,
             'goalsByPillar' => $goals->whereNotNull('goal_pillar_id')->groupBy('goal_pillar_id'),
-            'canCreateGoals' => $user->canManageGoals(),
+            'canCreateGoals' => $user->canCreateGoals(),
+            'manageableGoalIds' => $goals
+                ->filter(fn (Goal $goal) => $access->canUpdateGoal($user, $goal))
+                ->pluck('id'),
             'reportableGoalIds' => $goals
                 ->filter(fn (Goal $goal) => $access->canSubmitDailyReport($user, $goal))
                 ->pluck('id'),

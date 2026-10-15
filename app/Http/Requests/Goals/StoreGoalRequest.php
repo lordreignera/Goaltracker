@@ -13,7 +13,7 @@ class StoreGoalRequest extends FormRequest
     {
         $user = $this->user();
 
-        return $user && $user->canManageGoals();
+        return $user && $user->canCreateGoals();
     }
 
     public function rules(): array

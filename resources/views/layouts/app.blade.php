@@ -922,7 +922,7 @@
                             {!! $icon('target') !!}<span>Goal Pillars</span>
                         </a>
                     @endif
-                    @if ($currentUser->canManageGoals())
+                    @if ($currentUser->canCreateGoals())
                         <a class="sidebar-link {{ request()->routeIs('goals.create') ? 'active' : '' }}" href="{{ route('goals.create') }}">
                             {!! $icon('plus') !!}<span>Work Plan Goals</span>
                         </a>
