@@ -38,6 +38,7 @@ class StaffAccessControlTest extends TestCase
         $response->assertDontSee('Positions');
         $response->assertDontSee('Roles &amp; Permissions', false);
         $response->assertDontSee('Quarters');
+        $response->assertDontSee('Audit Logs');
     }
 
     public function test_staff_cannot_open_administration_routes_directly(): void
@@ -56,6 +57,7 @@ class StaffAccessControlTest extends TestCase
         $this->actingAs($staff)->get(route('positions.index'))->assertForbidden();
         $this->actingAs($staff)->get(route('roles.management.index'))->assertForbidden();
         $this->actingAs($staff)->get(route('quarters.index'))->assertForbidden();
+        $this->actingAs($staff)->get(route('audit-logs.index'))->assertForbidden();
     }
 
     public function test_staff_only_sees_goals_for_their_department_or_section(): void

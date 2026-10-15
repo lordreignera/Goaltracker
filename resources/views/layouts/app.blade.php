@@ -9,8 +9,6 @@
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
@@ -857,6 +855,7 @@
             $canManageQuarters = $currentUser->isAdmin() || $currentUser->can('manage quarters');
             $canManageRoles = $currentUser->isAdmin();
             $canManageSettings = $currentUser->isAdmin();
+            $canViewAuditLogs = $currentUser->isAdmin() || $currentUser->can('view audit logs');
             $canManageAdministration = $currentUser->canManageAdministration();
             $pendingRegistrationCount = $canManageUsers
                 ? \App\Models\User::where('approval_status', 'pending')->count()
@@ -868,6 +867,8 @@
                     ->take(5)
                     ->get()
                 : collect();
+            $workflowUnreadCount = $currentUser->unreadNotifications()->count();
+            $recentWorkflowNotifications = $currentUser->notifications()->latest()->take(6)->get();
             $icon = function (string $name): string {
                 return match ($name) {
                     'dashboard' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z"/></svg>',
@@ -933,6 +934,9 @@
                     <a class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.quarterly.index') }}">
                         {!! $icon('report') !!}<span>Reports</span>
                     </a>
+                    <a class="sidebar-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}">
+                        {!! $icon('bell') !!}<span>Notifications</span>
+                    </a>
                 </nav>
 
                 @if ($canManageAdministration || $canManageUsers || $canManageGoalPillars)
@@ -961,7 +965,7 @@
                     </nav>
                 @endif
 
-                @if ($canManageQuarters || $canManageRoles || $canManageSettings)
+                @if ($canManageQuarters || $canManageRoles || $canManageSettings || $canViewAuditLogs)
                     <div class="sidebar-section">Administration</div>
                     <nav class="sidebar-nav" aria-label="Administration navigation">
                         @if ($canManageQuarters)
@@ -977,6 +981,11 @@
                         @if ($canManageSettings)
                             <a class="sidebar-link {{ request()->routeIs('settings.company.*') ? 'active' : '' }}" href="{{ route('settings.company.edit') }}">
                                 {!! $icon('settings') !!}<span>Company Settings</span>
+                            </a>
+                        @endif
+                        @if ($canViewAuditLogs)
+                            <a class="sidebar-link {{ request()->routeIs('audit-logs.*') ? 'active' : '' }}" href="{{ route('audit-logs.index') }}">
+                                {!! $icon('shield') !!}<span>Audit Logs</span>
                             </a>
                         @endif
                     </nav>
@@ -1009,6 +1018,43 @@
                                 {!! $icon('search') !!}
                                 <input type="search" name="search" placeholder="Search goals, departments..." aria-label="Search goals and departments">
                             </form>
+
+                            <div class="dropdown">
+                                <button class="icon-button" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Workflow notifications">
+                                    {!! $icon('bell') !!}
+                                    @if ($workflowUnreadCount > 0)
+                                        <span class="notification-count">{{ $workflowUnreadCount > 9 ? '9+' : $workflowUnreadCount }}</span>
+                                    @endif
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end notification-menu">
+                                    <div class="p-3 d-flex align-items-center justify-content-between gap-3">
+                                        <div>
+                                            <div class="fw-bold">Goal Notifications</div>
+                                            <div class="text-muted small">{{ $workflowUnreadCount }} unread</div>
+                                        </div>
+                                        @if ($workflowUnreadCount > 0)
+                                            <form method="POST" action="{{ route('notifications.read-all') }}">
+                                                @csrf
+                                                <button class="btn btn-sm btn-link" type="submit">Mark all read</button>
+                                            </form>
+                                        @endif
+                                    </div>
+
+                                    @forelse ($recentWorkflowNotifications as $notification)
+                                        <a class="notification-item" href="{{ route('notifications.read', $notification) }}">
+                                            <div class="fw-bold">{{ $notification->data['title'] ?? 'Notification' }}</div>
+                                            <div class="text-muted small">{{ $notification->data['message'] ?? '' }}</div>
+                                            <div class="text-muted small mt-1">{{ $notification->created_at->diffForHumans() }}</div>
+                                        </a>
+                                    @empty
+                                        <div class="px-3 py-4 text-muted small border-top">No goal notifications yet.</div>
+                                    @endforelse
+
+                                    <div class="p-2 border-top">
+                                        <a class="btn btn-sm btn-primary w-100" href="{{ route('notifications.index') }}">View all notifications</a>
+                                    </div>
+                                </div>
+                            </div>
 
                             @if ($canManageUsers)
                                 <div class="dropdown">
@@ -1074,6 +1120,10 @@
 
                 <main class="admin-content">
                     <div class="content-container">
+                        @if (session('warning'))
+                            <div class="alert alert-warning" role="alert">{{ session('warning') }}</div>
+                        @endif
+
                         @if (isset($header))
                             <div class="mb-4">
                                 {{ $header }}
@@ -1089,8 +1139,6 @@
         @stack('modals')
 
         @livewireScripts
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
         <script>
             const themeKey = 'smart-goals-theme';
             const sidebarKey = 'smart-goals-sidebar';

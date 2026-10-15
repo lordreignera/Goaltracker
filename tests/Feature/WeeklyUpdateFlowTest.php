@@ -243,7 +243,7 @@ class WeeklyUpdateFlowTest extends TestCase
 
     public function test_staff_can_attach_evidence_to_daily_report(): void
     {
-        Storage::fake('public');
+        Storage::fake('private');
 
         [$staff, $objective] = $this->staffAndObjective();
 
@@ -258,7 +258,7 @@ class WeeklyUpdateFlowTest extends TestCase
 
         $update = $objective->weeklyUpdates()->firstOrFail();
 
-        Storage::disk('public')->assertExists($update->evidence_path);
+        Storage::disk('private')->assertExists($update->evidence_path);
         $this->assertSame('training-register.jpg', $update->evidence_original_name);
 
         $this->actingAs($staff)->get(route('weekly-updates.evidence', $update))
@@ -287,7 +287,7 @@ class WeeklyUpdateFlowTest extends TestCase
 
     public function test_webp_evidence_file_is_allowed(): void
     {
-        Storage::fake('public');
+        Storage::fake('private');
 
         [$staff, $objective] = $this->staffAndObjective();
 

@@ -88,6 +88,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'approved_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'two_factor_confirmed_at' => 'datetime',
             'is_active' => 'boolean',
             'password' => 'hashed',
         ];
@@ -229,6 +230,7 @@ class User extends Authenticatable
                 'manage positions',
                 'manage users',
                 'manage quarters',
+                'view audit logs',
             ]);
     }
 

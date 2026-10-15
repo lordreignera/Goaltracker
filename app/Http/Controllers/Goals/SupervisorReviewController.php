@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Goals;
 use App\Http\Controllers\Controller;
 use App\Models\WeeklyUpdate;
 use App\Services\GoalAccessService;
+use App\Services\WorkflowNotificationService;
 use Illuminate\Http\Request;
 
 class SupervisorReviewController extends Controller
 {
-    public function store(Request $request, WeeklyUpdate $weeklyUpdate)
-    {
+    public function store(
+        Request $request,
+        WeeklyUpdate $weeklyUpdate,
+        WorkflowNotificationService $notifications
+    ) {
         $goal = $weeklyUpdate->objective->goal;
         abort_unless(app(GoalAccessService::class)->canReviewGoal($request->user(), $goal), 403);
         abort_if($weeklyUpdate->user_id === $request->user()->id, 422, 'You cannot review your own report.');
@@ -58,6 +62,8 @@ class SupervisorReviewController extends Controller
                 'status' => $allObjectivesComplete ? 'completed' : 'in_progress',
             ]);
         }
+
+        $notifications->reportReviewed($weeklyUpdate, $request->user(), $data['decision']);
 
         return back()->with('status', 'Review saved.');
     }

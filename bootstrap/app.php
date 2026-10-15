@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureMultiFactorAuthentication;
 use App\Http\Middleware\EnsureUserIsApproved;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,10 +17,28 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prependToGroup('web', SecurityHeaders::class);
         $middleware->appendToGroup('web', EnsureUserIsApproved::class);
+
+        $trustedProxies = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_PROXIES', ''))
+        )));
+
+        if ($trustedProxies !== []) {
+            $middleware->trustProxies(
+                at: $trustedProxies,
+                headers: Request::HEADER_X_FORWARDED_FOR
+                    | Request::HEADER_X_FORWARDED_HOST
+                    | Request::HEADER_X_FORWARDED_PORT
+                    | Request::HEADER_X_FORWARDED_PROTO
+                    | Request::HEADER_X_FORWARDED_PREFIX,
+            );
+        }
 
         $middleware->alias([
             'approved' => EnsureUserIsApproved::class,
+            'mfa' => EnsureMultiFactorAuthentication::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

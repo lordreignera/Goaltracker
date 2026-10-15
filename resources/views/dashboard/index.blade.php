@@ -227,53 +227,36 @@
         @endif
 
         <section class="summary-grid">
-            <article class="summary-card">
-                <div class="d-flex justify-content-between gap-3">
-                    <div>
-                        <div class="summary-title">Total Goals</div>
-                        <div class="summary-value">{{ $totalGoals }}</div>
-                    </div>
-                    <span class="summary-icon soft-blue">{!! $icon('target') !!}</span>
-                </div>
-                <div class="summary-support mt-3">Across visible departments</div>
-                <div class="summary-compare mt-3"><strong class="text-success">0%</strong> vs last quarter</div>
-            </article>
-
-            <article class="summary-card">
-                <div class="d-flex justify-content-between gap-3">
-                    <div>
-                        <div class="summary-title">On Track</div>
-                        <div class="summary-value">{{ $onTrackGoals }}</div>
-                    </div>
-                    <span class="summary-icon soft-success">{!! $icon('check') !!}</span>
-                </div>
-                <div class="summary-support mt-3">{{ round(($onTrackGoals / $total) * 100, 1) }}% of total goals</div>
-                <div class="summary-compare mt-3"><strong class="text-success">0%</strong> vs last quarter</div>
-            </article>
-
-            <article class="summary-card">
-                <div class="d-flex justify-content-between gap-3">
-                    <div>
-                        <div class="summary-title">At Risk</div>
-                        <div class="summary-value">{{ $atRiskGoals }}</div>
-                    </div>
-                    <span class="summary-icon soft-warning">{!! $icon('clock') !!}</span>
-                </div>
-                <div class="summary-support mt-3">{{ round(($atRiskGoals / $total) * 100, 1) }}% of total goals</div>
-                <div class="summary-compare mt-3"><strong class="text-warning">0%</strong> vs last quarter</div>
-            </article>
-
-            <article class="summary-card">
-                <div class="d-flex justify-content-between gap-3">
-                    <div>
-                        <div class="summary-title">Off Track</div>
-                        <div class="summary-value">{{ $offTrackGoals }}</div>
-                    </div>
-                    <span class="summary-icon soft-danger">{!! $icon('x') !!}</span>
-                </div>
-                <div class="summary-support mt-3">{{ round(($offTrackGoals / $total) * 100, 1) }}% of total goals</div>
-                <div class="summary-compare mt-3"><strong class="text-danger">0%</strong> vs last quarter</div>
-            </article>
+            @include('dashboard.partials.summary-card', [
+                'title' => 'Total Goals',
+                'value' => $totalGoals,
+                'support' => 'Across visible departments',
+                'iconName' => 'target',
+                'iconClass' => 'soft-blue',
+            ])
+            @include('dashboard.partials.summary-card', [
+                'title' => 'On Track',
+                'value' => $onTrackGoals,
+                'support' => round(($onTrackGoals / $total) * 100, 1).'% of total goals',
+                'iconName' => 'check',
+                'iconClass' => 'soft-success',
+            ])
+            @include('dashboard.partials.summary-card', [
+                'title' => 'At Risk',
+                'value' => $atRiskGoals,
+                'support' => round(($atRiskGoals / $total) * 100, 1).'% of total goals',
+                'compareClass' => 'text-warning',
+                'iconName' => 'clock',
+                'iconClass' => 'soft-warning',
+            ])
+            @include('dashboard.partials.summary-card', [
+                'title' => 'Off Track',
+                'value' => $offTrackGoals,
+                'support' => round(($offTrackGoals / $total) * 100, 1).'% of total goals',
+                'compareClass' => 'text-danger',
+                'iconName' => 'x',
+                'iconClass' => 'soft-danger',
+            ])
         </section>
 
         <section class="dashboard-card">

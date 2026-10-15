@@ -82,8 +82,13 @@
                         $goal = $row[0];
                         $objective = $row[1];
                         $keyActivities = $objective->keyActivitiesList();
-                        $latestUpdate = $objective->weeklyUpdates->sortByDesc('report_date')->first();
+                        $latestUpdate = $objective->relationLoaded('latestWeeklyUpdate')
+                            ? $objective->latestWeeklyUpdate
+                            : $objective->weeklyUpdates->sortByDesc('report_date')->first();
                         $latestReview = $latestUpdate?->reviews?->sortByDesc('created_at')->first();
+                        $reportCount = $objective->relationLoaded('weeklyUpdates')
+                            ? $objective->weeklyUpdates->count()
+                            : ($objective->weekly_updates_count ?? 0);
                         $canManageGoal = $manageableGoalIds->contains($goal->id);
                         $canReport = $reportableGoalIds->contains($goal->id);
                     @endphp
@@ -157,7 +162,7 @@
                                     <span class="badge text-bg-light border">{{ ucfirst($frequency) }}</span>
                                 @endforeach
                             </div>
-                            <div class="text-muted small mt-2">{{ $objective->weeklyUpdates->count() }} report{{ $objective->weeklyUpdates->count() === 1 ? '' : 's' }}</div>
+                            <div class="text-muted small mt-2">{{ $reportCount }} report{{ $reportCount === 1 ? '' : 's' }}</div>
                             <div class="small mt-1">{{ $latestUpdate?->action_points ? str($latestUpdate->action_points)->limit(55) : 'No next step yet' }}</div>
                             <div class="text-muted small mt-1">{{ $latestReview?->comments ? str($latestReview->comments)->limit(55) : 'No supervisor review yet' }}</div>
                             @if ($planningContext === 'create')

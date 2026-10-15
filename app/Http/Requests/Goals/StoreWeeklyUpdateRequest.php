@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Goals;
 
 use App\Models\GoalObjective;
+use App\Services\EvidenceScanner;
 use App\Services\GoalAccessService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Storage;
@@ -123,6 +124,13 @@ class StoreWeeklyUpdateRequest extends FormRequest
 
         if ($this->hasFile('evidence_file')) {
             $file = $this->file('evidence_file');
+            try {
+                app(EvidenceScanner::class)->scan($file);
+            } catch (\RuntimeException $exception) {
+                throw ValidationException::withMessages([
+                    'evidence_file' => $exception->getMessage(),
+                ]);
+            }
             $path = Storage::disk(config('filesystems.evidence_disk'))->putFile('weekly-update-evidence', $file);
 
             if (! is_string($path)) {

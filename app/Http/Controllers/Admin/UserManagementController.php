@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Position;
 use App\Models\Section;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -54,9 +55,10 @@ class UserManagementController extends Controller
         ]);
     }
 
-    public function update(UpdateUserRequest $request, User $user)
+    public function update(UpdateUserRequest $request, User $user, AuditLogger $audit)
     {
         $data = $request->validated();
+        $oldAccess = $this->accessSnapshot($user);
 
         $user->forceFill([
             'first_name' => $data['first_name'],
@@ -77,10 +79,19 @@ class UserManagementController extends Controller
             $this->assignApprovedRole($user);
         }
 
+        $audit->record(
+            category: 'security',
+            action: 'user.access_updated',
+            description: "Access settings for {$user->name} were updated.",
+            subject: $user,
+            oldValues: $oldAccess,
+            newValues: $this->accessSnapshot($user->refresh()),
+        );
+
         return back()->with('status', "{$user->name} has been updated.");
     }
 
-    public function approve(Request $request, User $user)
+    public function approve(Request $request, User $user, AuditLogger $audit)
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         abort_if($user->isSuperAdmin(), 422, 'Super Admin accounts are protected.');
@@ -96,10 +107,18 @@ class UserManagementController extends Controller
         $this->assignApprovedRole($user);
         $this->syncDepartmentAccess($user, $user->accessibleDepartmentIds());
 
+        $audit->record(
+            category: 'security',
+            action: 'user.approved',
+            description: "{$user->name} was approved and granted system access.",
+            subject: $user,
+            newValues: $this->accessSnapshot($user->refresh()),
+        );
+
         return back()->with('status', "{$user->name} has been approved.");
     }
 
-    public function reject(Request $request, User $user)
+    public function reject(Request $request, User $user, AuditLogger $audit)
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         abort_if($user->approval_status === 'approved', 422, 'Approved accounts cannot be rejected. Deactivate the account if access should be removed.');
@@ -113,10 +132,18 @@ class UserManagementController extends Controller
 
         $user->syncRoles([]);
 
+        $audit->record(
+            category: 'security',
+            action: 'user.rejected',
+            description: "{$user->name}'s account request was rejected.",
+            subject: $user,
+            newValues: $this->accessSnapshot($user->refresh()),
+        );
+
         return back()->with('status', "{$user->name} has been rejected.");
     }
 
-    public function destroy(Request $request, User $user)
+    public function destroy(Request $request, User $user, AuditLogger $audit)
     {
         abort_unless($request->user()->isSuperAdmin(), 403);
         abort_if($request->user()->is($user), 422, 'You cannot delete your own account.');
@@ -137,6 +164,13 @@ class UserManagementController extends Controller
         }
 
         $name = $user->name;
+        $audit->record(
+            category: 'security',
+            action: 'user.deletion_authorized',
+            description: "Deletion of {$name}'s account was authorized.",
+            subject: $user,
+            oldValues: $this->accessSnapshot($user),
+        );
         $user->delete();
 
         return back()->with('status', "{$name} has been deleted.");
@@ -164,5 +198,18 @@ class UserManagementController extends Controller
             ->all();
 
         $user->accessibleDepartments()->sync($ids);
+    }
+
+    private function accessSnapshot(User $user): array
+    {
+        return [
+            'approval_status' => $user->approval_status,
+            'is_active' => $user->is_active,
+            'requested_role' => $user->requested_role,
+            'roles' => $user->roles()->pluck('name')->sort()->values()->all(),
+            'department_ids' => $user->accessibleDepartments()->pluck('departments.id')->map(fn ($id) => (int) $id)->sort()->values()->all(),
+            'section_id' => $user->section_id,
+            'position_id' => $user->position_id,
+        ];
     }
 }

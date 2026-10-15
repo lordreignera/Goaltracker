@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CompanySettingController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\GoalPillarController;
@@ -14,12 +15,16 @@ use App\Http\Controllers\Goals\ObjectiveController;
 use App\Http\Controllers\Goals\SupervisorReviewController;
 use App\Http\Controllers\Goals\WeeklyUpdateController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Reports\QuarterlyReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login')->name('home');
 
-Route::middleware(['auth', 'approved'])->group(function () {
+Route::middleware(['auth', 'approved', 'mfa'])->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/{notification}', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/help/user-guide', [HelpController::class, 'index'])->name('help.user-guide');
     Route::get('/help/user-guide/pdf', [HelpController::class, 'pdf'])->name('help.user-guide.pdf');
@@ -34,6 +39,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('roles/management', [RoleManagementController::class, 'index'])->name('roles.management.index');
     Route::post('roles/management', [RoleManagementController::class, 'store'])->name('roles.management.store');
     Route::put('roles/management/{role}/permissions', [RoleManagementController::class, 'updatePermissions'])->name('roles.management.permissions.update');
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::put('users/management/{user}', [UserManagementController::class, 'update'])->name('users.management.update');
     Route::post('users/management/{user}/approve', [UserManagementController::class, 'approve'])->name('users.management.approve');
     Route::post('users/management/{user}/reject', [UserManagementController::class, 'reject'])->name('users.management.reject');

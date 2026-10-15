@@ -292,6 +292,7 @@ class DatabaseSeeder extends Seeder
             'view reports',
             'export reports',
             'view organization dashboard',
+            'view audit logs',
         ];
 
         foreach ($permissions as $permission) {

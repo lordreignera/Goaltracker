@@ -21,6 +21,7 @@ class WeeklyUpdate extends Model
         'action_points',
         'evidence_path',
         'evidence_original_name',
+        'evidence_deleted_at',
         'status',
         'submitted_at',
     ];
@@ -33,6 +34,7 @@ class WeeklyUpdate extends Model
         'is_progress_update' => 'boolean',
         'achievement_percentage' => 'integer',
         'submitted_at' => 'datetime',
+        'evidence_deleted_at' => 'datetime',
     ];
 
     protected static function booted(): void

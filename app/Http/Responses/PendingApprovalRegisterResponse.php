@@ -2,7 +2,6 @@
 
 namespace App\Http\Responses;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Fortify\Contracts\RegisterResponse;
 

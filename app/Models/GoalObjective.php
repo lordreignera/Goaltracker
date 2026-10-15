@@ -37,6 +37,20 @@ class GoalObjective extends Model
         return $this->hasMany(WeeklyUpdate::class);
     }
 
+    public function latestWeeklyUpdate()
+    {
+        return $this->hasOne(WeeklyUpdate::class, 'goal_objective_id')
+            ->latestOfMany('report_date');
+    }
+
+    public function latestApprovedUpdate()
+    {
+        return $this->hasOne(WeeklyUpdate::class, 'goal_objective_id')
+            ->where('status', 'approved')
+            ->whereHas('latestApprovedReview')
+            ->latestOfMany('report_period_start');
+    }
+
     public function approvedWeeklyUpdates()
     {
         return $this->weeklyUpdates()->where('status', 'approved');
@@ -92,6 +106,10 @@ class GoalObjective extends Model
 
     public function approvedAchievementPercent(): int
     {
+        if ($this->relationLoaded('latestApprovedUpdate')) {
+            return (int) ($this->latestApprovedUpdate?->verifiedAchievementPercent() ?? 0);
+        }
+
         if ($this->relationLoaded('weeklyUpdates')) {
             $latestApproved = $this->weeklyUpdates
                 ->where('status', 'approved')
@@ -167,5 +185,4 @@ class GoalObjective extends Model
             $periodStart->copy()->addDays(6)->min($lastReportingDate),
         ];
     }
-
 }

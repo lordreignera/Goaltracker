@@ -17,7 +17,29 @@ class DashboardController extends Controller
         $user = $request->user();
         $goals = Goal::query()
             ->visibleTo($user)
-            ->with(['pillar', 'quarter', 'assignedDepartments', 'objectives.weeklyUpdates.reviews'])
+            ->select([
+                'id',
+                'quarter_id',
+                'goal_pillar_id',
+                'created_by',
+                'owner_id',
+                'status',
+                'submitted_at',
+                'approved_at',
+                'approved_by',
+                'created_at',
+            ])
+            ->with([
+                'pillar:id,name,annual_goal',
+                'quarter:id,name,starts_at,ends_at',
+                'assignedDepartments:id,name',
+                'objectives' => fn ($query) => $query
+                    ->withCount('weeklyUpdates')
+                    ->with([
+                        'latestWeeklyUpdate.reviews',
+                        'latestApprovedUpdate.latestApprovedReview',
+                    ]),
+            ])
             ->latest()
             ->get();
         $goalPillars = GoalPillar::where('is_active', true)
@@ -29,9 +51,19 @@ class DashboardController extends Controller
         $onTrackGoals = $goals->filter(fn (Goal $goal) => $goal->progress() >= 70)->count();
         $atRiskGoals = $goals->filter(fn (Goal $goal) => $goal->progress() >= 40 && $goal->progress() < 70)->count();
         $offTrackGoals = $goals->filter(fn (Goal $goal) => $goal->progress() < 40)->count();
-        $organizationScore = ($user->isAdmin() || $user->can('view organization dashboard'))
-            ? Department::with('goals.objectives')->get()->avg(fn ($department) => $department->goals->avg(fn ($goal) => $goal->progress()) ?? 0)
-            : null;
+        $organizationScore = null;
+        if ($user->isAdmin() || $user->can('view organization dashboard')) {
+            $progressByDepartment = $goals
+                ->flatMap(fn (Goal $goal) => $goal->assignedDepartments->map(
+                    fn (Department $department) => [$department->id, $goal->progress()]
+                ))
+                ->groupBy(fn (array $row) => $row[0])
+                ->map(fn ($rows) => collect($rows)->avg(fn (array $row) => $row[1]));
+
+            $organizationScore = Department::query()
+                ->pluck('id')
+                ->avg(fn (int $departmentId) => $progressByDepartment->get($departmentId, 0));
+        }
 
         return view('dashboard.index', [
             'totalGoals' => $goals->count(),

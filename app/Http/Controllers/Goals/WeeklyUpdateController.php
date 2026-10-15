@@ -8,19 +8,27 @@ use App\Http\Requests\Goals\UpdateWeeklyUpdateRequest;
 use App\Models\GoalObjective;
 use App\Models\WeeklyUpdate;
 use App\Services\GoalAccessService;
+use App\Services\WorkflowNotificationService;
 use Illuminate\Support\Facades\Storage;
 
 class WeeklyUpdateController extends Controller
 {
-    public function store(StoreWeeklyUpdateRequest $request, GoalObjective $objective)
-    {
-        $objective->weeklyUpdates()->create($request->preparedUpdateData() + ['user_id' => $request->user()->id]);
+    public function store(
+        StoreWeeklyUpdateRequest $request,
+        GoalObjective $objective,
+        WorkflowNotificationService $notifications
+    ) {
+        $update = $objective->weeklyUpdates()->create($request->preparedUpdateData() + ['user_id' => $request->user()->id]);
+        $notifications->reportSubmitted($update, $request->user());
 
         return back()->with('status', 'Daily report submitted.');
     }
 
-    public function update(UpdateWeeklyUpdateRequest $request, WeeklyUpdate $weeklyUpdate)
-    {
+    public function update(
+        UpdateWeeklyUpdateRequest $request,
+        WeeklyUpdate $weeklyUpdate,
+        WorkflowNotificationService $notifications
+    ) {
         $data = $request->preparedUpdateData() + ['status' => 'submitted'];
         $oldEvidencePath = $weeklyUpdate->evidence_path;
 
@@ -33,6 +41,8 @@ class WeeklyUpdateController extends Controller
         if (in_array($weeklyUpdate->objective->status, ['rejected', 'revision_requested'], true)) {
             $weeklyUpdate->objective->update(['status' => 'pending']);
         }
+
+        $notifications->reportSubmitted($weeklyUpdate, $request->user(), true);
 
         return back()->with('status', 'Daily report resubmitted.');
     }

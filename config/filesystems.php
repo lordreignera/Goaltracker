@@ -15,7 +15,7 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
-    'evidence_disk' => env('EVIDENCE_FILESYSTEM_DISK', 'public'),
+    'evidence_disk' => env('EVIDENCE_FILESYSTEM_DISK', 'private'),
 
     /*
     |--------------------------------------------------------------------------
@@ -36,6 +36,13 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/private'),
             'serve' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
             'throw' => false,
             'report' => false,
         ],

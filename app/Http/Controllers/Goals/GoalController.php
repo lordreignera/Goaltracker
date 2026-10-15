@@ -11,6 +11,7 @@ use App\Models\GoalPillar;
 use App\Models\Quarter;
 use App\Services\GoalAccessService;
 use App\Services\GoalManagementService;
+use App\Services\WorkflowNotificationService;
 use Illuminate\Http\Request;
 
 class GoalController extends Controller
@@ -76,11 +77,18 @@ class GoalController extends Controller
         ]);
     }
 
-    public function store(StoreGoalRequest $request, GoalManagementService $goals)
-    {
+    public function store(
+        StoreGoalRequest $request,
+        GoalManagementService $goals,
+        WorkflowNotificationService $notifications
+    ) {
         $data = $request->validated();
         $goal = $goals->createGoal($request->user(), $data);
         $isSubmitted = ($data['save_action'] ?? 'draft') === 'submit';
+
+        if ($isSubmitted) {
+            $notifications->goalSubmitted($goal, $request->user());
+        }
 
         return redirect()
             ->route('goals.show', $goal)
@@ -131,12 +139,12 @@ class GoalController extends Controller
             ->with('status', 'Office work plan draft updated.');
     }
 
-    public function submit(Request $request, Goal $goal)
+    public function submit(Request $request, Goal $goal, WorkflowNotificationService $notifications)
     {
         abort_unless(app(GoalAccessService::class)->canUpdateGoal($request->user(), $goal), 403);
         abort_if($goal->status !== 'draft', 422, 'Only a draft work plan can be submitted.');
 
-        $weightTotal = $goal->objectives()->sum('weight');
+        $weightTotal = (int) $goal->objectives()->sum('weight');
 
         if ($weightTotal !== 100) {
             return back()->withErrors([
@@ -148,6 +156,8 @@ class GoalController extends Controller
             'status' => 'submitted',
             'submitted_at' => now(),
         ]);
+
+        $notifications->goalSubmitted($goal, $request->user());
 
         return back()->with('status', 'Office work plan submitted for review.');
     }
