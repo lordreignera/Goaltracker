@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-app-layout title="User Guide">
     <x-slot name="header">
         <h1 class="page-title">User Guide</h1>
     </x-slot>
@@ -40,6 +40,24 @@
             border: 1px solid #bfdbfe;
             font-size: .8rem;
             font-weight: 800;
+        }
+
+        .account-guide-callout {
+            border: 1px solid #a7f3d0;
+            border-left: 4px solid #0f766e;
+            border-radius: 12px;
+            background: #f0fdf4;
+        }
+
+        .account-guide-callout h2 {
+            color: #14532d;
+        }
+
+        .account-guide-link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
         }
 
         .guide-step {
@@ -170,6 +188,55 @@
                 <p class="text-muted mb-0">
                     The system helps each office organize quarterly work plan goals by activity pillar, submit progress reports, and calculate official progress from supervisor-verified scores.
                 </p>
+            </section>
+
+            <section class="guide-card account-guide-callout p-4" id="account-settings-guide">
+                <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+                    <div>
+                        <span class="guide-pill">Account Settings</span>
+                        <h2 class="h5 fw-bold mt-3 mb-2">Set up your account in four steps</h2>
+                        <p class="text-muted mb-0">Use this page whenever you need to update your details, password, security, or active sessions.</p>
+                    </div>
+                    <div class="account-guide-link-row">
+                        <a class="btn btn-primary" href="{{ route('profile.show') }}">Open Account Settings</a>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-3">
+                    <div class="guide-step">
+                        <span class="guide-step-number">1</span>
+                        <div>
+                            <div class="fw-bold">Update your profile information</div>
+                            <div class="text-muted small">Open Account Settings, confirm your name and email, then select <strong>Save</strong> in the profile section. If your email needs verification, follow the verification link sent to you.</div>
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <span class="guide-step-number">2</span>
+                        <div>
+                            <div class="fw-bold">Change your password</div>
+                            <div class="text-muted small">Enter your current password, type a new password of at least 8 characters with letters, numbers, and symbols, confirm it, then select <strong>Save</strong>. Use the eye button to check what you typed before saving.</div>
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <span class="guide-step-number">3</span>
+                        <div>
+                            <div class="fw-bold">Enable MFA only if you want the extra protection</div>
+                            <div class="text-muted small">MFA is optional for application access. If you enable it, scan the QR code or enter the setup key in your authenticator app, confirm the code, and store the recovery codes somewhere private.</div>
+                        </div>
+                    </div>
+                    <div class="guide-step">
+                        <span class="guide-step-number">4</span>
+                        <div>
+                            <div class="fw-bold">Review other browser sessions</div>
+                            <div class="text-muted small">If you used a shared or unfamiliar computer, select the browser-sessions option, enter your current password, and sign out other sessions. This does not change your password.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="formula-card mt-4 mb-0">
+                    <div class="fw-bold">What should I save?</div>
+                    <div class="small mt-1">Profile changes and password changes have separate Save buttons. Save each section after completing it. A successful save displays a confirmation message near that section.</div>
+                </div>
             </section>
 
             <section class="guide-card p-4">
@@ -384,6 +451,7 @@
             <section class="guide-card p-4">
                 <h2 class="h6 fw-bold mb-3">Quick Links</h2>
                 <div class="d-grid gap-2">
+                    <a class="btn btn-outline-primary" href="{{ route('profile.show') }}">Account Settings</a>
                     <a class="btn btn-primary" href="{{ route('goals.create') }}">Create Goal</a>
                     <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">View Goals</a>
                     <a class="btn btn-outline-secondary" href="{{ route('reports.quarterly.index') }}">Quarterly Report</a>

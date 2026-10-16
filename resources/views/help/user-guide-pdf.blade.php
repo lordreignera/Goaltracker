@@ -10,6 +10,7 @@
         h3 { font-size: 12px; margin: 12px 0 6px; }
         p { margin: 0 0 8px; }
         ul { margin: 0 0 8px 18px; padding: 0; }
+        ol { margin: 0 0 8px 18px; padding: 0; }
         li { margin-bottom: 4px; }
         .muted { color: #64748b; }
         .card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
@@ -27,6 +28,18 @@
     <div class="card">
         <h2>How the System Works</h2>
         <p>The system helps each office organize quarterly work plan goals by activity pillar, submit progress reports, and calculate official progress from supervisor-verified scores.</p>
+    </div>
+
+    <h2>Account Settings</h2>
+    <p>Open Account Settings from your profile menu, or use the Account Settings link in the User Guide. Complete each section separately:</p>
+    <ol>
+        <li><strong>Profile information:</strong> confirm your name and email, then select Save in the profile section. Follow the email verification link if one is sent.</li>
+        <li><strong>Password:</strong> enter your current password, a new password of at least 8 characters with letters, numbers, and symbols, then confirm it and select Save. Use the eye button to check what you typed.</li>
+        <li><strong>Multi-factor authentication:</strong> MFA is optional. If enabled, scan the QR code or enter the setup key in an authenticator app, confirm the code, and store the recovery codes privately.</li>
+        <li><strong>Browser sessions:</strong> sign out other sessions when you used a shared or unfamiliar computer. This requires your current password and does not change your password.</li>
+    </ol>
+    <div class="formula">
+        Profile changes and password changes have separate Save buttons. Save each section after completing it and look for the confirmation message near that section.
     </div>
 
     <h2>Create a Goal</h2>
