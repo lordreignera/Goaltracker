@@ -1,5 +1,11 @@
 <?php
 
+$applicationName = trim((string) env('APP_NAME', 'SMART Goals Tracker'));
+
+if ($applicationName === '' || strcasecmp($applicationName, 'Laravel') === 0) {
+    $applicationName = 'SMART Goals Tracker';
+}
+
 return [
 
     /*
@@ -13,7 +19,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => $applicationName,
 
     /*
     |--------------------------------------------------------------------------

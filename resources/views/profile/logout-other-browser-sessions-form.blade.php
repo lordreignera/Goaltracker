@@ -1,4 +1,4 @@
-<x-action-section>
+<x-action-section class="account-settings-section-grid">
     <x-slot name="title">
         {{ __('Browser Sessions') }}
     </x-slot>
