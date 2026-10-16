@@ -10,9 +10,8 @@ class SecurityHardeningTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_mfa_enforcement_redirects_unconfirmed_users_to_account_settings(): void
+    public function test_mfa_is_optional_for_application_access(): void
     {
-        config(['security.require_mfa' => true]);
         $user = User::factory()->create([
             'approval_status' => 'approved',
             'is_active' => true,
@@ -21,17 +20,11 @@ class SecurityHardeningTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('dashboard'));
 
-        $response->assertRedirect(route('profile.show'));
-        $response->assertSessionHas('warning', 'Multi-factor authentication is required. Set it up in Account Settings before continuing.');
-
-        $this->actingAs($user)->get(route('profile.show'))
-            ->assertOk()
-            ->assertSee('Two Factor Authentication');
+        $response->assertOk();
     }
 
-    public function test_confirmed_mfa_users_can_access_protected_business_routes(): void
+    public function test_users_with_mfa_enabled_can_access_protected_business_routes(): void
     {
-        config(['security.require_mfa' => true]);
         $user = User::factory()->create([
             'approval_status' => 'approved',
             'is_active' => true,
@@ -39,20 +32,6 @@ class SecurityHardeningTest extends TestCase
         ]);
 
         $this->actingAs($user)->get(route('dashboard'))->assertOk();
-    }
-
-    public function test_mfa_enforcement_returns_a_machine_readable_locked_response(): void
-    {
-        config(['security.require_mfa' => true]);
-        $user = User::factory()->create([
-            'approval_status' => 'approved',
-            'is_active' => true,
-            'two_factor_confirmed_at' => null,
-        ]);
-
-        $this->actingAs($user)->getJson(route('dashboard'))
-            ->assertStatus(423)
-            ->assertJsonStructure(['message', 'setup_url']);
     }
 
     public function test_security_headers_are_added_to_web_responses(): void

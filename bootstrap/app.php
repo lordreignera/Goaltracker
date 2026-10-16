@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\EnsureMultiFactorAuthentication;
 use App\Http\Middleware\EnsureUserIsApproved;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -38,7 +37,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'approved' => EnsureUserIsApproved::class,
-            'mfa' => EnsureMultiFactorAuthentication::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
