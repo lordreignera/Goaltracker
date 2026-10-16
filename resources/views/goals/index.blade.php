@@ -116,9 +116,15 @@
                     <td>{{ $goal->quarter->name }}</td>
                     <td><span class="badge text-bg-light border">{{ str_replace('_', ' ', ucfirst($goal->status)) }}</span></td>
                     <td>
+                        @php($previewObjective = $goal->objectives->first())
                         <span class="badge text-bg-light border">{{ $goal->objectives->count() }} total</span>
                         <span class="badge text-bg-success">{{ $goal->objectives->filter->isApprovedComplete()->count() }} completed</span>
-                        <div class="small text-muted mt-1">{{ $goal->objectives->pluck('title')->join(', ') }}</div>
+                        @if ($previewObjective)
+                            <div class="small fw-semibold mt-1">{{ $previewObjective->title }}</div>
+                            <button class="btn btn-sm btn-outline-secondary mt-2" type="button" data-bs-toggle="modal" data-bs-target="#goalObjectivesModal-{{ $goal->id }}">
+                                View all objectives
+                            </button>
+                        @endif
                     </td>
                     <td>
                         <div class="progress"><div class="progress-bar" style="width: {{ $goal->progress() }}%"></div></div>
@@ -134,6 +140,46 @@
             </tbody>
         </table>
     </div>
+
+    @foreach ($goals as $goal)
+        <div class="modal fade" id="goalObjectivesModal-{{ $goal->id }}" tabindex="-1" aria-labelledby="goalObjectivesModalLabel-{{ $goal->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h3 class="modal-title h5 fw-bold mb-1" id="goalObjectivesModalLabel-{{ $goal->id }}">{{ $goal->pillar?->name ?? 'Work Plan' }} Objectives</h3>
+                            <div class="text-muted small">{{ $goal->assignedDepartments->pluck('name')->join(', ') ?: 'Office-wide' }} | {{ $goal->quarter->name }}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="list-group list-group-flush">
+                            @foreach ($goal->objectives as $objective)
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                                        <div>
+                                            <div class="fw-semibold">{{ $objective->title }}</div>
+                                            <div class="text-muted small mt-1">{{ str($objective->key_activities)->limit(120) }}</div>
+                                            <div class="small mt-1"><strong>Deliverable:</strong> {{ str($objective->specific_output)->limit(120) }}</div>
+                                        </div>
+                                        <div class="text-md-end">
+                                            <span class="badge text-bg-light border">{{ $objective->weight }}% weight</span>
+                                            <div class="text-muted small mt-1">{{ $objective->progressPercent() }}% verified</div>
+                                            <a class="btn btn-sm btn-outline-secondary mt-2" href="{{ route('goals.show', $goal) }}#report-objective-{{ $objective->id }}">Open progress</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a class="btn btn-primary" href="{{ route('goals.show', $goal) }}">Open Goal</a>
+                        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
 
     <div class="mt-3">
         {{ $goals->links() }}

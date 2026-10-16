@@ -404,6 +404,47 @@ class GoalCreationTest extends TestCase
             ->assertSee("#report-objective-{$objective->id}", false);
     }
 
+    public function test_dashboard_and_my_goals_collapse_pillar_objectives_into_a_view_all_modal(): void
+    {
+        $department = Department::create(['name' => 'Programs Department']);
+        $pillar = $this->goalPillar();
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $supervisor = User::factory()->create([
+            'department_id' => $department->id,
+            'role' => 'supervisor',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'goal_pillar_id' => $pillar->id,
+            'created_by' => $supervisor->id,
+            'owner_id' => $supervisor->id,
+            'status' => 'submitted',
+        ]);
+        $goal->assignments()->create(['department_id' => $department->id]);
+        $goal->objectives()->create($this->objectiveFields([
+            'title' => 'Preview objective',
+            'key_activities' => 'Complete the preview objective activities.',
+            'weight' => 40,
+        ]) + ['status' => 'pending']);
+        $goal->objectives()->create($this->objectiveFields([
+            'title' => 'Hidden objective',
+            'key_activities' => 'Complete the hidden objective activities.',
+            'weight' => 60,
+        ]) + ['status' => 'pending']);
+
+        $this->actingAs($supervisor)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('View all objectives (2)', false)
+            ->assertSee('Hidden objective');
+
+        $this->actingAs($supervisor)->get(route('goals.index'))
+            ->assertOk()
+            ->assertSee('View all objectives')
+            ->assertSee('Hidden objective');
+    }
+
     public function test_dashboard_draft_shows_completion_actions_without_reporting_actions(): void
     {
         $department = Department::create(['name' => 'Programs Department']);

@@ -77,7 +77,7 @@
                     });
                 @endphp
 
-                @forelse ($pillarRows as $row)
+                @forelse ($pillarRows->take(1) as $row)
                     @php
                         $goal = $row[0];
                         $objective = $row[1];
@@ -105,6 +105,9 @@
                         <td data-label="Work Plan Goal">
                             <div class="fw-bold">{{ $objective->title }}</div>
                             <div class="text-muted small mt-1">{{ $goal->assignedDepartments->pluck('name')->join(', ') }}</div>
+                            <button class="btn btn-sm btn-outline-secondary mt-2" type="button" data-bs-toggle="modal" data-bs-target="#pillarObjectivesModal-{{ $goalPillar->id }}">
+                                View all objectives ({{ $pillarRows->count() }})
+                            </button>
                             @if ($goal->status === 'draft')
                                 <span class="badge text-bg-warning border mt-1">Draft</span>
                                 <div class="text-muted small mt-1">Complete and submit this goal before reporting.</div>
@@ -237,3 +240,22 @@
         </tbody>
     </table>
 </div>
+
+@foreach ($goalPillars as $goalPillar)
+    @php
+        $pillarGoals = $goalsByPillar->get($goalPillar->id, collect());
+        $pillarRows = $pillarGoals->flatMap(function ($goal) {
+            return $goal->objectives->map(fn ($objective) => [$goal, $objective]);
+        });
+    @endphp
+
+    @if ($pillarRows->isNotEmpty())
+        @include('goals.partials.pillar-objectives-modal', [
+            'goalPillar' => $goalPillar,
+            'pillarRows' => $pillarRows,
+            'planningContext' => $planningContext,
+            'manageableGoalIds' => $manageableGoalIds,
+            'reportableGoalIds' => $reportableGoalIds,
+        ])
+    @endif
+@endforeach

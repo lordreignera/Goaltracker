@@ -50,6 +50,8 @@ class GoalAccessServiceTest extends TestCase
 
         $service = app(GoalAccessService::class);
 
+        $staff->accessibleDepartments()->sync([$otherDepartment->id]);
+
         $this->assertTrue($service->canViewGoal($superAdmin, $goal));
         $this->assertTrue($service->canViewGoal($sectionSupervisor, $goal));
         $this->assertFalse($service->canViewGoal($otherSectionSupervisor, $goal));
@@ -61,6 +63,45 @@ class GoalAccessServiceTest extends TestCase
         $goal->refresh();
 
         $this->assertFalse($service->canViewGoal($staff, $goal));
+    }
+
+    public function test_directly_assigned_user_can_view_a_goal_outside_their_department(): void
+    {
+        $department = Department::create(['name' => 'ICT Department']);
+        $otherDepartment = Department::create(['name' => 'Finance Department']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $user = User::factory()->create(['department_id' => $department->id]);
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'status' => 'submitted',
+        ]);
+        $goal->assignments()->create(['department_id' => $otherDepartment->id]);
+        $goal->assignments()->create(['department_id' => $otherDepartment->id, 'user_id' => $user->id]);
+
+        $service = app(GoalAccessService::class);
+
+        $this->assertTrue($service->canViewGoal($user, $goal));
+        $this->assertTrue(Goal::visibleTo($user)->whereKey($goal)->exists());
+    }
+
+    public function test_creator_can_view_a_goal_they_created_for_another_department(): void
+    {
+        $department = Department::create(['name' => 'ICT Department']);
+        $otherDepartment = Department::create(['name' => 'Finance Department']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $creator = User::factory()->create(['department_id' => $department->id]);
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'created_by' => $creator->id,
+            'owner_id' => $creator->id,
+            'status' => 'submitted',
+        ]);
+        $goal->assignments()->create(['department_id' => $otherDepartment->id]);
+
+        $service = app(GoalAccessService::class);
+
+        $this->assertTrue($service->canViewGoal($creator, $goal));
+        $this->assertTrue(Goal::visibleTo($creator)->whereKey($goal)->exists());
     }
 
     public function test_owner_field_does_not_bypass_department_or_section_visibility(): void

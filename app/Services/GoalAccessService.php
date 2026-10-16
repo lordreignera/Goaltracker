@@ -14,7 +14,11 @@ class GoalAccessService
             return true;
         }
 
-        if ($goal->status === 'draft' && $goal->created_by !== $user->id) {
+        if ($goal->created_by === $user->id) {
+            return true;
+        }
+
+        if ($goal->status === 'draft') {
             return false;
         }
 
@@ -66,29 +70,15 @@ class GoalAccessService
             return $query;
         }
 
-        $departmentIds = $user->accessibleDepartmentIds();
-
         return $query
             ->where(function (Builder $query) use ($user) {
                 $query->where('status', '!=', 'draft')
                     ->orWhere('created_by', $user->id);
             })
-            ->where(function (Builder $query) use ($user, $departmentIds) {
-                $query->whereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
-                    ->orWhereHas('assignments', function (Builder $query) use ($user, $departmentIds) {
-                        $query->whereIn('department_id', $departmentIds)
-                            ->where(function (Builder $query) use ($user) {
-                                $query->whereNull('section_id')
-                                    ->whereNull('user_id');
-
-                                if ($user->section_id) {
-                                    $query->orWhere(function (Builder $query) use ($user) {
-                                        $query->where('department_id', $user->department_id)
-                                            ->where('section_id', $user->section_id);
-                                    });
-                                }
-                            });
-                    });
+            ->where(function (Builder $query) use ($user) {
+                $query->where('created_by', $user->id)
+                    ->orWhereHas('assignedUsers', fn (Builder $query) => $query->whereKey($user->id))
+                    ->orWhereHas('assignments', fn (Builder $query) => $this->scopeToUserDepartment($query, $user));
             });
     }
 
@@ -98,25 +88,27 @@ class GoalAccessService
             return true;
         }
 
-        $departmentIds = $user->accessibleDepartmentIds();
-
-        if (empty($departmentIds)) {
-            return false;
-        }
-
         return $goal->assignments()
-            ->whereIn('department_id', $departmentIds)
+            ->where(fn (Builder $query) => $this->scopeToUserDepartment($query, $user))
+            ->exists();
+    }
+
+    /**
+     * Match department-wide assignments and assignments for the user's own section.
+     * Extra departments a user can administer do not grant ordinary goal visibility.
+     */
+    private function scopeToUserDepartment(Builder $query, User $user): Builder
+    {
+        $query->where('department_id', $user->department_id)
+            ->whereNull('user_id')
             ->where(function (Builder $query) use ($user) {
-                $query->whereNull('section_id')
-                    ->whereNull('user_id');
+                $query->whereNull('section_id');
 
                 if ($user->section_id) {
-                    $query->orWhere(function (Builder $query) use ($user) {
-                        $query->where('department_id', $user->department_id)
-                            ->where('section_id', $user->section_id);
-                    });
+                    $query->orWhere('section_id', $user->section_id);
                 }
-            })
-            ->exists();
+            });
+
+        return $query;
     }
 }
