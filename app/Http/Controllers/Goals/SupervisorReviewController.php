@@ -65,6 +65,13 @@ class SupervisorReviewController extends Controller
 
         $notifications->reportReviewed($weeklyUpdate, $request->user(), $data['decision']);
 
-        return back()->with('status', 'Review saved.');
+        $reviewStatus = match ($data['decision']) {
+            'approved' => 'Report approved. Verified progress is now updated.',
+            'rejected' => 'Report rejected. The author has been notified.',
+            default => 'Revision requested. The author has been notified.',
+        };
+
+        return redirect(route('goals.show', $goal).'#report-'.$weeklyUpdate->id)
+            ->with('status', $reviewStatus);
     }
 }

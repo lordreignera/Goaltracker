@@ -8,6 +8,7 @@ use App\Models\Quarter;
 use App\Models\User;
 use App\Services\GoalAccessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -63,6 +64,37 @@ class GoalAccessServiceTest extends TestCase
         $goal->refresh();
 
         $this->assertFalse($service->canViewGoal($staff, $goal));
+    }
+
+    public function test_department_head_can_see_all_section_goals_in_their_department(): void
+    {
+        Permission::findOrCreate('review goals');
+        Role::findOrCreate('Manager')->syncPermissions(['review goals']);
+
+        $department = Department::create(['name' => 'ICT Department']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
+        $quarter = Quarter::create(['name' => 'Q1 2026', 'starts_at' => '2026-01-01', 'ends_at' => '2026-03-31']);
+        $departmentHead = User::factory()->create([
+            'department_id' => $department->id,
+            'section_id' => null,
+            'role' => 'manager',
+        ]);
+        $departmentHead->assignRole('Manager');
+
+        $goal = Goal::create([
+            'quarter_id' => $quarter->id,
+            'status' => 'submitted',
+        ]);
+        $goal->assignments()->create([
+            'department_id' => $department->id,
+            'section_id' => $section->id,
+        ]);
+
+        $service = app(GoalAccessService::class);
+
+        $this->assertTrue($service->canViewGoal($departmentHead, $goal));
+        $this->assertTrue($service->canReviewGoal($departmentHead, $goal));
+        $this->assertTrue(Goal::visibleTo($departmentHead)->whereKey($goal)->exists());
     }
 
     public function test_directly_assigned_user_can_view_a_goal_outside_their_department(): void

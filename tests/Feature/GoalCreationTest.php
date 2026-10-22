@@ -39,6 +39,8 @@ class GoalCreationTest extends TestCase
         $this->actingAs($supervisor)->get(route('goals.create'))
             ->assertOk()
             ->assertSee('Work Plan Goals by Activity Pillar')
+            ->assertSee('data-create-goal data-bs-toggle="modal" data-bs-target="#strategicGoalModal"', false)
+            ->assertSee('action="'.route('goals.store').'"', false)
             ->assertSee('Pillar Planning Table')
             ->assertSee('Activity Pillar')
             ->assertSee('Office / Department')
@@ -158,6 +160,10 @@ class GoalCreationTest extends TestCase
 
         $response->assertRedirect(route('goals.show', $goal));
         $response->assertSessionHas('status', 'Office work plan saved and submitted for review.');
+        $this->actingAs($user)->get(route('goals.show', $goal))
+            ->assertOk()
+            ->assertSee('Office work plan saved and submitted for review.')
+            ->assertSee('role="status"', false);
         $this->assertSame('submitted', $goal->status);
         $this->assertNotNull($goal->submitted_at);
     }
@@ -401,6 +407,7 @@ class GoalCreationTest extends TestCase
             ->assertSee('Add Report')
             ->assertSee('View Progress')
             ->assertSee(route('goals.destroy', $goal), false)
+            ->assertSee("#add-report-objective-{$objective->id}", false)
             ->assertSee("#report-objective-{$objective->id}", false);
     }
 

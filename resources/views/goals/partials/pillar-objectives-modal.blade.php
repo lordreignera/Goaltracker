@@ -70,7 +70,7 @@
                                         <div class="d-flex flex-wrap justify-content-end gap-1">
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('goals.show', $goal) }}">Open</a>
                                             @if ($canReport)
-                                                <a class="btn btn-sm btn-primary" href="{{ route('goals.show', $goal) }}#report-objective-{{ $objective->id }}">Add Report</a>
+                                                <a class="btn btn-sm btn-primary" href="{{ route('goals.show', $goal) }}#add-report-objective-{{ $objective->id }}">Add Report</a>
                                             @endif
                                         </div>
                                     @endif

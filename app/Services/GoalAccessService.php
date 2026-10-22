@@ -100,14 +100,19 @@ class GoalAccessService
     private function scopeToUserDepartment(Builder $query, User $user): Builder
     {
         $query->where('department_id', $user->department_id)
-            ->whereNull('user_id')
-            ->where(function (Builder $query) use ($user) {
-                $query->whereNull('section_id');
+            ->whereNull('user_id');
 
-                if ($user->section_id) {
-                    $query->orWhere('section_id', $user->section_id);
-                }
-            });
+        if ($user->canReviewGoals() && ! $user->section_id) {
+            return $query;
+        }
+
+        $query->where(function (Builder $query) use ($user) {
+            $query->whereNull('section_id');
+
+            if ($user->section_id) {
+                $query->orWhere('section_id', $user->section_id);
+            }
+        });
 
         return $query;
     }

@@ -356,6 +356,25 @@
                 font-size: .86rem;
             }
 
+            .topbar-identity {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 4px 9px;
+                margin-top: 7px;
+                color: var(--sg-muted);
+                font-size: .76rem;
+            }
+
+            .topbar-identity strong {
+                color: var(--sg-text);
+                font-weight: 800;
+            }
+
+            .topbar-identity-divider {
+                color: var(--sg-border);
+            }
+
             .topbar-actions {
                 display: flex;
                 align-items: center;
@@ -846,6 +865,9 @@
             $companySettings = \App\Models\CompanySetting::current();
             $currentUser = Auth::user();
             $roleLabel = $currentUser->getRoleNames()->first() ?? ucfirst((string) $currentUser->role);
+            $departmentLabel = $currentUser->department?->name ?? 'Department not assigned';
+            $sectionLabel = $currentUser->section?->name;
+            $positionLabel = $currentUser->position?->title ?? 'Position not assigned';
             $initials = collect(explode(' ', trim($currentUser->name)))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->join('');
             $hour = now()->format('H');
             $greeting = $hour < 12 ? 'Good morning' : ($hour < 17 ? 'Good afternoon' : 'Good evening');
@@ -1012,6 +1034,15 @@
                             <div class="min-w-0">
                                 <p class="topbar-greeting">{{ $greeting }}, {{ $currentUser->name }}</p>
                                 <p class="topbar-support">Here is what is happening with your goals today.</p>
+                                <div class="topbar-identity" aria-label="Your organization assignment">
+                                    <span><strong>Department:</strong> {{ $departmentLabel }}</span>
+                                    <span class="topbar-identity-divider" aria-hidden="true">|</span>
+                                    <span><strong>Position:</strong> {{ $positionLabel }}</span>
+                                    @if ($sectionLabel)
+                                        <span class="topbar-identity-divider" aria-hidden="true">|</span>
+                                        <span><strong>Section:</strong> {{ $sectionLabel }}</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -1107,6 +1138,8 @@
                                     <div class="px-3 py-3">
                                         <div class="fw-bold">{{ $currentUser->name }}</div>
                                         <div class="text-muted small">{{ $currentUser->email }}</div>
+                                        <div class="text-muted small mt-2">{{ $departmentLabel }}</div>
+                                        <div class="text-muted small">{{ $positionLabel }}</div>
                                     </div>
                                     <a class="user-menu-link" href="{{ route('profile.show') }}">Profile</a>
                                     <a class="user-menu-link" href="{{ route('profile.show') }}">Account Settings</a>
@@ -1122,6 +1155,12 @@
 
                 <main class="admin-content">
                     <div class="content-container">
+                        @if (session('status') && (request()->routeIs('goals.*') || request()->routeIs('dashboard')))
+                            <div class="alert alert-success d-flex align-items-center justify-content-between gap-3" role="status" aria-live="polite">
+                                <span>{{ session('status') }}</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss message"></button>
+                            </div>
+                        @endif
                         @if (session('warning'))
                             <div class="alert alert-warning" role="alert">{{ session('warning') }}</div>
                         @endif

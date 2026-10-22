@@ -95,9 +95,96 @@ class WeeklyUpdateFlowTest extends TestCase
             ->assertSee('Required only when updating progress')
             ->assertSee('Submit Report')
             ->assertSee('Reporting Period')
-            ->assertSee('Progress Update')
+            ->assertSee('Select reporting period')
+            ->assertSee('data-report-period-picker', false)
+            ->assertSee('Progress Score')
             ->assertSee('data-progress-score disabled', false)
             ->assertDontSee('Submit Daily Report');
+    }
+
+    public function test_submitting_a_report_returns_to_its_row_with_clear_approval_status_and_actions(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+
+        $response = $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_period_start' => '2026-01-01',
+            'reporting_frequency' => 'weekly',
+            'achievement_summary' => 'Configured the first set of computers.',
+        ]);
+
+        $update = $objective->weeklyUpdates()->firstOrFail();
+
+        $response->assertRedirect(route('goals.show', $objective->goal).'#report-'.$update->id)
+            ->assertSessionHas('status', 'Report added successfully and awaiting supervisor approval.');
+
+        $this->actingAs($staff)->get(route('goals.show', $objective->goal))
+            ->assertOk()
+            ->assertSee('Report added successfully and awaiting supervisor approval.')
+            ->assertSee('Awaiting approval')
+            ->assertSee('Configured the first set of computers.')
+            ->assertSee('Add Another Report')
+            ->assertSee(route('weekly-updates.update', $update), false)
+            ->assertSee(route('weekly-updates.destroy', $update), false)
+            ->assertSee('View');
+    }
+
+    public function test_author_can_delete_an_unapproved_report_but_other_users_and_approved_reports_cannot(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+        $update = $objective->weeklyUpdates()->create([
+            'user_id' => $staff->id,
+            'report_date' => '2026-01-01',
+            'achievement_summary' => 'Report to remove.',
+            'status' => 'submitted',
+        ]);
+        $colleague = User::factory()->create([
+            'department_id' => $staff->department_id,
+            'section_id' => $staff->section_id,
+            'role' => 'staff',
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+        $colleague->assignRole('Staff');
+
+        $this->actingAs($colleague)->delete(route('weekly-updates.destroy', $update))->assertForbidden();
+        $this->assertDatabaseHas('weekly_updates', ['id' => $update->id]);
+
+        $this->actingAs($staff)->delete(route('weekly-updates.destroy', $update))
+            ->assertRedirect(route('goals.show', $objective->goal).'#report-objective-'.$objective->id)
+            ->assertSessionHas('status', 'Report deleted. You can add another report for this period.');
+        $this->assertDatabaseMissing('weekly_updates', ['id' => $update->id]);
+
+        $approved = $objective->weeklyUpdates()->create([
+            'user_id' => $staff->id,
+            'report_date' => '2026-01-08',
+            'achievement_summary' => 'Approved report.',
+            'status' => 'approved',
+        ]);
+
+        $this->actingAs($staff)->delete(route('weekly-updates.destroy', $approved))->assertForbidden();
+        $this->actingAs($staff)->get(route('goals.show', $objective->goal))
+            ->assertOk()
+            ->assertSee('Approved')
+            ->assertSee('viewReportModal-'.$approved->id)
+            ->assertDontSee(route('weekly-updates.destroy', $approved), false)
+            ->assertDontSee(route('weekly-updates.update', $approved), false);
+    }
+
+    public function test_weekly_report_can_be_submitted_by_selecting_a_reporting_period(): void
+    {
+        [$staff, $objective] = $this->staffAndObjective();
+
+        $this->actingAs($staff)->post(route('objectives.weekly-updates.store', $objective), [
+            'report_period_start' => '2026-01-08',
+            'reporting_frequency' => 'weekly',
+            'achievement_summary' => 'Submitted from the selected second-week period.',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $update = $objective->weeklyUpdates()->firstOrFail();
+
+        $this->assertSame('2026-01-08', $update->report_date->toDateString());
+        $this->assertSame('2026-01-08', $update->report_period_start->toDateString());
+        $this->assertSame('2026-01-14', $update->report_period_end->toDateString());
     }
 
     public function test_draft_goal_cannot_be_reported_on_until_it_is_submitted(): void

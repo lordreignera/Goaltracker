@@ -193,7 +193,10 @@
         <div>
             <div class="text-muted small">Review each activity pillar, then add goals and activities from your office work plan.</div>
         </div>
-        <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Back to Goals</a>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-maroon" type="button" data-create-goal data-bs-toggle="modal" data-bs-target="#strategicGoalModal">Create Goal</button>
+            <a class="btn btn-outline-secondary" href="{{ route('goals.index') }}">Back to Goals</a>
+        </div>
     </div>
 
     <x-validation-errors class="alert alert-danger mb-3" />
@@ -654,16 +657,21 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label small fw-semibold">Report Date</label>
-                                        <input class="form-control" type="date" name="report_date" min="{{ $minReportDate }}" max="{{ $maxReportDate }}" required>
-                                        <small class="text-muted">{{ $firstReportDate?->format('M d, Y') }} to {{ $lastReportDate?->format('M d, Y') }}</small>
+                                @if ($errors->hasAny(['report_period_start', 'report_date', 'reporting_frequency', 'achievement_percentage', 'achievement_summary']))
+                                    <div class="alert alert-danger py-2 small">
+                                        @foreach (['report_period_start', 'report_date', 'reporting_frequency', 'achievement_percentage', 'achievement_summary'] as $reportField)
+                                            @error($reportField)
+                                                <div>{{ $message }}</div>
+                                            @enderror
+                                        @endforeach
                                     </div>
+                                @endif
+                                <div class="row g-3">
+                                    @include('goals.partials.report-period-fields', ['objective' => $objective])
 
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold">Report Cadence</label>
-                                        <select class="form-select" name="reporting_frequency" required>
+                                        <select class="form-select" name="reporting_frequency" data-report-frequency required>
                                             @foreach ($reportingFrequencies as $frequency)
                                                 <option value="{{ $frequency }}">{{ ucfirst($frequency) }}</option>
                                             @endforeach
@@ -722,6 +730,16 @@
         const selectedPillarHelp = document.querySelector('[data-selected-pillar-help]');
         const strategicGoalModalElement = document.getElementById('strategicGoalModal');
         const oldModalSource = @json(old('modal_source'));
+
+        document.querySelector('[data-create-goal]')?.addEventListener('click', () => {
+            if (goalPillarSelect) {
+                goalPillarSelect.value = '';
+            }
+
+            if (selectedPillarHelp) {
+                selectedPillarHelp.textContent = 'Select a pillar, then complete the quarter, departments, activities, and deliverables.';
+            }
+        });
 
         function showStrategicGoalModal() {
             if (strategicGoalModalElement && window.bootstrap) {

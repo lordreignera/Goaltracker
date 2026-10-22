@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Department;
+use App\Models\Position;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Jetstream\Http\Livewire\UpdateProfileInformationForm;
@@ -57,5 +59,33 @@ class ProfileInformationTest extends TestCase
         $response->assertOk()
             ->assertSee('<title>'.config('app.name').'</title>', false)
             ->assertDontSee('<title>Laravel</title>', false);
+    }
+
+    public function test_dashboard_displays_the_authenticated_users_department_position_and_section(): void
+    {
+        $department = Department::create(['name' => 'ICT Department']);
+        $section = $department->sections()->create(['name' => 'Software Development']);
+        $position = Position::create([
+            'department_id' => $department->id,
+            'section_id' => $section->id,
+            'title' => 'Software Developer',
+        ]);
+        $user = User::factory()->create([
+            'department_id' => $department->id,
+            'section_id' => $section->id,
+            'position_id' => $position->id,
+            'approval_status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Department:')
+            ->assertSee($department->name)
+            ->assertSee('Position:')
+            ->assertSee($position->title)
+            ->assertSee('Section:')
+            ->assertSee($section->name);
     }
 }

@@ -109,6 +109,7 @@ class GoalController extends Controller
                 'pillar',
                 'assignedDepartments',
                 'objectives.weeklyUpdates.reviews',
+                'objectives.weeklyUpdates.user',
             ]),
             'canUpdateGoal' => $access->canUpdateGoal($request->user(), $goal),
             'canReviewGoal' => $access->canReviewGoal($request->user(), $goal),
@@ -136,7 +137,7 @@ class GoalController extends Controller
 
         return redirect()
             ->route('goals.show', $goal)
-            ->with('status', 'Office work plan draft updated.');
+            ->with('status', $goal->status === 'draft' ? 'Office work plan draft updated.' : 'Office work plan saved successfully.');
     }
 
     public function submit(Request $request, Goal $goal, WorkflowNotificationService $notifications)

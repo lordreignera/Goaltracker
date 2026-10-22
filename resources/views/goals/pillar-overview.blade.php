@@ -117,7 +117,7 @@
                                     @if ($planningContext === 'create')
                                         <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#reportObjectiveModal-{{ $objective->id }}">Add Report</button>
                                     @else
-                                        <a class="btn btn-sm btn-primary" href="{{ route('goals.show', $goal) }}#report-objective-{{ $objective->id }}">Add Report</a>
+                                        <a class="btn btn-sm btn-primary" href="{{ route('goals.show', $goal) }}#add-report-objective-{{ $objective->id }}">Add Report</a>
                                     @endif
                                 @endif
 
@@ -201,7 +201,7 @@
                                         </li>
                                     @endif
                                     @if ($canReport)
-                                        <li><a class="dropdown-item" href="{{ route('goals.show', $goal) }}#report-objective-{{ $objective->id }}">Add Report</a></li>
+                                        <li><a class="dropdown-item" href="{{ route('goals.show', $goal) }}#add-report-objective-{{ $objective->id }}">Add Report</a></li>
                                     @endif
                                     <li><a class="dropdown-item" href="{{ route('goals.show', $goal) }}#report-objective-{{ $objective->id }}">View Progress</a></li>
                                 </ul>

@@ -185,4 +185,46 @@ class GoalObjective extends Model
             $periodStart->copy()->addDays(6)->min($lastReportingDate),
         ];
     }
+
+    public function reportingPeriods(?string $frequency = null): array
+    {
+        $frequencies = $frequency ? [$frequency] : $this->reportingFrequencies();
+        [$firstReportingDate, $lastReportingDate] = $this->reportingDateRange();
+        $periods = [];
+
+        foreach ($frequencies as $reportingFrequency) {
+            if (! in_array($reportingFrequency, ['daily', 'weekly', 'monthly'], true)) {
+                continue;
+            }
+
+            $cursor = $firstReportingDate->copy()->startOfDay();
+
+            while ($cursor->lte($lastReportingDate)) {
+                [$periodStart, $periodEnd] = $this->reportingPeriodFor($cursor, $reportingFrequency);
+
+                if ($periodStart->gt($lastReportingDate)) {
+                    break;
+                }
+
+                $periods[$reportingFrequency][] = [
+                    'start' => $periodStart->toDateString(),
+                    'end' => $periodEnd->toDateString(),
+                    'report_date' => $periodStart->toDateString(),
+                    'label' => $periodStart->isSameDay($periodEnd)
+                        ? $periodStart->format('M d, Y')
+                        : $periodStart->format('M d').' - '.$periodEnd->format('M d, Y'),
+                ];
+
+                $nextCursor = $periodEnd->copy()->addDay();
+
+                if ($nextCursor->lte($cursor)) {
+                    break;
+                }
+
+                $cursor = $nextCursor;
+            }
+        }
+
+        return $periods;
+    }
 }

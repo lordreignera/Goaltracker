@@ -15,12 +15,19 @@ class UpdateWeeklyUpdateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $weeklyUpdate = $this->route('weeklyUpdate');
+        $data = [];
 
         if (! $this->filled('reporting_frequency') && $weeklyUpdate instanceof WeeklyUpdate) {
-            $this->merge([
-                'reporting_frequency' => $weeklyUpdate->reporting_frequency
-                    ?: $weeklyUpdate->objective->reportingFrequencies()[0],
-            ]);
+            $data['reporting_frequency'] = $weeklyUpdate->reporting_frequency
+                ?: $weeklyUpdate->objective->reportingFrequencies()[0];
+        }
+
+        if ($this->filled('report_period_start')) {
+            $data['report_date'] = $this->input('report_period_start');
+        }
+
+        if ($data) {
+            $this->merge($data);
         }
     }
 
@@ -39,6 +46,7 @@ class UpdateWeeklyUpdateRequest extends FormRequest
     {
         return [
             'report_date' => ['required', 'date'],
+            'report_period_start' => ['nullable', 'date'],
             'reporting_frequency' => ['required', 'in:daily,weekly,monthly'],
             'is_progress_update' => ['nullable', 'boolean'],
             'achievement_percentage' => ['required_if:is_progress_update,1', 'nullable', 'integer', 'min:0', 'max:100'],
@@ -91,6 +99,18 @@ class UpdateWeeklyUpdateRequest extends FormRequest
                         'report_date',
                         "Report date must be between {$firstAllowedDate->toFormattedDateString()} and {$lastAllowedDate->toFormattedDateString()}."
                     );
+                }
+
+                if ($this->filled('report_period_start') && ! $validator->errors()->has('report_period_start')) {
+                    $selectedPeriodStart = $this->date('report_period_start');
+                    [$periodStart] = $objective->reportingPeriodFor($reportDate, $reportingFrequency);
+
+                    if (! $selectedPeriodStart || ! $selectedPeriodStart->isSameDay($periodStart)) {
+                        $validator->errors()->add(
+                            'report_period_start',
+                            'Select a reporting period from the available periods for this objective.'
+                        );
+                    }
                 }
 
                 [$periodStart] = $objective->reportingPeriodFor($reportDate, $reportingFrequency);

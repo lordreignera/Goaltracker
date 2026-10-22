@@ -52,6 +52,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::post('goals/{goal}/objectives', [ObjectiveController::class, 'store'])->name('goals.objectives.store');
     Route::post('objectives/{objective}/weekly-updates', [WeeklyUpdateController::class, 'store'])->name('objectives.weekly-updates.store');
     Route::put('weekly-updates/{weeklyUpdate}', [WeeklyUpdateController::class, 'update'])->name('weekly-updates.update');
+    Route::delete('weekly-updates/{weeklyUpdate}', [WeeklyUpdateController::class, 'destroy'])->name('weekly-updates.destroy');
     Route::get('weekly-updates/{weeklyUpdate}/evidence', [WeeklyUpdateController::class, 'evidence'])->name('weekly-updates.evidence');
     Route::post('weekly-updates/{weeklyUpdate}/reviews', [SupervisorReviewController::class, 'store'])->name('weekly-updates.reviews.store');
     Route::get('reports/quarterly', [QuarterlyReportController::class, 'index'])->name('reports.quarterly.index');
